@@ -92,7 +92,7 @@ if(BUILD_SHARED)
       target_link_directories(dof_shared PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
       )
-      target_link_libraries(dof_shared PUBLIC cargs serialport sockpp)
+      target_link_libraries(dof_shared PUBLIC cargs serialport sockpp hidapi)
    elseif(PLATFORM STREQUAL "linux")
       target_link_directories(dof_shared PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
@@ -217,7 +217,7 @@ if(BUILD_STATIC)
          target_link_directories(dof_test_s PUBLIC
             third-party/runtime-libs/${PLATFORM}/${ARCH}
          )
-         target_link_libraries(dof_test_s PUBLIC dof_static cargs serialport sockpp)
+         target_link_libraries(dof_test_s PUBLIC dof_static cargs serialport sockpp hidapi)
       elseif(PLATFORM STREQUAL "linux")
          target_link_directories(dof_test_s PUBLIC
             third-party/runtime-libs/${PLATFORM}/${ARCH}
