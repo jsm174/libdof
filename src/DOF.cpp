@@ -1,13 +1,16 @@
 #include "DOF/DOF.h"
 
 #include <algorithm>
-#include <chrono>
+#include <cctype>
 #include <cstring>
 
 #include "DOF/Config.h"
 #include "Logger.h"
 
-#if defined(__APPLE__) && (!((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV)))
+#if !(                                                                                                                \
+    (defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || \
+    defined(__ANDROID__) || defined(_WIN32) || defined(_WIN64))
+#include "Pinscape.h"
 #include "hidapi.h"
 #endif
 
@@ -16,33 +19,36 @@ namespace DOF
 
 DOF::DOF()
 {
-#if defined(__APPLE__) && (!((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV)))
-  struct hid_device_info *devs, *cur_dev;
-  int res = hid_init();
+#if !(                                                                                                                \
+    (defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || \
+    defined(__ANDROID__) || defined(_WIN32) || defined(_WIN64))
+  hid_init();
 
-  devs = hid_enumerate(0x0, 0x0);
-  cur_dev = devs;
-
-  while (cur_dev)
-  {
-    std::string productName;
-    if (cur_dev->product_string)
-    {
-      wchar_t* wstr = cur_dev->product_string;
-      while (*wstr) productName += static_cast<char>(*wstr++);
-
-      Log("Product: %s", productName.c_str());
-    }
-    cur_dev = cur_dev->next;
-  }
+  m_pPinscape = new Pinscape();
+  m_pPinscape->FindDevices();
 #endif
 }
 
-DOF::~DOF() {}
+DOF::~DOF()
+{
+#if !(                                                                                                                \
+    (defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || \
+    defined(__ANDROID__) || defined(_WIN32) || defined(_WIN64))
+  delete m_pPinscape;
+
+  hid_exit();
+#endif
+}
 
 void DOF::DataReceive(char type, int number, int value)
 {
   Log("DOF::DataReceive: type=%c, number=%d, value=%d", type, number, value);
+
+#if !(                                                                                                                \
+    (defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || \
+    defined(__ANDROID__) || defined(_WIN32) || defined(_WIN64))
+  m_pPinscape->DataReceive(type, number, value);
+#endif
 }
 
 }  // namespace DOF

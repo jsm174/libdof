@@ -39,6 +39,12 @@
 namespace DOF
 {
 
+#if !(                                                                                                                \
+    (defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || \
+    defined(__ANDROID__) || defined(_WIN32) || defined(_WIN64))
+class Pinscape;
+#endif
+
 class LIBDOFAPI DOF
 {
  public:
@@ -46,6 +52,13 @@ class LIBDOFAPI DOF
   ~DOF();
 
   void DataReceive(char type, int number, int value);
+
+ private:
+#if !(                                                                                                                \
+    (defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || \
+    defined(__ANDROID__) || defined(_WIN32) || defined(_WIN64))
+  Pinscape* m_pPinscape;
+#endif
 };
 
 }  // namespace DOF

@@ -70,6 +70,10 @@ jobs:
         name: Add autoconf and automake (mac runner)
         run: |
            brew install autoconf automake 
+      - if: (matrix.os == 'ubuntu-latest' && matrix.arch != 'aarch64')
+        name: Add libudev (linux runner)
+        run: |
+           sudo apt-get install libudev-dev
       - if: (!(matrix.platform == 'linux' && matrix.arch == 'aarch64'))
         name: Build libdof-${{ matrix.platform }}-${{ matrix.arch }}
         run: |
@@ -101,7 +105,7 @@ jobs:
           bind_mount_repository: true
           commands: |
             apt-get update -y --allow-releaseinfo-change
-            apt-get install --no-install-recommends -y pkg-config cmake autoconf automake libtool
+            apt-get install --no-install-recommends -y pkg-config cmake autoconf automake libtool libudev-dev
             ./platforms/${{ matrix.platform }}/${{ matrix.arch }}/external.sh
             NUM_PROCS=$(nproc)
             cmake -DCMAKE_BUILD_TYPE=Release -DPLATFORM=${{ matrix.platform }} -DARCH=${{ matrix.arch }} -B build
