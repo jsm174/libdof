@@ -24,8 +24,9 @@ DOF::DOF()
     defined(__ANDROID__) || defined(_WIN32) || defined(_WIN64))
   hid_init();
 
-  m_pPinscape = new Pinscape();
-  m_pPinscape->FindDevices();
+  Pinscape::Initialize();
+
+  m_pPinscape = new Pinscape(1);
 #endif
 }
 
@@ -44,10 +45,11 @@ void DOF::DataReceive(char type, int number, int value)
 {
   Log("DOF::DataReceive: type=%c, number=%d, value=%d", type, number, value);
 
+  uint8_t outputs[15] = {0};
 #if !(                                                                                                                \
     (defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || \
     defined(__ANDROID__) || defined(_WIN32) || defined(_WIN64))
-  m_pPinscape->DataReceive(type, number, value);
+  m_pPinscape->UpdateOutputs(outputs);
 #endif
 }
 

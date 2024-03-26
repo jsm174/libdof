@@ -31,7 +31,7 @@ PinscapeDevice::PinscapeDevice(hid_device* pDevice, const std::string& szPath, c
   else
     m_unitNo = 1;
 
-  uint8_t buffer[15];
+  uint8_t buffer[15] = {0};
   if (ReadUSB(buffer))
   {
     m_plungerEnabled = (buffer[1] & 0x01) != 0;
@@ -70,7 +70,7 @@ bool PinscapeDevice::ReadUSB(uint8_t* pBuffer)
   if (actual != 15)
   {
     Log("Pinscape Controller USB error reading from device: not all bytes received");
-    return false;
+    return true;
   }
 
   return true;
@@ -80,7 +80,7 @@ void PinscapeDevice::AllOff() { SpecialRequest(5); }
 
 bool PinscapeDevice::SpecialRequest(uint8_t id)
 {
-  uint8_t buffer[9];
+  uint8_t buffer[9] = {0};
   buffer[0] = 0x00;
   buffer[1] = 0x41;
   buffer[2] = id;

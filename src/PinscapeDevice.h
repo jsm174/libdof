@@ -23,6 +23,8 @@ class PinscapeDevice
   bool SpecialRequest(uint8_t id);
   bool WriteUSB(uint8_t* buf);
 
+  void UpdateOutputs(uint8_t* NewOutputValues);
+
  private:
   hid_device* m_pDevice;
   std::string m_szPath;

@@ -5,11 +5,11 @@ int main(int argc, const char* argv[])
   DOF::Config* pConfig = DOF::Config::GetInstance();
   pConfig->SetLogCallback(LogCallback);
 
-  DOF::DOF* pDmd = new DOF::DOF();
+  DOF::DOF* pDOF = new DOF::DOF();
 
-  run(pDmd);
+  run(pDOF);
 
-  delete pDmd;
+  delete pDOF;
 
   return 0;
 }
