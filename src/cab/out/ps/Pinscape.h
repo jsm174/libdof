@@ -2,6 +2,7 @@
 
 #include <chrono>
 
+#include "../OutputControllerFlexCompleteBase.h"
 #include "DOF/DOF.h"
 #include "hidapi.h"
 
@@ -10,7 +11,7 @@ namespace DOF
 
 class PinscapeDevice;
 
-class Pinscape
+class Pinscape : public OutputControllerFlexCompleteBase
 {
  public:
   static void Initialize();
@@ -42,7 +43,6 @@ class Pinscape
   PinscapeDevice* m_pDevice;
 
   std::string m_szName;
-  int m_numberOfOutputs;
 };
 
 }  // namespace DOF

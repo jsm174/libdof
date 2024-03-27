@@ -80,7 +80,7 @@ cp -a .libs/*.dylib ../../third-party/runtime-libs/macos/x64
 cd ..
 
 #
-# build libhdi and copy to platform/arch
+# build hdiapi and copy to platform/arch
 #
 
 curl -sL https://github.com/libusb/hidapi/archive/${HIDAPI_SHA}.zip -o hidapi.zip

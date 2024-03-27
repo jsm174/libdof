@@ -13,7 +13,7 @@
 #include <string>
 #include <thread>
 
-#include "Logger.h"
+#include "../../../Logger.h"
 #include "PinscapeDevice.h"
 
 namespace DOF
@@ -60,9 +60,12 @@ void Pinscape::SetNumber(int value)
       }
     }
 
-    if (m_pDevice) m_numberOfOutputs = m_pDevice->GetNumOutputs();
+    if (m_pDevice)
+    {
+      SetNumberOfOutputs(m_pDevice->GetNumOutputs());
+    }
 
-    memset(m_oldOutputValues, 255, m_numberOfOutputs);
+    memset(m_oldOutputValues, 255, GetNumberOfOutputs());
   }
 }
 
@@ -81,22 +84,22 @@ void Pinscape::Init()
     SetMinCommandIntervalMs(1);  //(int)Cabinet.Owner.ConfigurationSettings["PinscapeDefaultMinCommandIntervalMs"];*/
   }
 
-  /*base.Init(Cabinet);*/
+  OutputControllerFlexCompleteBase::Init(/*Cabinet*/);
 }
 
 void Pinscape::Finish()
 {
   m_pDevice->AllOff();
 
-  /*base.Finish();*/
+  OutputControllerFlexCompleteBase::Finish();
 }
 
 void Pinscape::UpdateOutputs(uint8_t* pNewOutputValues)
 {
   uint8_t pfx = 200;
-  for (int i = 0; i < m_numberOfOutputs; i += 7, ++pfx)
+  for (int i = 0; i < GetNumberOfOutputs(); i += 7, ++pfx)
   {
-    int lim = std::min(i + 7, m_numberOfOutputs);
+    int lim = std::min(i + 7, GetNumberOfOutputs());
     for (int j = i; j < lim; ++j)
     {
       if (pNewOutputValues[j] != m_oldOutputValues[j])

@@ -65,13 +65,17 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(LIBDOF_SOURCES
    src/Config.cpp
    src/DOF.cpp
+   src/Pinball.cpp
    src/Logger.cpp
+
+   src/cab/out/OutputControllerCompleteBase.cpp
+   src/cab/out/OutputControllerFlexCompleteBase.cpp
 )
 
 if(PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
    list(APPEND LIBDOF_SOURCES
-      src/Pinscape.cpp
-      src/PinscapeDevice.cpp
+      src/cab/out/ps/Pinscape.cpp
+      src/cab/out/ps/PinscapeDevice.cpp
    )
 endif()
 

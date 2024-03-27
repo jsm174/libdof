@@ -51,10 +51,12 @@ cd ..
 curl -sL https://github.com/fpagliughi/sockpp/archive/${SOCKPP_SHA}.zip -o sockpp.zip
 unzip sockpp.zip
 cd sockpp-$SOCKPP_SHA
-cp -r include/sockpp ../../third-party/include/
-cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -B build
+cmake \
+   -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+   -B build
 cmake --build build -- -j${NUM_PROCS}
-cp -a build/*.{so,so.*} ../../third-party/runtime-libs/linux/aarch64/
+cp -r include/sockpp ../../third-party/include/
+cp -a build/libsockpp.{so,so.*} ../../third-party/runtime-libs/linux/aarch64/
 cd ..
 
 #
@@ -73,7 +75,7 @@ cp -a .libs/*.{so,so.*} ../../third-party/runtime-libs/linux/aarch64
 cd ..
 
 #
-# build libhdi and copy to platform/arch
+# build hdiapi and copy to platform/arch
 #
 
 curl -sL https://github.com/libusb/hidapi/archive/${HIDAPI_SHA}.zip -o hidapi.zip
@@ -85,6 +87,5 @@ cmake \
    -B build
 cmake --build build -- -j${NUM_PROCS}
 cp hidapi/hidapi.h ../../third-party/include/
-ls -laRt
 cp -a build/src/linux/*.{so,so.*} ../../third-party/runtime-libs/linux/aarch64
 cd ..
