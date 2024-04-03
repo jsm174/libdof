@@ -37,8 +37,8 @@ cd external
 curl -sL https://github.com/likle/cargs/archive/${CARGS_SHA}.zip -o cargs.zip
 unzip cargs.zip
 cd cargs-${CARGS_SHA}
-cp include/cargs.h ../../third-party/include/
-cmake -DBUILD_SHARED_LIBS=ON \
+cmake \
+   -DBUILD_SHARED_LIBS=ON \
    -DCMAKE_SYSTEM_NAME=Android \
    -DCMAKE_SYSTEM_VERSION=30 \
    -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
@@ -47,9 +47,9 @@ cmake -DBUILD_SHARED_LIBS=ON \
    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
    -B build
 cmake --build build -- -j${NUM_PROCS}
+cp include/cargs.h ../../third-party/include/
 cp build/*.so ../../third-party/runtime-libs/android/arm64-v8a/
 cd ..
-
 
 #
 # build sockpp and copy to external
@@ -59,8 +59,8 @@ curl -sL https://github.com/fpagliughi/sockpp/archive/${SOCKPP_SHA}.zip -o sockp
 unzip sockpp.zip
 cd sockpp-$SOCKPP_SHA
 patch -p1 < ../../platforms/android/arm64-v8a/sockpp/001.patch
-cp -r include/sockpp ../../third-party/include/
-cmake -DSOCKPP_BUILD_SHARED=ON \
+cmake \
+   -DSOCKPP_BUILD_SHARED=ON \
    -DSOCKPP_BUILD_STATIC=OFF \
    -DCMAKE_SYSTEM_NAME=Android \
    -DCMAKE_SYSTEM_VERSION=30 \
@@ -70,5 +70,6 @@ cmake -DSOCKPP_BUILD_SHARED=ON \
    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
    -B build
 cmake --build build -- -j${NUM_PROCS}
-cp build/*.so ../../third-party/runtime-libs/android/arm64-v8a/
+cp -r include/sockpp ../../third-party/include/
+cp build/libsockpp.so ../../third-party/runtime-libs/android/arm64-v8a/
 cd ..

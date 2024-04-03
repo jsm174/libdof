@@ -1,22 +1,22 @@
 #include "DOF/DOF.h"
 
 #include <algorithm>
-#include <chrono>
+#include <cctype>
 #include <cstring>
 
-#include "DOF/Config.h"
-#include "Logger.h"
+#include "Pinball.h"
 
 namespace DOF
 {
 
-DOF::DOF() {}
+DOF::DOF() { m_pPinball = new Pinball(); }
 
-DOF::~DOF() {}
+DOF::~DOF() { delete m_pPinball; }
 
-void DOF::DataReceive(char type, int number, int value)
-{
-  Log("DOF::DataReceive: type=%c, number=%d, value=%d", type, number, value);
-}
+void DOF::Init(const char* szTableFilename, const char* szRomName) {}
+
+void DOF::DataReceive(char type, int number, int value) { m_pPinball->ReceiveData(type, number, value); }
+
+void DOF::Finish() {}
 
 }  // namespace DOF

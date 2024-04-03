@@ -31,14 +31,13 @@ cd external
 curl -sL https://github.com/likle/cargs/archive/${CARGS_SHA}.zip -o cargs.zip
 unzip cargs.zip
 cd cargs-${CARGS_SHA}
+cmake \
+   -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+   -B build
+cmake --build build -- -j${NUM_PROCS}
 cp include/cargs.h ../../third-party/include/
-mkdir build
-cd build
-cmake ..
-make
-cp *.a ../../../third-party/build-libs/tvos/arm64/
-cd ../..
-
+cp build/*.a ../../third-party/build-libs/tvos/arm64/
+cd ..
 
 #
 # build sockpp and copy to external
@@ -47,8 +46,8 @@ cd ../..
 curl -sL https://github.com/fpagliughi/sockpp/archive/${SOCKPP_SHA}.zip -o sockpp.zip
 unzip sockpp.zip
 cd sockpp-$SOCKPP_SHA
-cp -r include/sockpp ../../third-party/include/
-cmake -DSOCKPP_BUILD_SHARED=OFF \
+cmake \
+   -DSOCKPP_BUILD_SHARED=OFF \
    -DSOCKPP_BUILD_STATIC=ON \
    -DCMAKE_SYSTEM_NAME=tvOS \
    -DCMAKE_OSX_DEPLOYMENT_TARGET=16.0 \
@@ -56,5 +55,6 @@ cmake -DSOCKPP_BUILD_SHARED=OFF \
    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
    -B build
 cmake --build build -- -j${NUM_PROCS}
-cp build/*.a ../../third-party/build-libs/tvos/arm64/
+cp -r include/sockpp ../../third-party/include/
+cp build/libsockpp.a ../../third-party/build-libs/tvos/arm64/
 cd ..

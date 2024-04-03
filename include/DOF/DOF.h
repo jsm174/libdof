@@ -29,15 +29,22 @@
 #include <thread>
 
 #include "Config.h"
-#
 #include "sockpp/tcp_connector.h"
 
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
 #endif
 
+#if !(                                                                                                                \
+    (defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || \
+    defined(__ANDROID__) || defined(_WIN32) || defined(_WIN64))
+#define __HIDAPI__
+#endif
+
 namespace DOF
 {
+
+class Pinball;
 
 class LIBDOFAPI DOF
 {
@@ -45,7 +52,12 @@ class LIBDOFAPI DOF
   DOF();
   ~DOF();
 
+  void Init(const char* szTableFilename, const char* szRomName);
   void DataReceive(char type, int number, int value);
+  void Finish();
+
+ private:
+  Pinball* m_pPinball;
 };
 
 }  // namespace DOF

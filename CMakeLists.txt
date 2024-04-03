@@ -65,8 +65,19 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(LIBDOF_SOURCES
    src/Config.cpp
    src/DOF.cpp
+   src/Pinball.cpp
    src/Logger.cpp
+
+   src/cab/out/OutputControllerCompleteBase.cpp
+   src/cab/out/OutputControllerFlexCompleteBase.cpp
 )
+
+if(PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
+   list(APPEND LIBDOF_SOURCES
+      src/cab/out/ps/Pinscape.cpp
+      src/cab/out/ps/PinscapeDevice.cpp
+   )
+endif()
 
 set(LIBDOF_INCLUDE_DIRS
    ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -92,12 +103,12 @@ if(BUILD_SHARED)
       target_link_directories(dof_shared PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
       )
-      target_link_libraries(dof_shared PUBLIC cargs serialport sockpp)
+      target_link_libraries(dof_shared PUBLIC cargs serialport sockpp hidapi)
    elseif(PLATFORM STREQUAL "linux")
       target_link_directories(dof_shared PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
       )
-      target_link_libraries(dof_shared PUBLIC cargs serialport sockpp)
+      target_link_libraries(dof_shared PUBLIC cargs serialport sockpp hidapi-hidraw)
    elseif(PLATFORM STREQUAL "ios" OR PLATFORM STREQUAL "tvos")
       target_link_directories(dof_shared PUBLIC
          third-party/build-libs/${PLATFORM}/${ARCH}
@@ -217,12 +228,12 @@ if(BUILD_STATIC)
          target_link_directories(dof_test_s PUBLIC
             third-party/runtime-libs/${PLATFORM}/${ARCH}
          )
-         target_link_libraries(dof_test_s PUBLIC dof_static cargs serialport sockpp)
+         target_link_libraries(dof_test_s PUBLIC dof_static cargs serialport sockpp hidapi)
       elseif(PLATFORM STREQUAL "linux")
          target_link_directories(dof_test_s PUBLIC
             third-party/runtime-libs/${PLATFORM}/${ARCH}
          )
-         target_link_libraries(dof_test_s PUBLIC dof_static cargs serialport sockpp)
+         target_link_libraries(dof_test_s PUBLIC dof_static cargs serialport sockpp hidapi-hidraw)
       endif()
 
       if(POST_BUILD_COPY_EXT_LIBS)
