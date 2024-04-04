@@ -92,6 +92,6 @@ cmake \
    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
    -B build
 cmake --build build -- -j${NUM_PROCS}
-cp hidapi/hidapi.h ../../third-party/include/
+cp -r hidapi ../../third-party/include/
 cp -a build/src/mac/*.dylib ../../third-party/runtime-libs/macos/arm64/
 cd ..

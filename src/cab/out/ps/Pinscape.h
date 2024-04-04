@@ -4,7 +4,7 @@
 
 #include "../OutputControllerFlexCompleteBase.h"
 #include "DOF/DOF.h"
-#include "hidapi.h"
+#include <hidapi/hidapi.h>
 
 namespace DOF
 {

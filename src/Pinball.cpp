@@ -7,7 +7,7 @@
 #include "Logger.h"
 
 #ifdef __HIDAPI__
-#include "hidapi.h"
+#include <hidapi/hidapi.h>
 #endif
 
 namespace DOF
