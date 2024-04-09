@@ -7,9 +7,11 @@ OutputControllerCompleteBase::OutputControllerCompleteBase() {}
 
 OutputControllerCompleteBase::~OutputControllerCompleteBase() {}
 
-void OutputControllerCompleteBase::Init(/*Cabinet*/) {}
+void OutputControllerCompleteBase::Init(Cabinet* pCabinet) {}
 
 void OutputControllerCompleteBase::Finish() {}
+
+void OutputControllerCompleteBase::Update() {}
 
 void OutputControllerCompleteBase::SetupOutputs()
 {

@@ -43,12 +43,13 @@ void Pinscape::SetNumber(int value)
     Log("Pinscape Unit Numbers must be between 1-16. The supplied number %d is out of range.", value);
     return;
   }
+
   if (m_number != value)
   {
     std::ostringstream oss;
     oss << "Pinscape Controller " << std::setfill('0') << std::setw(2) << value;
 
-    m_szName = oss.str();
+    SetName(oss.str());
     m_number = value;
 
     for (PinscapeDevice* pDevice : m_devices)
@@ -65,7 +66,7 @@ void Pinscape::SetNumber(int value)
       SetNumberOfOutputs(m_pDevice->GetNumOutputs());
     }
 
-    memset(m_oldOutputValues, 255, GetNumberOfOutputs());
+    memset(m_oldOutputValues, 0, GetNumberOfOutputs());
   }
 }
 
@@ -75,7 +76,7 @@ void Pinscape::SetMinCommandIntervalMs(int value)
   m_minCommandIntervalMsSet = true;
 }
 
-void Pinscape::Init()
+void Pinscape::Init(Cabinet* pCabinet)
 {
   if (!m_minCommandIntervalMsSet 
        /*&& Cabinet.Owner.ConfigurationSettings.ContainsKey("PinscapeDefaultMinCommandIntervalMs")
@@ -84,11 +85,13 @@ void Pinscape::Init()
     SetMinCommandIntervalMs(1);  //(int)Cabinet.Owner.ConfigurationSettings["PinscapeDefaultMinCommandIntervalMs"];*/
   }
 
-  OutputControllerFlexCompleteBase::Init(/*Cabinet*/);
+  OutputControllerFlexCompleteBase::Init(nullptr /*Cabinet*/);
 }
 
 void Pinscape::Finish()
 {
+  if (!m_pDevice) return;
+
   m_pDevice->AllOff();
 
   OutputControllerFlexCompleteBase::Finish();
@@ -96,7 +99,11 @@ void Pinscape::Finish()
 
 void Pinscape::UpdateOutputs(uint8_t* pNewOutputValues)
 {
+  if (!m_pDevice) return;
+
+  uint8_t buf[9];
   uint8_t pfx = 200;
+
   for (int i = 0; i < GetNumberOfOutputs(); i += 7, ++pfx)
   {
     int lim = std::min(i + 7, GetNumberOfOutputs());
@@ -105,16 +112,14 @@ void Pinscape::UpdateOutputs(uint8_t* pNewOutputValues)
       if (pNewOutputValues[j] != m_oldOutputValues[j])
       {
         UpdateDelay();
-        uint8_t buf[9] = {0};
-        buf[0] = 0;
+
+        buf[0] = 0x00;
         buf[1] = pfx;
 
-        // Array.Copy(NewOutputValues, i, buf, 2, lim - i);
         memcpy(buf + 2, pNewOutputValues + i, lim - i);
 
         m_pDevice->WriteUSB(buf);
 
-        // Array.Copy(NewOutputValues, i, OldOutputValues, i, lim - i);
         memcpy(m_oldOutputValues + i, pNewOutputValues + i, lim - i);
 
         break;
@@ -164,7 +169,7 @@ void Pinscape::FindDevices()
                 new PinscapeDevice(pHandle, pCurrentDevice->path, productName, pCurrentDevice->vendor_id,
                                    pCurrentDevice->product_id, pCurrentDevice->release_number);
 
-            Log("Found Pinscape device: %s", pDevice->ToString().c_str());
+            Log("Found Pinscape device: %s (path=%s)", pDevice->ToString().c_str(), pCurrentDevice->path);
 
             m_devices.push_back(pDevice);
           }

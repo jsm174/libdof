@@ -1,16 +1,20 @@
 #pragma once
 
+#include "DOF/DOF.h"
+#include "IOutputController.h"
+
 namespace DOF
 {
 
-class OutputControllerCompleteBase
+class OutputControllerCompleteBase : public IOutputController
 {
  public:
   OutputControllerCompleteBase();
   ~OutputControllerCompleteBase();
 
-  virtual void Init(/*Cabinet*/);
-  virtual void Finish();
+  virtual void Init(Cabinet* pCabinet) override;
+  virtual void Finish() override;
+  void Update() override;
 
  protected:
   void SetupOutputs();

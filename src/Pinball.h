@@ -2,25 +2,30 @@
 
 #include "DOF/DOF.h"
 
-#ifdef __HIDAPI__
-#include "cab/out/ps/Pinscape.h"
-#endif
-
 namespace DOF
 {
+
+class Cabinet;
+class Table;
 
 class Pinball
 {
  public:
-  Pinball();
-  ~Pinball();
+  static Pinball* GetInstance();
 
+  void Setup(const char* szTableFilename, const char* szRomName);
+  void Init();
   void ReceiveData(char type, int number, int value);
+  void Finish();
 
  private:
-#ifdef __HIDAPI__
-  Pinscape* m_pPinscape;
-#endif
+  Pinball(){};
+  ~Pinball(){};
+
+  static Pinball* m_pInstance;
+
+  Cabinet* m_pCabinet;
+  Table* m_pTable;
 };
 
 }  // namespace DOF
