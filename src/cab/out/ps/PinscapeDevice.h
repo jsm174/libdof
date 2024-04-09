@@ -1,7 +1,8 @@
 #pragma once
 
-#include "DOF/DOF.h"
 #include <hidapi/hidapi.h>
+
+#include "DOF/DOF.h"
 
 namespace DOF
 {

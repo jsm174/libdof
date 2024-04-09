@@ -9,14 +9,19 @@
 namespace DOF
 {
 
-DOF::DOF() { m_pPinball = new Pinball(); }
+DOF::DOF() {}
 
-DOF::~DOF() { delete m_pPinball; }
+DOF::~DOF() {}
 
-void DOF::Init(const char* szTableFilename, const char* szRomName) {}
+void DOF::Init(const char* szTableFilename, const char* szRomName)
+{
+  Pinball* pPinball = Pinball::GetInstance();
+  pPinball->Setup(/*F.FullName,*/ szTableFilename, szRomName);
+  pPinball->Init();
+}
 
-void DOF::DataReceive(char type, int number, int value) { m_pPinball->ReceiveData(type, number, value); }
+void DOF::DataReceive(char type, int number, int value) { Pinball::GetInstance()->ReceiveData(type, number, value); }
 
-void DOF::Finish() {}
+void DOF::Finish() { Pinball::GetInstance()->Finish(); }
 
 }  // namespace DOF

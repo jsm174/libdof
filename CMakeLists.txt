@@ -68,14 +68,42 @@ set(LIBDOF_SOURCES
    src/Pinball.cpp
    src/Logger.cpp
 
+   src/globalconfiguration/GlobalConfiguration.cpp
+
+   src/pinballsupport/AlarmHandler.cpp
+   src/pinballsupport/InputQueue.cpp
+
+   src/fx/AssignedEffect.cpp
+   src/fx/AssignedEffectList.cpp
+   src/fx/EffectList.cpp
+   
+   src/table/Table.cpp
+   src/table/TableElement.cpp
+   src/table/TableElementData.cpp
+   src/table/TableElementList.cpp
+
+   src/cab/ICabinetOwner.cpp
+   src/cab/Cabinet.cpp
+
+   src/cab/out/IOutput.cpp
+   src/cab/out/Output.cpp
+   src/cab/out/IOutputController.cpp
+   src/cab/out/OutputControllerBase.cpp
    src/cab/out/OutputControllerCompleteBase.cpp
    src/cab/out/OutputControllerFlexCompleteBase.cpp
+   src/cab/out/OutputControllerList.cpp
+   src/cab/out/IAutoConfigOutputController.cpp
+
+   src/cab/toys/IToy.cpp
+   src/cab/toys/IToyUpdatable.cpp
+   src/cab/toys/ToyList.cpp
 )
 
 if(PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
    list(APPEND LIBDOF_SOURCES
       src/cab/out/ps/Pinscape.cpp
       src/cab/out/ps/PinscapeDevice.cpp
+      src/cab/out/ps/PinscapeAutoConfigurator.cpp
    )
 endif()
 

@@ -9,6 +9,10 @@ int main(int argc, const char* argv[])
 
   run(pDOF);
 
+  pDOF->Init("table", "rom");
+  pDOF->DataReceive('a', 1, 2);
+  pDOF->Finish();
+
   delete pDOF;
 
   return 0;

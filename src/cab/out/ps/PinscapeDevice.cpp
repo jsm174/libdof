@@ -31,22 +31,22 @@ PinscapeDevice::PinscapeDevice(hid_device* pDevice, const std::string& szPath, c
   else
     m_unitNo = 1;
 
-  uint8_t buffer[15] = {0};
-  if (ReadUSB(buffer))
+  uint8_t buf[15];
+  if (ReadUSB(buf))
   {
-    m_plungerEnabled = (buffer[1] & 0x01) != 0;
+    m_plungerEnabled = (buf[1] & 0x01) != 0;
   }
 
-  SpecialRequest(4);
+  SpecialRequest(0x04);
 
   for (int i = 0; i < 16; ++i)
   {
-    if (ReadUSB(buffer))
+    if (ReadUSB(buf))
     {
-      if ((buffer[2] & 0xF8) == 0x88)
+      if ((buf[2] & 0xF8) == 0x88)
       {
-        m_numOutputs = (int)buffer[3] | (((int)buffer[4]) << 8);
-        m_unitNo = (short)(((ushort)buffer[5] | (((ushort)buffer[6]) << 8)) + 1);
+        m_numOutputs = (int)buf[3] | (((int)buf[4]) << 8);
+        m_unitNo = (short)(((ushort)buf[5] | (((ushort)buf[6]) << 8)) + 1);
 
         break;
       }
@@ -61,37 +61,36 @@ bool PinscapeDevice::IsLedWizEmulator(int unitNum)
   return (ushort)m_vendorID == 0xFAFA && m_productID == 0x00F1 + unitNum;
 }
 
-bool PinscapeDevice::ReadUSB(uint8_t* pBuffer)
+bool PinscapeDevice::ReadUSB(uint8_t* pBuf)
 {
-  pBuffer[0] = 0x00;
+  memset(pBuf, 0x00, 15);
 
-  int actual = hid_read(m_pDevice, pBuffer, 15);
-
-  if (actual != 15)
+  int actual = hid_read(m_pDevice, pBuf + 1, 14);
+  if (actual != 14)
   {
     Log("Pinscape Controller USB error reading from device: not all bytes received");
-    return true;
+    return false;
   }
 
   return true;
 }
 
-void PinscapeDevice::AllOff() { SpecialRequest(5); }
+void PinscapeDevice::AllOff() { SpecialRequest(0x05); }
 
 bool PinscapeDevice::SpecialRequest(uint8_t id)
 {
-  uint8_t buffer[9] = {0};
-  buffer[0] = 0x00;
-  buffer[1] = 0x41;
-  buffer[2] = id;
+  uint8_t buf[9];
+  memset(buf, 0x00, sizeof(buf));
 
-  return WriteUSB(buffer);
+  buf[1] = 0x41;
+  buf[2] = id;
+
+  return WriteUSB(buf);
 }
 
-bool PinscapeDevice::WriteUSB(uint8_t* pBuffer)
+bool PinscapeDevice::WriteUSB(uint8_t* pBuf)
 {
-  int actual = hid_write(m_pDevice, pBuffer, 9);
-
+  int actual = hid_write(m_pDevice, pBuf, 9);
   if (actual != 9)
   {
     Log("Pinscape Controller USB error sending request: not all bytes sent");

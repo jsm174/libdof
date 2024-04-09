@@ -2,45 +2,60 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <cstring>
 
 #include "Logger.h"
-
-#ifdef __HIDAPI__
-#include <hidapi/hidapi.h>
-#endif
+#include "cab/Cabinet.h"
+#include "globalconfiguration/GlobalConfiguration.h"
+#include "table/Table.h"
 
 namespace DOF
 {
 
-Pinball::Pinball()
+Pinball* Pinball::m_pInstance = NULL;
+
+Pinball* Pinball::GetInstance()
 {
-#ifdef __HIDAPI__
-  hid_init();
+  if (!m_pInstance) m_pInstance = new Pinball();
 
-  // Pinscape::Initialize();
-
-  // m_pPinscape = new Pinscape(1);
-#endif
+  return m_pInstance;
 }
 
-Pinball::~Pinball()
+void Pinball::Setup(const char* szTableFilename, const char* szRomName)
 {
-#ifdef __HIDAPI__
-  // delete m_pPinscape;
+  Log("Loading Pinball parts");
+  Log("Loading cabinet");
 
-  hid_exit();
-#endif
+  m_pCabinet = nullptr;
+
+  if (GlobalConfiguration::GetInstance()->GetCabinetConfigFile())
+  {
+  }
+  else
+  {
+    Log("Cabinet config file %s does not exist.", "cabinet.xml");
+  }
+
+  if (!m_pCabinet)
+  {
+    Log("No cabinet config file loaded. Will use AutoConfig.");
+    m_pCabinet = new Cabinet();
+    m_pCabinet->AutoConfig();
+  }
+
+  Log("Cabinet loaded");
+
+  Log("Loading table config");
 }
+
+void Pinball::Init() {}
+
+void Pinball::Finish() {}
 
 void Pinball::ReceiveData(char type, int number, int value)
 {
   Log("Pinball::ReceiveData: type=%c, number=%d, value=%d", type, number, value);
-
-#ifdef __HIDAPI__
-  uint8_t outputs[15] = {0};
-  // m_pPinscape->UpdateOutputs(outputs);
-#endif
 }
 
 }  // namespace DOF

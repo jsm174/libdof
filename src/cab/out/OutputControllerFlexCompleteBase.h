@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DOF/DOF.h"
 #include "OutputControllerCompleteBase.h"
 
 namespace DOF
