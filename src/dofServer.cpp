@@ -44,7 +44,7 @@ static struct cag_option options[] = {
      .description = "Enables verbose logging, includes normal logging (optional, default is no logging)"},
     {.identifier = 'h', .access_letters = "h", .access_name = "help", .description = "Show help"}};
 
-void LIBDOFCALLBACK LogCallback(const char* format, va_list args)
+void LIBDOFCALLBACK LogCallback(DOF_LogLevel logLevel, const char* format, va_list args)
 {
   char buffer[1024];
   vsnprintf(buffer, sizeof(buffer), format, args);
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
       inih::INIReader r{cag_option_get_value(&cag_context)};
       pConfig->SetDOFServerAddr(r.Get<string>("DOFServer", "Addr", "localhost").c_str());
       pConfig->SetDOFServerPort(r.Get<int>("DOFServer", "Port", 6789));
-      if (opt_verbose) DOF::Log("Loaded config file");
+      if (opt_verbose) DOF::Log(DOF_LogLevel_INFO, "Loaded config file");
     }
     else if (identifier == 'a')
     {
@@ -101,12 +101,12 @@ int main(int argc, char* argv[])
 
   sockpp::initialize();
   if (opt_verbose)
-    DOF::Log("Opening DOFServer, listining for TCP connections on %s:%d", pConfig->GetDOFServerAddr(),
-             pConfig->GetDOFServerPort());
+    DOF::Log(DOF_LogLevel_INFO, "Opening DOFServer, listining for TCP connections on %s:%d",
+             pConfig->GetDOFServerAddr(), pConfig->GetDOFServerPort());
   sockpp::tcp_acceptor acc({pConfig->GetDOFServerAddr(), (in_port_t)pConfig->GetDOFServerPort()});
   if (!acc)
   {
-    DOF::Log("Error creating the DOFServer acceptor: %s", acc.last_error_str().c_str());
+    DOF::Log(DOF_LogLevel_ERROR, "Error creating the DOFServer acceptor: %s", acc.last_error_str().c_str());
     return 1;
   }
 

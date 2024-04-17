@@ -4,6 +4,7 @@ int main(int argc, const char* argv[])
 {
   DOF::Config* pConfig = DOF::Config::GetInstance();
   pConfig->SetLogCallback(LogCallback);
+  pConfig->SetBasePath("/Users/jmillard/.vpinball/directoutputconfig/");
 
   DOF::DOF* pDOF = new DOF::DOF();
 

@@ -1,13 +1,13 @@
 #include "ToyList.h"
 
-#include "../../Logger.h"
+#include "../../Log.h"
 #include "IToyUpdatable.h"
 
 namespace DOF
 {
-void ToyList::WriteXml() { Log("Not implemented"); }
+void ToyList::WriteXml() { Log::Write("Not implemented"); }
 
-void ToyList::ReadXml() { Log("Not implemented"); }
+void ToyList::ReadXml() { Log::Write("Not implemented"); }
 
 void ToyList::Init(Cabinet* pCabinet)
 {

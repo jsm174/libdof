@@ -6,6 +6,7 @@
 namespace DOF
 {
 
+class CabinetOutputList;
 class OutputControllerList;
 class ToyList;
 class AlarmHandler;
@@ -33,9 +34,9 @@ class Cabinet
   // SetColorList
   // GetCurveList
   // SetCurveList
-  bool GetAutoConfiguredEnabled() const { return m_autoConfiguredEnabled; }
-  void SetAutoConfiguredEnabled(bool autoConfiguredEnabled) { m_autoConfiguredEnabled = autoConfiguredEnabled; }
-  // CabinetOutputList
+  bool IsAutoConfigEnabled() const { return m_autoConfigEnabled; }
+  void SetAutoConfigEnabled(bool autoConfigEnabled) { m_autoConfigEnabled = autoConfigEnabled; }
+  CabinetOutputList* GetOutputs() { return m_pOutputs; }
   OutputControllerList* GetOutputControllers() { return m_pOutputControllers; }
   void SetOutputControllers(OutputControllerList* pOutputControllers) { m_pOutputControllers = pOutputControllers; }
   // GetScheduledSettings
@@ -57,7 +58,8 @@ class Cabinet
   std::string m_szName;
   std::string m_szCabinetConfigurationFilename;
   ToyList* m_pToys;
-  bool m_autoConfiguredEnabled = true;
+  bool m_autoConfigEnabled = true;
+  CabinetOutputList* m_pOutputs;
   OutputControllerList* m_pOutputControllers;
 };
 

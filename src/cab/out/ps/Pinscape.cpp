@@ -13,7 +13,7 @@
 #include <string>
 #include <thread>
 
-#include "../../../Logger.h"
+#include "../../../Log.h"
 #include "PinscapeDevice.h"
 
 namespace DOF
@@ -40,7 +40,7 @@ void Pinscape::SetNumber(int value)
 {
   if (value < 1 || value > 16)
   {
-    Log("Pinscape Unit Numbers must be between 1-16. The supplied number %d is out of range.", value);
+    Log::Write("Pinscape Unit Numbers must be between 1-16. The supplied number %d is out of range.", value);
     return;
   }
 
@@ -169,7 +169,7 @@ void Pinscape::FindDevices()
                 new PinscapeDevice(pHandle, pCurrentDevice->path, productName, pCurrentDevice->vendor_id,
                                    pCurrentDevice->product_id, pCurrentDevice->release_number);
 
-            Log("Found Pinscape device: %s (path=%s)", pDevice->ToString().c_str(), pCurrentDevice->path);
+            Log::Write("Found Pinscape device: %s (path=%s)", pDevice->ToString().c_str(), pCurrentDevice->path);
 
             m_devices.push_back(pDevice);
           }

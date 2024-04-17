@@ -4,7 +4,7 @@
 
 #include "DOF/DOF.h"
 
-void LIBDOFCALLBACK LogCallback(const char* format, va_list args)
+void LIBDOFCALLBACK LogCallback(DOF_LogLevel logLevel, const char* format, va_list args)
 {
   char buffer[1024];
   vsnprintf(buffer, sizeof(buffer), format, args);

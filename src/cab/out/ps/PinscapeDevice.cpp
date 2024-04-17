@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <cstdint>
 
-#include "../../../Logger.h"
+#include "../../../Log.h"
 
 namespace DOF
 {
@@ -68,7 +68,7 @@ bool PinscapeDevice::ReadUSB(uint8_t* pBuf)
   int actual = hid_read(m_pDevice, pBuf + 1, 14);
   if (actual != 14)
   {
-    Log("Pinscape Controller USB error reading from device: not all bytes received");
+    Log::Write("Pinscape Controller USB error reading from device: not all bytes received");
     return false;
   }
 
@@ -93,7 +93,7 @@ bool PinscapeDevice::WriteUSB(uint8_t* pBuf)
   int actual = hid_write(m_pDevice, pBuf, 9);
   if (actual != 9)
   {
-    Log("Pinscape Controller USB error sending request: not all bytes sent");
+    Log::Write("Pinscape Controller USB error sending request: not all bytes sent");
     return false;
   }
 

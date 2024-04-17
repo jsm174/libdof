@@ -34,7 +34,7 @@ class Table
   {
     m_szTableConfigurationFilename = szTableConfigurationFilename;
   }
-  bool GetAddLedControlConfig() { return m_addLedControlConfig; }
+  bool IsAddLedControlConfig() { return m_addLedControlConfig; }
   void SetAddLedControlConfig(bool addLedControlConfig) { m_addLedControlConfig = addLedControlConfig; }
   TableConfigSourceEnum GetConfigurationSource() { return m_configurationSource; }
   void SetConfigurationSource(TableConfigSourceEnum configurationSource)

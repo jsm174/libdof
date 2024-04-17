@@ -1,6 +1,6 @@
 #include "Table.h"
 
-#include "../Logger.h"
+#include "../Log.h"
 #include "../fx/AssignedEffectList.h"
 #include "../fx/EffectList.h"
 #include "TableElementList.h"
@@ -68,14 +68,14 @@ void Table::SaveConfigXmlFile(const std::string& szFileName) {}
 
 Table* Table::GetTableFromConfigXmlFile(const std::string& szFileName)
 {
-  Log("Not implemented");
+  Log::Write("Not implemented");
 
   return nullptr;
 }
 
 Table* Table::GetTableFromConfigXml(const std::string& szConfigXml)
 {
-  Log("Not implemented");
+  Log::Write("Not implemented");
 
   return nullptr;
 }
