@@ -5,15 +5,17 @@
 namespace DOF
 {
 
-void Log(const char *format, ...)
+void Log(DOF_LogLevel logLevel, const char* format, ...)
 {
-  DOF_LogCallback logCallback = Config::GetInstance()->GetLogCallback();
+  static Config* pConfig = Config::GetInstance();
 
-  if (!logCallback) return;
+  DOF_LogCallback logCallback = pConfig->GetLogCallback();
+
+  if (!logCallback || logLevel < pConfig->GetLogLevel()) return;
 
   va_list args;
   va_start(args, format);
-  (*(logCallback))(format, args);
+  (*(logCallback))(logLevel, format, args);
   va_end(args);
 }
 

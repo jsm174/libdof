@@ -66,9 +66,10 @@ set(LIBDOF_SOURCES
    src/Config.cpp
    src/DOF.cpp
    src/Pinball.cpp
+   src/Log.cpp
    src/Logger.cpp
-
-   src/globalconfiguration/GlobalConfiguration.cpp
+   
+   src/globalconfiguration/GlobalConfig.cpp
 
    src/pinballsupport/AlarmHandler.cpp
    src/pinballsupport/InputQueue.cpp
@@ -84,6 +85,7 @@ set(LIBDOF_SOURCES
 
    src/cab/ICabinetOwner.cpp
    src/cab/Cabinet.cpp
+   src/cab/CabinetOutputList.cpp
 
    src/cab/out/IOutput.cpp
    src/cab/out/Output.cpp
@@ -97,6 +99,10 @@ set(LIBDOF_SOURCES
    src/cab/toys/IToy.cpp
    src/cab/toys/IToyUpdatable.cpp
    src/cab/toys/ToyList.cpp
+
+   src/ledcontrol/loader/LedControl.cpp
+   src/ledcontrol/loader/LedControlConfig.cpp
+   src/ledcontrol/loader/LedControlConfigList.cpp
 )
 
 if(PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")

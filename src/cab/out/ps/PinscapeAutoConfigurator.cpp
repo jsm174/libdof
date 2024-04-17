@@ -1,6 +1,6 @@
 #include "PinscapeAutoConfigurator.h"
 
-#include "../../../Logger.h"
+#include "../../../Log.h"
 #include "../../Cabinet.h"
 #include "../OutputControllerList.h"
 #include "Pinscape.h"
@@ -24,8 +24,8 @@ void PinscapeAutoConfigurator::AutoConfig(Cabinet* pCabinet)
       {
         pCabinet->GetOutputControllers()->push_back(pPinscape);
 
-        Log("Detected and added Pinscape Controller Nr. %d with name %s", pPinscape->GetNumber(),
-            pPinscape->GetName().c_str());
+        Log::Write("Detected and added Pinscape Controller Nr. %d with name %s", pPinscape->GetNumber(),
+                   pPinscape->GetName().c_str());
 
         /*if (!Cabinet.Toys.Any(T = > T is LedWizEquivalent && ((LedWizEquivalent)T).LedWizNumber == p.Number +
         UnitBias))

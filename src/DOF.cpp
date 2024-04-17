@@ -16,7 +16,7 @@ DOF::~DOF() {}
 void DOF::Init(const char* szTableFilename, const char* szRomName)
 {
   Pinball* pPinball = Pinball::GetInstance();
-  pPinball->Setup(/*F.FullName,*/ szTableFilename, szRomName);
+  pPinball->Setup("", szTableFilename, szRomName);
   pPinball->Init();
 }
 

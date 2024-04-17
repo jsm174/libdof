@@ -1,29 +1,29 @@
 #include "OutputControllerList.h"
 
-#include "../../Logger.h"
+#include "../../Log.h"
 
 namespace DOF
 {
-void OutputControllerList::WriteXml() { Log("Not implemented"); }
+void OutputControllerList::WriteXml() { Log::Write("Not implemented"); }
 
-void OutputControllerList::ReadXml() { Log("Not implemented"); }
+void OutputControllerList::ReadXml() { Log::Write("Not implemented"); }
 
 void OutputControllerList::Init(Cabinet* pCabinet)
 {
-  Log("Initializing output controllers");
+  Log::Write("Initializing output controllers");
 
   for (IOutputController* pController : *this) pController->Init(pCabinet);
 
-  Log("Output controllers initialized");
+  Log::Write("Output controllers initialized");
 }
 
 void OutputControllerList::Finish()
 {
-  Log("Finishing output controllers");
+  Log::Write("Finishing output controllers");
 
   for (IOutputController* pController : *this) pController->Finish();
 
-  Log("Output controllers finished");
+  Log::Write("Output controllers finished");
 }
 
 void OutputControllerList::Update()

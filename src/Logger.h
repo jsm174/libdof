@@ -1,8 +1,10 @@
 #pragma once
 
+#include "DOF/Config.h"
+
 namespace DOF
 {
 
-void Log(const char *format, ...);
+void Log(DOF_LogLevel logLevel, const char* format, ...);
 
 }
