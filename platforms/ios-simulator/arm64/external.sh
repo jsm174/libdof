@@ -33,13 +33,14 @@ unzip cargs.zip
 cd cargs-${CARGS_SHA}
 cmake \
    -DCMAKE_SYSTEM_NAME=iOS \
+   -DCMAKE_OSX_SYSROOT=iphonesimulator \
    -DCMAKE_OSX_ARCHITECTURES=arm64 \
    -DCMAKE_OSX_DEPLOYMENT_TARGET=17.0 \
    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
    -B build
 cmake --build build -- -j${NUM_PROCS}
 cp include/cargs.h ../../third-party/include/
-cp build/*.a ../../third-party/build-libs/ios/arm64/
+cp build/*.a ../../third-party/build-libs/ios-simulator/arm64/
 cd ..
 
 #
@@ -53,11 +54,12 @@ cmake \
    -DSOCKPP_BUILD_SHARED=OFF \
    -DSOCKPP_BUILD_STATIC=ON \
    -DCMAKE_SYSTEM_NAME=iOS \
+   -DCMAKE_OSX_SYSROOT=iphonesimulator \
    -DCMAKE_OSX_ARCHITECTURES=arm64 \
    -DCMAKE_OSX_DEPLOYMENT_TARGET=17.0 \
    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
    -B build
 cmake --build build -- -j${NUM_PROCS}
 cp -r include/sockpp ../../third-party/include/
-cp build/libsockpp.a ../../third-party/build-libs/ios/arm64/
+cp build/libsockpp.a ../../third-party/build-libs/ios-simulator/arm64/
 cd ..
