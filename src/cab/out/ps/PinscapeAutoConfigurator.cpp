@@ -60,7 +60,7 @@ void PinscapeAutoConfigurator::Test(Pinscape* pPinscape)
 
   if (noOutputs > 0)
   {
-    uint8_t outputs[noOutputs];
+    uint8_t* outputs = (uint8_t*)malloc(noOutputs * sizeof(uint8_t));
 
     auto start = std::chrono::steady_clock::now();
     int direction = 1;
@@ -69,9 +69,9 @@ void PinscapeAutoConfigurator::Test(Pinscape* pPinscape)
 
     while (std::chrono::steady_clock::now() - start < std::chrono::seconds(10))
     {
-      for (auto& output : outputs)
+      for (int i = 0; i < noOutputs; ++i)
       {
-        output = static_cast<uint8_t>(value);
+        outputs[i] = (uint8_t)value;
       }
 
       pPinscape->UpdateOutputs(outputs);
@@ -87,6 +87,8 @@ void PinscapeAutoConfigurator::Test(Pinscape* pPinscape)
     }
 
     pPinscape->Finish();
+    
+    free(outputs);
   }
 }
 

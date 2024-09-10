@@ -30,8 +30,8 @@ class PinscapeDevice
   hid_device* m_pDevice;
   std::string m_szPath;
   std::string m_szName;
-  ushort m_vendorID;
-  ushort m_productID;
+  uint16_t m_vendorID;
+  uint16_t m_productID;
   short m_version;
   bool m_plungerEnabled;
   int m_numOutputs;

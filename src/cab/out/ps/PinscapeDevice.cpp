@@ -27,7 +27,7 @@ PinscapeDevice::PinscapeDevice(hid_device* pDevice, const std::string& szPath, c
   m_numOutputs = 32;
 
   if (vendorID == 0xFAFA && (productID & 0xFFF0) == 0x00F0)
-    m_unitNo = (unsigned short)((productID & 0x000f) + 1);
+    m_unitNo = (int)((productID & 0x000f) + 1);
   else
     m_unitNo = 1;
 
@@ -46,7 +46,7 @@ PinscapeDevice::PinscapeDevice(hid_device* pDevice, const std::string& szPath, c
       if ((buf[2] & 0xF8) == 0x88)
       {
         m_numOutputs = (int)buf[3] | (((int)buf[4]) << 8);
-        m_unitNo = (short)(((ushort)buf[5] | (((ushort)buf[6]) << 8)) + 1);
+        m_unitNo = (int)(((uint16_t)buf[5] | (((uint16_t)buf[6]) << 8)) + 1);
 
         break;
       }
@@ -58,7 +58,7 @@ PinscapeDevice::~PinscapeDevice() { hid_close(m_pDevice); }
 
 bool PinscapeDevice::IsLedWizEmulator(int unitNum)
 {
-  return (ushort)m_vendorID == 0xFAFA && m_productID == 0x00F1 + unitNum;
+  return (uint16_t)m_vendorID == 0xFAFA && m_productID == 0x00F1 + unitNum;
 }
 
 bool PinscapeDevice::ReadUSB(uint8_t* pBuf)
