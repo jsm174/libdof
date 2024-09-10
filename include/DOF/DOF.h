@@ -37,8 +37,15 @@
 
 #if !(                                                                                                                \
     (defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || \
-    defined(__ANDROID__) || defined(_WIN32) || defined(_WIN64))
+    defined(__ANDROID__))
 #define __HIDAPI__
+#endif
+
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
 #endif
 
 namespace DOF
