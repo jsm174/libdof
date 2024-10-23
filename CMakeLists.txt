@@ -29,6 +29,10 @@ elseif(PLATFORM STREQUAL "android")
    set(CMAKE_SYSTEM_NAME Android)
    set(CMAKE_SYSTEM_VERSION 30)
    set(CMAKE_ANDROID_ARCH_ABI arm64-v8a)
+elseif(PLATFORM STREQUAL "win")
+   if (PLATFORM STREQUAL "x64")
+     set(DOF_LIB_SUFFIX 64)
+   endif()
 endif()
 
 file(READ include/DOF/DOF.h version)
@@ -186,7 +190,12 @@ if(BUILD_SHARED)
    install(DIRECTORY include/DOF DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 
    if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
-      FetchContent_MakeAvailable(cargs)
+      block()
+         set(BUILD_SHARED_LIBS ON)
+         FetchContent_MakeAvailable(cargs)
+         set_target_properties(cargs PROPERTIES OUTPUT_NAME cargs${DOF_LIB_SUFFIX})
+      endblock()
+
       add_executable(dofserver
          src/dofServer.cpp
          src/Logger.cpp
@@ -204,6 +213,8 @@ if(BUILD_SHARED)
       target_link_libraries(dof_test PUBLIC dof_shared)
 
       if(POST_BUILD_COPY_EXT_LIBS)
+         set_target_properties(cargs PROPERTIES LIBRARY_OUTPUT_DIRECTORY $<TARGET_FILE_DIR:dofserver>)
+
          if(PLATFORM STREQUAL "win")
             if(ARCH STREQUAL "x64")
                add_custom_command(TARGET dofserver POST_BUILD
