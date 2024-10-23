@@ -28,8 +28,9 @@
 #include <string>
 #include <thread>
 
+#include <sockpp/tcp_connector.h>
+
 #include "Config.h"
-#include "sockpp/tcp_connector.h"
 
 #if defined(__APPLE__)
 #include <TargetConditionals.h>

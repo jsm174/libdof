@@ -2,12 +2,10 @@
 
 set -e
 
-SOCKPP_SHA=e6c4688a576d95f42dd7628cefe68092f6c5cd0f
 LIBSERIALPORT_SHA=fd20b0fc5a34cd7f776e4af6c763f59041de223b
 HIDAPI_SHA=d0732cda906ad07b7e1ef93f1919035643620435
 
 echo "Building libraries..."
-echo "  SOCKPP_SHA: ${SOCKPP_SHA}"
 echo "  LIBSERIALPORT_SHA: ${LIBSERIALPORT_SHA}"
 echo "  HIDAPI_SHA: ${HIDAPI_SHA}"
 echo ""
@@ -22,20 +20,6 @@ echo ""
 rm -rf external
 mkdir external
 cd external
-
-#
-# build sockpp and copy to external
-#
-
-curl -sL https://github.com/fpagliughi/sockpp/archive/${SOCKPP_SHA}.zip -o sockpp.zip
-unzip sockpp.zip
-cd sockpp-$SOCKPP_SHA
-cp -r include/sockpp ../../third-party/include/
-cmake -G "Visual Studio 17 2022" -A Win32 -B build
-cmake --build build --config ${BUILD_TYPE}
-cp build/${BUILD_TYPE}/sockpp.lib ../../third-party/build-libs/win/x86/
-cp build/${BUILD_TYPE}/sockpp.dll ../../third-party/runtime-libs/win/x86/
-cd ..
 
 #
 # build libserialport and copy to platform/arch
