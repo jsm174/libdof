@@ -42,6 +42,15 @@ set(VERSION_PATCH "${CMAKE_MATCH_1}")
 project(dof VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
    DESCRIPTION "Cross-platform DOF utilities library")
 
+# Dependencies
+include(FetchContent)
+
+FetchContent_Declare(cargs
+  GIT_REPOSITORY git@github.com:likle/cargs.git
+  GIT_TAG v1.2.0
+)
+
+
 if(PLATFORM STREQUAL "win")
    if(ARCH STREQUAL "x86")
       add_compile_definitions(WIN32)
@@ -134,30 +143,30 @@ if(BUILD_SHARED)
          third-party/runtime-libs/${PLATFORM}/${ARCH}
       )
       if(ARCH STREQUAL "x64")
-         target_link_libraries(dof_shared PUBLIC cargs64 libserialport64 sockpp64 hidapi64 ws2_32)
+         target_link_libraries(dof_shared PUBLIC libserialport64 sockpp64 hidapi64 ws2_32)
       else()
-         target_link_libraries(dof_shared PUBLIC cargs libserialport sockpp hidapi ws2_32)
+         target_link_libraries(dof_shared PUBLIC libserialport sockpp hidapi ws2_32)
       endif()
    elseif(PLATFORM STREQUAL "macos")
       target_link_directories(dof_shared PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
       )
-      target_link_libraries(dof_shared PUBLIC cargs serialport sockpp hidapi)
+      target_link_libraries(dof_shared PUBLIC serialport sockpp hidapi)
    elseif(PLATFORM STREQUAL "linux")
       target_link_directories(dof_shared PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
       )
-      target_link_libraries(dof_shared PUBLIC cargs serialport sockpp hidapi-hidraw)
+      target_link_libraries(dof_shared PUBLIC serialport sockpp hidapi-hidraw)
    elseif(PLATFORM STREQUAL "ios" OR PLATFORM STREQUAL "ios-simulator" OR PLATFORM STREQUAL "tvos")
       target_link_directories(dof_shared PUBLIC
          third-party/build-libs/${PLATFORM}/${ARCH}
       )
-      target_link_libraries(dof_shared PUBLIC cargs sockpp)
+      target_link_libraries(dof_shared PUBLIC sockpp)
    elseif(PLATFORM STREQUAL "android")
       target_link_directories(dof_shared PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
       )
-      target_link_libraries(dof_shared PUBLIC cargs sockpp)
+      target_link_libraries(dof_shared PUBLIC sockpp)
    endif()
 
    if(PLATFORM STREQUAL "win" AND ARCH STREQUAL "x64")
@@ -177,11 +186,12 @@ if(BUILD_SHARED)
    install(DIRECTORY include/DOF DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 
    if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
+      FetchContent_MakeAvailable(cargs)
       add_executable(dofserver
          src/dofServer.cpp
          src/Logger.cpp
       )
-      target_link_libraries(dofserver PUBLIC dof_shared)
+      target_link_libraries(dofserver PUBLIC dof_shared PRIVATE cargs)
 
       add_executable(dofserver_test
          src/testDofServer.cpp
@@ -197,8 +207,6 @@ if(BUILD_SHARED)
          if(PLATFORM STREQUAL "win")
             if(ARCH STREQUAL "x64")
                add_custom_command(TARGET dofserver POST_BUILD
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/cargs64.lib" "$<TARGET_FILE_DIR:dofserver>"
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/cargs64.dll" "$<TARGET_FILE_DIR:dofserver>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libserialport64.lib" "$<TARGET_FILE_DIR:dofserver>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport64.dll" "$<TARGET_FILE_DIR:dofserver>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/sockpp64.lib" "$<TARGET_FILE_DIR:dofserver>"
@@ -208,8 +216,6 @@ if(BUILD_SHARED)
                )
             else()
                add_custom_command(TARGET dofserver POST_BUILD
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/cargs.lib" "$<TARGET_FILE_DIR:dofserver>"
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/cargs.dll" "$<TARGET_FILE_DIR:dofserver>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libserialport.lib" "$<TARGET_FILE_DIR:dofserver>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport.dll" "$<TARGET_FILE_DIR:dofserver>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/sockpp.lib" "$<TARGET_FILE_DIR:dofserver>"
@@ -263,28 +269,26 @@ if(BUILD_STATIC)
             third-party/runtime-libs/${PLATFORM}/${ARCH}
          )
          if(ARCH STREQUAL "x64")
-            target_link_libraries(dof_test_s PUBLIC dof_static cargs64 libserialport64 sockpp64 hidapi64 ws2_32)
+            target_link_libraries(dof_test_s PUBLIC dof_static libserialport64 sockpp64 hidapi64 ws2_32)
          else()
-            target_link_libraries(dof_test_s PUBLIC dof_static cargs libserialport sockpp hidapi ws2_32)
+            target_link_libraries(dof_test_s PUBLIC dof_static libserialport sockpp hidapi ws2_32)
          endif()
       elseif(PLATFORM STREQUAL "macos")
          target_link_directories(dof_test_s PUBLIC
             third-party/runtime-libs/${PLATFORM}/${ARCH}
          )
-         target_link_libraries(dof_test_s PUBLIC dof_static cargs serialport sockpp hidapi)
+         target_link_libraries(dof_test_s PUBLIC dof_static serialport sockpp hidapi)
       elseif(PLATFORM STREQUAL "linux")
          target_link_directories(dof_test_s PUBLIC
             third-party/runtime-libs/${PLATFORM}/${ARCH}
          )
-         target_link_libraries(dof_test_s PUBLIC dof_static cargs serialport sockpp hidapi-hidraw)
+         target_link_libraries(dof_test_s PUBLIC dof_static serialport sockpp hidapi-hidraw)
       endif()
 
       if(POST_BUILD_COPY_EXT_LIBS)
          if(PLATFORM STREQUAL "win")
             if(ARCH STREQUAL "x64")
                add_custom_command(TARGET dof_test_s POST_BUILD
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/cargs64.lib" "$<TARGET_FILE_DIR:dof_test_s>"
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/cargs64.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libserialport64.lib" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport64.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/sockpp64.lib" "$<TARGET_FILE_DIR:dof_test_s>"
@@ -294,8 +298,6 @@ if(BUILD_STATIC)
                )
             else()
                add_custom_command(TARGET dof_test_s POST_BUILD
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/cargs.lib" "$<TARGET_FILE_DIR:dof_test_s>"
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/cargs.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libserialport.lib" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/sockpp.lib" "$<TARGET_FILE_DIR:dof_test_s>"
