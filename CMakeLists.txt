@@ -50,13 +50,13 @@ project(dof VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
 include(FetchContent)
 
 FetchContent_Declare(cargs
-  GIT_REPOSITORY git@github.com:likle/cargs.git
-  GIT_TAG v1.2.0
+  URL https://github.com/likle/cargs/archive/v1.2.0.zip
+  URL_HASH SHA1=adb9fe1fefde53dfe16f72eea1039a10812c2273
 )
 
 FetchContent_Declare(sockpp
-  GIT_REPOSITORY git@github.com:fpagliughi/sockpp.git
-  GIT_TAG e6c4688a576d95f42dd7628cefe68092f6c5cd0f
+  URL https://github.com/fpagliughi/sockpp/archive/e6c4688a576d95f42dd7628cefe68092f6c5cd0f.zip
+  URL_HASH SHA1=56e5bc962036e46a9f7f8f1f98ffe662c8132974
   PATCH_COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/patch/sockpp/001.patch
 )
 
