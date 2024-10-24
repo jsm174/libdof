@@ -72,6 +72,8 @@ FetchContent_MakeAvailable(hidapi sockpp)
 
 set_target_properties(sockpp PROPERTIES OUTPUT_NAME sockpp${DOF_LIB_SUFFIX})
 
+add_library(ini INTERFACE)
+target_include_directories(ini INTERFACE third-party/ini/)
 
 
 if(PLATFORM STREQUAL "win")
@@ -153,7 +155,6 @@ endif()
 
 set(LIBDOF_INCLUDE_DIRS
    ${CMAKE_CURRENT_SOURCE_DIR}/include
-   third-party/include
 )
 
 if(BUILD_SHARED)
@@ -216,7 +217,7 @@ if(BUILD_SHARED)
          src/dofServer.cpp
          src/Logger.cpp
       )
-      target_link_libraries(dofserver PUBLIC dof_shared PRIVATE cargs)
+      target_link_libraries(dofserver PUBLIC dof_shared PRIVATE cargs ini)
 
       add_executable(dofserver_test
          src/testDofServer.cpp
