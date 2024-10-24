@@ -7,7 +7,7 @@
 #include "toys/ToyList.h"
 
 #ifdef __HIDAPI__
-#include <hidapi/hidapi.h>
+#include <hidapi.h>
 
 #include "out/ps/Pinscape.h"
 #include "out/ps/PinscapeAutoConfigurator.h"
