@@ -302,38 +302,5 @@ if(BUILD_STATIC)
       elseif(PLATFORM STREQUAL "linux")
          target_link_libraries(dof_test_s PUBLIC dof_static serialport)
       endif()
-
-      if(POST_BUILD_COPY_EXT_LIBS)
-         set_target_properties(sockpp PROPERTIES LIBRARY_OUTPUT_DIRECTORY $<TARGET_FILE_DIR:dofserver>)
-         set_target_properties(sockpp PROPERTIES LIBRARY_OUTPUT_DIRECTORY $<TARGET_FILE_DIR:dofserver>)
-         if(TARGET hidapi)
-            set_target_properties(hidapi PROPERTIES LIBRARY_OUTPUT_DIRECTORY $<TARGET_FILE_DIR:dofserver>)
-         endif()
-         if(TARGET hidapi_hidraw)
-            set_target_properties(hidapi_hidraw PROPERTIES LIBRARY_OUTPUT_DIRECTORY $<TARGET_FILE_DIR:dofserver>)
-         endif()
-
-         if(TARGET serialport)
-            set_target_properties(serialport PROPERTIES LIBRARY_OUTPUT_DIRECTORY $<TARGET_FILE_DIR:dofserver>)
-         endif()
-
-         if(PLATFORM STREQUAL "win")
-            if(ARCH STREQUAL "x64")
-               add_custom_command(TARGET dof_test_s POST_BUILD
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libserialport64.lib" "$<TARGET_FILE_DIR:dof_test_s>"
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport64.dll" "$<TARGET_FILE_DIR:dof_test_s>"
-               )
-            else()
-               add_custom_command(TARGET dof_test_s POST_BUILD
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libserialport.lib" "$<TARGET_FILE_DIR:dof_test_s>"
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport.dll" "$<TARGET_FILE_DIR:dof_test_s>"
-               )
-            endif()
-         elseif(PLATFORM STREQUAL "macos")
-            add_custom_command(TARGET dof_test_s POST_BUILD
-               COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/*.dylib" "$<TARGET_FILE_DIR:dof_test_s>"
-            )
-         endif()
-      endif()
    endif()
 endif()
