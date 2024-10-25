@@ -75,6 +75,10 @@ set_target_properties(sockpp PROPERTIES OUTPUT_NAME sockpp${DOF_LIB_SUFFIX})
 add_library(ini INTERFACE)
 target_include_directories(ini INTERFACE third-party/ini/)
 
+if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "linux" OR PLATFORM STREQUAL "macos")
+  add_subdirectory(third-party/libserialport)
+endif()
+
 
 if(PLATFORM STREQUAL "win")
    if(ARCH STREQUAL "x86")
@@ -174,12 +178,9 @@ if(BUILD_SHARED)
       target_link_directories(dof_shared PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
       )
-     target_link_libraries(dof_shared PUBLIC serialport PRIVATE hidapi)
+     target_link_libraries(dof_shared PRIVATE serialport hidapi)
    elseif(PLATFORM STREQUAL "linux")
-      target_link_directories(dof_shared PUBLIC
-         third-party/runtime-libs/${PLATFORM}/${ARCH}
-      )
-     target_link_libraries(dof_shared PUBLIC serialport PRIVATE hidapi_hidraw)
+     target_link_libraries(dof_shared PRIVATE hidapi_hidraw serialport)
    elseif(PLATFORM STREQUAL "ios" OR PLATFORM STREQUAL "ios-simulator" OR PLATFORM STREQUAL "tvos")
       target_link_directories(dof_shared PUBLIC
          third-party/build-libs/${PLATFORM}/${ARCH}
@@ -239,27 +240,14 @@ if(BUILD_SHARED)
             set_target_properties(hidapi_hidraw PROPERTIES LIBRARY_OUTPUT_DIRECTORY $<TARGET_FILE_DIR:dofserver>)
          endif()
 
-         if(PLATFORM STREQUAL "win")
-            if(ARCH STREQUAL "x64")
+         if(TARGET serialport)
+            get_target_property(serialport_libraries serialport INTERFACE_LINK_LIBRARIES)
+
+            foreach(serialport_lib IN ITEMS ${serialport_libraries})
                add_custom_command(TARGET dofserver POST_BUILD
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libserialport64.lib" "$<TARGET_FILE_DIR:dofserver>"
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport64.dll" "$<TARGET_FILE_DIR:dofserver>"
+                  COMMAND ${CMAKE_COMMAND} -E copy "${serialport_lib}" "$<TARGET_FILE_DIR:dofserver>"
                )
-            else()
-               add_custom_command(TARGET dofserver POST_BUILD
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libserialport.lib" "$<TARGET_FILE_DIR:dofserver>"
-                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport.dll" "$<TARGET_FILE_DIR:dofserver>"
-               )
-            endif()
-         elseif(PLATFORM STREQUAL "macos")
-            add_custom_command(TARGET dofserver POST_BUILD
-               COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/*.dylib" "$<TARGET_FILE_DIR:dofserver>"
-            )
-         elseif(PLATFORM STREQUAL "linux")
-            add_custom_command(TARGET dofserver POST_BUILD
-               COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/*.so" "$<TARGET_FILE_DIR:dofserver>"
-               COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/*.so.*" "$<TARGET_FILE_DIR:dofserver>"
-            )
+            endforeach()
          endif()
       endif()
    endif()
@@ -277,7 +265,7 @@ if(BUILD_STATIC)
       )
     target_link_libraries(dof_stack PRIVATE hidapi)
    elseif(PLATFORM STREQUAL "linux")
-     target_link_libraries(dof_static PRIVATE hidapi_hidraw)
+     target_link_libraries(dof_static PRIVATE hidapi_hidraw serialport)
    elseif(PLATFORM STREQUAL "macos")
      target_link_libraries(dof_static PRIVATE hidapi)
    else()
@@ -312,9 +300,6 @@ if(BUILD_STATIC)
          )
          target_link_libraries(dof_test_s PUBLIC dof_static serialport)
       elseif(PLATFORM STREQUAL "linux")
-         target_link_directories(dof_test_s PUBLIC
-            third-party/runtime-libs/${PLATFORM}/${ARCH}
-         )
          target_link_libraries(dof_test_s PUBLIC dof_static serialport)
       endif()
 
@@ -326,6 +311,10 @@ if(BUILD_STATIC)
          endif()
          if(TARGET hidapi_hidraw)
             set_target_properties(hidapi_hidraw PROPERTIES LIBRARY_OUTPUT_DIRECTORY $<TARGET_FILE_DIR:dofserver>)
+         endif()
+
+         if(TARGET serialport)
+            set_target_properties(serialport PROPERTIES LIBRARY_OUTPUT_DIRECTORY $<TARGET_FILE_DIR:dofserver>)
          endif()
 
          if(PLATFORM STREQUAL "win")
@@ -343,11 +332,6 @@ if(BUILD_STATIC)
          elseif(PLATFORM STREQUAL "macos")
             add_custom_command(TARGET dof_test_s POST_BUILD
                COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/*.dylib" "$<TARGET_FILE_DIR:dof_test_s>"
-            )
-         else()
-            add_custom_command(TARGET dof_test_s POST_BUILD
-               COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/*.so" "$<TARGET_FILE_DIR:dof_test_s>"
-               COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/*.so.*" "$<TARGET_FILE_DIR:dof_test_s>"
             )
          endif()
       endif()
