@@ -72,8 +72,7 @@ FetchContent_MakeAvailable(hidapi sockpp)
 
 set_target_properties(sockpp PROPERTIES OUTPUT_NAME sockpp${DOF_LIB_SUFFIX})
 
-add_library(ini INTERFACE)
-target_include_directories(ini INTERFACE third-party/ini/)
+add_subdirectory(third-party/ini)
 
 if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "linux" OR PLATFORM STREQUAL "macos")
   add_subdirectory(third-party/libserialport)
