@@ -262,7 +262,7 @@ if(BUILD_STATIC)
       set_target_properties(dof_static PROPERTIES
          OUTPUT_NAME "dof_static"
       )
-    target_link_libraries(dof_stack PRIVATE hidapi)
+    target_link_libraries(dof_static PRIVATE hidapi)
    elseif(PLATFORM STREQUAL "linux")
      target_link_libraries(dof_static PRIVATE hidapi_hidraw serialport)
    elseif(PLATFORM STREQUAL "macos")

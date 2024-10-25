@@ -19,7 +19,7 @@ elseif(PLATFORM STREQUAL "win")
     URL ${LIBSERIALPORT_URL}
     URL_HASH SHA1=${LIBSERIALPORT_HASH}
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND ${MSBUILD_COMMAND <SOURCE_DIR>/libserialport.sln -p:Configuration=Release -p:Platform=${ARCH}
+    BUILD_COMMAND ${MSBUILD_COMMAND} <SOURCE_DIR>/libserialport.sln -p:Configuration=Release -p:Platform=${ARCH}
   )
 else()
   message(FATAL_ERROR "libserialport build for '${PLATFORM}' platform is not implemented.")
