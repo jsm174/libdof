@@ -12,6 +12,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <cstring>
 
 #include "../../../Log.h"
 #include "PinscapeDevice.h"

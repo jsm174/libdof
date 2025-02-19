@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <limits>
+#include <algorithm>
 
 #include "../fx/AssignedEffectList.h"
 #include "TableElementData.h"
