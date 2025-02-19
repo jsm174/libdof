@@ -28,6 +28,8 @@
 #include <string>
 #include <thread>
 
+#include <sockpp/tcp_connector.h>
+
 #include "Config.h"
 
 #if defined(__APPLE__)
