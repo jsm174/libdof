@@ -5,14 +5,6 @@ set -e
 CARGS_SHA=5949a20a926e902931de4a32adaad9f19c76f251
 SOCKPP_SHA=e6c4688a576d95f42dd7628cefe68092f6c5cd0f
 
-if [[ $(uname) == "Linux" ]]; then
-   NUM_PROCS=$(nproc)
-elif [[ $(uname) == "Darwin" ]]; then
-   NUM_PROCS=$(sysctl -n hw.ncpu)
-else
-   NUM_PROCS=1
-fi
-
 echo "Building libraries..."
 echo "  CARGS_SHA: ${CARGS_SHA}"
 echo "  SOCKPP_SHA: ${SOCKPP_SHA}"
@@ -20,6 +12,14 @@ echo ""
 
 if [ -z "${BUILD_TYPE}" ]; then
    BUILD_TYPE="Release"
+fi
+
+if [[ $(uname) == "Linux" ]]; then
+   NUM_PROCS=$(nproc)
+elif [[ $(uname) == "Darwin" ]]; then
+   NUM_PROCS=$(sysctl -n hw.ncpu)
+else
+   NUM_PROCS=1
 fi
 
 echo "Build type: ${BUILD_TYPE}"
@@ -34,9 +34,10 @@ cd external
 # build cargs and copy to external
 #
 
-curl -sL https://github.com/likle/cargs/archive/${CARGS_SHA}.zip -o cargs.zip
-unzip cargs.zip
-cd cargs-${CARGS_SHA}
+curl -sL https://github.com/likle/cargs/archive/${CARGS_SHA}.tar.gz -o cargs-${CARGS_SHA}.tar.gz
+tar xzf cargs-${CARGS_SHA}.tar.gz
+mv cargs-${CARGS_SHA} cargs
+cd cargs
 cmake \
    -DBUILD_SHARED_LIBS=ON \
    -DCMAKE_SYSTEM_NAME=Android \
@@ -48,16 +49,17 @@ cmake \
    -B build
 cmake --build build -- -j${NUM_PROCS}
 cp include/cargs.h ../../third-party/include/
-cp build/*.so ../../third-party/runtime-libs/android/arm64-v8a/
+cp build/libcargs.so ../../third-party/runtime-libs/android/arm64-v8a/
 cd ..
 
 #
 # build sockpp and copy to external
 #
 
-curl -sL https://github.com/fpagliughi/sockpp/archive/${SOCKPP_SHA}.zip -o sockpp.zip
-unzip sockpp.zip
-cd sockpp-$SOCKPP_SHA
+curl -sL https://github.com/fpagliughi/sockpp/archive/${SOCKPP_SHA}.tar.gz -o sockpp-${SOCKPP_SHA}.tar.gz
+tar xzf sockpp-${SOCKPP_SHA}.tar.gz
+mv sockpp-${SOCKPP_SHA} sockpp
+cd sockpp
 patch -p1 < ../../platforms/android/arm64-v8a/sockpp/001.patch
 cmake \
    -DSOCKPP_BUILD_SHARED=ON \

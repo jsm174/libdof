@@ -39,7 +39,6 @@ cp build/${BUILD_TYPE}/cargs.lib ../../third-party/build-libs/win/x86/
 cp build/${BUILD_TYPE}/cargs.dll ../../third-party/runtime-libs/win/x86/
 cd ..
 
-
 #
 # build sockpp and copy to external
 #
@@ -63,8 +62,8 @@ unzip libserialport.zip
 cd libserialport-$LIBSERIALPORT_SHA
 cp libserialport.h ../../third-party/include
 msbuild.exe libserialport.sln -p:Configuration=Release -p:Platform=x86
-cp Release/*.lib ../../third-party/build-libs/win/x86
-cp Release/*.dll ../../third-party/runtime-libs/win/x86
+cp Release/libserialport.lib ../../third-party/build-libs/win/x86
+cp Release/libserialport.dll ../../third-party/runtime-libs/win/x86
 cd ..
 
 #
@@ -77,6 +76,6 @@ cd hidapi-$HIDAPI_SHA
 cmake -G "Visual Studio 17 2022" -A Win32 -B build
 cmake --build build --config ${BUILD_TYPE}
 cp -r hidapi ../../third-party/include/
-cp build/src/windows/${BUILD_TYPE}/*.lib ../../third-party/build-libs/win/x86/
-cp build/src/windows/${BUILD_TYPE}/*.dll ../../third-party/runtime-libs/win/x86/
+cp build/src/windows/${BUILD_TYPE}/hidapi.lib ../../third-party/build-libs/win/x86/
+cp build/src/windows/${BUILD_TYPE}/hidapi.dll ../../third-party/runtime-libs/win/x86/
 cd ..

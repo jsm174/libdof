@@ -36,8 +36,8 @@ patch -p1 < ../../platforms/win/x64/cargs/001.patch
 cp include/cargs.h ../../third-party/include/
 cmake -G "Visual Studio 17 2022" -DBUILD_SHARED_LIBS=ON -B build
 cmake --build build --config ${BUILD_TYPE}
-cp build/${BUILD_TYPE}/*.lib ../../third-party/build-libs/win/x64/
-cp build/${BUILD_TYPE}/*.dll ../../third-party/runtime-libs/win/x64/
+cp build/${BUILD_TYPE}/cargs64.lib ../../third-party/build-libs/win/x64/
+cp build/${BUILD_TYPE}/cargs64.dll ../../third-party/runtime-libs/win/x64/
 cd ..
 
 
@@ -52,8 +52,8 @@ patch -p1 < ../../platforms/win/x64/sockpp/001.patch
 cp -r include/sockpp ../../third-party/include/
 cmake -G "Visual Studio 17 2022" -B build
 cmake --build build --config ${BUILD_TYPE}
-cp build/${BUILD_TYPE}/*.lib ../../third-party/build-libs/win/x64/
-cp build/${BUILD_TYPE}/*.dll ../../third-party/runtime-libs/win/x64/
+cp build/${BUILD_TYPE}/sockpp64.lib ../../third-party/build-libs/win/x64/
+cp build/${BUILD_TYPE}/sockpp64.dll ../../third-party/runtime-libs/win/x64/
 cd ..
 
 #
@@ -66,8 +66,8 @@ cd libserialport-$LIBSERIALPORT_SHA
 cp libserialport.h ../../third-party/include
 patch libserialport.vcxproj < ../../platforms/win/x64/libserialport/001.patch
 msbuild.exe libserialport.sln -p:Configuration=Release -p:Platform=x64
-cp x64/Release/*.lib ../../third-party/build-libs/win/x64
-cp x64/Release/*.dll ../../third-party/runtime-libs/win/x64
+cp x64/Release/libserialport64.lib ../../third-party/build-libs/win/x64
+cp x64/Release/libserialport64.dll ../../third-party/runtime-libs/win/x64
 cd ..
 
 #
@@ -81,6 +81,6 @@ patch -p1 < ../../platforms/win/x64/hidapi/001.patch
 cmake -G "Visual Studio 17 2022" -B build
 cmake --build build --config ${BUILD_TYPE}
 cp -r hidapi ../../third-party/include/
-cp build/src/windows/${BUILD_TYPE}/*.lib ../../third-party/build-libs/win/x64/
-cp build/src/windows/${BUILD_TYPE}/*.dll ../../third-party/runtime-libs/win/x64/
+cp build/src/windows/${BUILD_TYPE}/hidapi64.lib ../../third-party/build-libs/win/x64/
+cp build/src/windows/${BUILD_TYPE}/hidapi64.dll ../../third-party/runtime-libs/win/x64/
 cd ..
