@@ -2,23 +2,14 @@
 
 set -e
 
-CARGS_SHA=5949a20a926e902931de4a32adaad9f19c76f251
-SOCKPP_SHA=e6c4688a576d95f42dd7628cefe68092f6c5cd0f
+source ./platforms/config.sh
 
 echo "Building libraries..."
 echo "  CARGS_SHA: ${CARGS_SHA}"
 echo "  SOCKPP_SHA: ${SOCKPP_SHA}"
 echo ""
 
-if [ -z "${BUILD_TYPE}" ]; then
-   BUILD_TYPE="Release"
-fi
-
 NUM_PROCS=$(sysctl -n hw.ncpu)
-
-echo "Build type: ${BUILD_TYPE}"
-echo "Procs: ${NUM_PROCS}"
-echo ""
 
 rm -rf external
 mkdir external
