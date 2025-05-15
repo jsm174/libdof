@@ -180,6 +180,8 @@ void Pinscape::FindDevices()
 
     pCurrentDevice = pCurrentDevice->next;
   }
+
+  hid_free_enumeration(pDevices);
 }
 
 std::string Pinscape::GetProductName(hid_device_info* dev)
