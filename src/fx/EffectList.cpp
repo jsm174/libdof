@@ -3,8 +3,8 @@
 namespace DOF
 {
 
-void EffectList::Init(Table* pTable) {}
+void EffectList::Init(Table* pTable) { }
 
-void EffectList::Finish() {}
+void EffectList::Finish() { }
 
-}  // namespace DOF
+} // namespace DOF

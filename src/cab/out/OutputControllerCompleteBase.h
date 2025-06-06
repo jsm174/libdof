@@ -8,18 +8,18 @@ namespace DOF
 
 class OutputControllerCompleteBase : public IOutputController
 {
- public:
-  OutputControllerCompleteBase();
-  ~OutputControllerCompleteBase();
+public:
+   OutputControllerCompleteBase();
+   ~OutputControllerCompleteBase();
 
-  virtual void Init(Cabinet* pCabinet) override;
-  virtual void Finish() override;
-  void Update() override;
+   virtual void Init(Cabinet* pCabinet) override;
+   virtual void Finish() override;
+   void Update() override;
 
- protected:
-  void SetupOutputs();
+protected:
+   void SetupOutputs();
 
-  virtual int GetNumberOfConfiguredOutputs() = 0;
+   virtual int GetNumberOfConfiguredOutputs() = 0;
 };
 
-}  // namespace DOF
+} // namespace DOF

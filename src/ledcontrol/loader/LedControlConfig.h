@@ -9,7 +9,7 @@ namespace DOF
 
 class LedControlConfig
 {
- public:
+public:
 };
 
-}  // namespace DOF
+} // namespace DOF

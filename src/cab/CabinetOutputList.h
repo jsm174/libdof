@@ -10,11 +10,11 @@ class Cabinet;
 
 class CabinetOutputList : public std::vector<IOutput*>
 {
- public:
-  CabinetOutputList(Cabinet* pCabinet);
+public:
+   CabinetOutputList(Cabinet* pCabinet);
 
- private:
-  Cabinet* m_pCabinet;
+private:
+   Cabinet* m_pCabinet;
 };
 
-}  // namespace DOF
+} // namespace DOF

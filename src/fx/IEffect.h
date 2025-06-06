@@ -7,11 +7,11 @@ namespace DOF
 
 class IEffect
 {
- public:
-  IEffect() {}
-  ~IEffect() {}
+public:
+   IEffect() { }
+   ~IEffect() { }
 
- private:
+private:
 };
 
-}  // namespace DOF
+} // namespace DOF

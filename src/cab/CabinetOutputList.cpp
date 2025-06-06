@@ -8,4 +8,4 @@ namespace DOF
 
 CabinetOutputList::CabinetOutputList(Cabinet* pCabinet) { m_pCabinet = pCabinet; }
 
-}  // namespace DOF
+} // namespace DOF

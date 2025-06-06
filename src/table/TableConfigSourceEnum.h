@@ -8,10 +8,10 @@ namespace DOF
 
 enum class TableConfigSourceEnum
 {
-  Unknown,
-  TableConfigurationFile,
-  IniFile,
-  TabbleConfigurationFileAndIniFile
+   Unknown,
+   TableConfigurationFile,
+   IniFile,
+   TabbleConfigurationFileAndIniFile
 };
 
-}  // namespace DOF
+} // namespace DOF

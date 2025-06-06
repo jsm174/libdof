@@ -8,8 +8,8 @@ namespace DOF
 
 class IToyUpdatable : public IToy
 {
- public:
-  virtual void UpdateOutputs() = 0;
+public:
+   virtual void UpdateOutputs() = 0;
 };
 
-}  // namespace DOF
+} // namespace DOF

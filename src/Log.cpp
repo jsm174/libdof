@@ -1,38 +1,49 @@
 #include "Log.h"
 
+#include "Logger.h"
+
 namespace DOF
 {
 
-std::string Log::m_szFilename = "";
+std::string Log::m_filename = "";
 
-void Log::Init() {}
-void Log::AfterInit() {}
-void Log::Finish() {}
-void Log::WriteRaw(const char* format, ...) {}
+void Log::Init() { }
+void Log::AfterInit() { }
+void Log::Finish() { }
+void Log::WriteRaw(const char* format, ...) { }
 
 void Log::Write(const char* format, ...)
 {
-  char pBuffer[1024];
-  va_list args;
-  va_start(args, format);
-  vsnprintf(pBuffer, sizeof(pBuffer), format, args);
-  printf("[INFO] %s\n", pBuffer);
-  va_end(args);
+   va_list args;
+   va_start(args, format);
+   ::DOF::Log(DOF_LogLevel_INFO, format, args);
+   va_end(args);
 }
 
 void Log::Warning(const char* format, ...)
 {
-  char pBuffer[1024];
-  va_list args;
-  va_start(args, format);
-  vsnprintf(pBuffer, sizeof(pBuffer), format, args);
-  printf("[WARNING] %s\n", pBuffer);
-  va_end(args);
+   va_list args;
+   va_start(args, format);
+   ::DOF::Log(DOF_LogLevel_WARN, format, args);
+   va_end(args);
 }
 
-void Log::Exception(const char* format, ...) {}
-void Log::Debug(const char* format, ...) {}
+void Log::Exception(const char* format, ...)
+{
+   va_list args;
+   va_start(args, format);
+   ::DOF::Log(DOF_LogLevel_ERROR, format, args);
+   va_end(args);
+}
 
-Log::Log() {}
+void Log::Debug(const char* format, ...)
+{
+   va_list args;
+   va_start(args, format);
+   ::DOF::Log(DOF_LogLevel_DEBUG, format, args);
+   va_end(args);
+}
 
-}  // namespace DOF
+Log::Log() { }
+
+} // namespace DOF

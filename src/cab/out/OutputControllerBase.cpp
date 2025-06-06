@@ -3,8 +3,8 @@
 namespace DOF
 {
 
-OutputControllerBase::OutputControllerBase() {}
+OutputControllerBase::OutputControllerBase() { }
 
-OutputControllerBase::~OutputControllerBase() {}
+OutputControllerBase::~OutputControllerBase() { }
 
-}  // namespace DOF
+} // namespace DOF

@@ -7,16 +7,19 @@ namespace DOF
 
 void Log(DOF_LogLevel logLevel, const char* format, ...)
 {
-  static Config* pConfig = Config::GetInstance();
-
-  DOF_LogCallback logCallback = pConfig->GetLogCallback();
-
-  if (!logCallback || logLevel < pConfig->GetLogLevel()) return;
-
-  va_list args;
-  va_start(args, format);
-  (*(logCallback))(logLevel, format, args);
-  va_end(args);
+   va_list args;
+   va_start(args, format);
+   Log(logLevel, format, args);
+   va_end(args);
 }
 
-}  // namespace DOF
+void Log(DOF_LogLevel logLevel, const char* format, va_list args)
+{
+   static Config* pConfig = Config::GetInstance();
+   auto callback = pConfig->GetLogCallback();
+   if (!callback || logLevel < pConfig->GetLogLevel())
+      return;
+   callback(logLevel, format, args);
+}
+
+} // namespace DOF

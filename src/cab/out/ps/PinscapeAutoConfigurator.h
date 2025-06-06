@@ -10,12 +10,12 @@ class Pinscape;
 
 class PinscapeAutoConfigurator : public IAutoConfigOutputController
 {
- public:
-  PinscapeAutoConfigurator() {}
-  ~PinscapeAutoConfigurator() {}
+public:
+   PinscapeAutoConfigurator() { }
+   ~PinscapeAutoConfigurator() { }
 
-  void AutoConfig(Cabinet* pCabinet) override;
-  void Test(Pinscape* pPinscape);
+   void AutoConfig(Cabinet* pCabinet) override;
+   void Test(Pinscape* pPinscape);
 };
 
-}  // namespace DOF
+} // namespace DOF

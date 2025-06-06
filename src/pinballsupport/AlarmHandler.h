@@ -9,9 +9,9 @@ class Cabinet;
 
 class AlarmHandler
 {
- public:
-  AlarmHandler() {}
-  ~AlarmHandler() {}
+public:
+   AlarmHandler() { }
+   ~AlarmHandler() { }
 };
 
-}  // namespace DOF
+} // namespace DOF

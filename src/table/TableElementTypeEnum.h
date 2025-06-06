@@ -8,18 +8,18 @@ namespace DOF
 
 enum class TableElementTypeEnum
 {
-  Unknown = '?',
-  Lamp = 'L',
-  Switch = 'W',
-  Solenoid = 'S',
-  GIString = 'G',
-  Mech = 'M',
-  GetMech = 'N',
-  EMTable = 'E',
-  LED = 'D',
-  Score = 'C',
-  ScoreDigit = 'B',
-  NamedElement = '$'
+   Unknown = '?',
+   Lamp = 'L',
+   Switch = 'W',
+   Solenoid = 'S',
+   GIString = 'G',
+   Mech = 'M',
+   GetMech = 'N',
+   EMTable = 'E',
+   LED = 'D',
+   Score = 'C',
+   ScoreDigit = 'B',
+   NamedElement = '$'
 };
 
-}  // namespace DOF
+} // namespace DOF

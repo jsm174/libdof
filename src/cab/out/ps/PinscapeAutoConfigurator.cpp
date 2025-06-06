@@ -11,23 +11,22 @@ namespace DOF
 
 void PinscapeAutoConfigurator::AutoConfig(Cabinet* pCabinet)
 {
-  int UnitBias = 50;
+   int UnitBias = 50;
 
-  for (PinscapeDevice* pDevice : Pinscape::GetAllDevices())
-  {
-    int unitNo = pDevice->GetUnitNo();
-    if (unitNo)
-    {
-      Pinscape* pPinscape = new Pinscape(unitNo);
-
-      if (!pCabinet->GetOutputControllers()->Contains(pPinscape->GetName()))
+   for (PinscapeDevice* pDevice : Pinscape::GetAllDevices())
+   {
+      int unitNo = pDevice->GetUnitNo();
+      if (unitNo)
       {
-        pCabinet->GetOutputControllers()->push_back(pPinscape);
+         Pinscape* pPinscape = new Pinscape(unitNo);
 
-        Log::Write("Detected and added Pinscape Controller Nr. %d with name %s", pPinscape->GetNumber(),
-                   pPinscape->GetName().c_str());
+         if (!pCabinet->GetOutputControllers()->Contains(pPinscape->GetName()))
+         {
+            pCabinet->GetOutputControllers()->push_back(pPinscape);
 
-        /*if (!Cabinet.Toys.Any(T = > T is LedWizEquivalent && ((LedWizEquivalent)T).LedWizNumber == p.Number +
+            Log::Write("Detected and added Pinscape Controller Nr. %d with name %s", pPinscape->GetNumber(), pPinscape->GetName().c_str());
+
+            /*if (!Cabinet.Toys.Any(T = > T is LedWizEquivalent && ((LedWizEquivalent)T).LedWizNumber == p.Number +
         UnitBias))
         {
           LedWizEquivalent LWE = new LedWizEquivalent();
@@ -49,47 +48,47 @@ void PinscapeAutoConfigurator::AutoConfig(Cabinet* pCabinet)
                       ", {0}".Build(p.NumberOfOutputs));
           }
         }*/
+         }
       }
-    }
-  }
+   }
 }
 
 void PinscapeAutoConfigurator::Test(Pinscape* pPinscape)
 {
-  int noOutputs = pPinscape->GetNumberOfConfiguredOutputs();
+   int noOutputs = pPinscape->GetNumberOfConfiguredOutputs();
 
-  if (noOutputs > 0)
-  {
-    uint8_t* outputs = (uint8_t*)malloc(noOutputs * sizeof(uint8_t));
+   if (noOutputs > 0)
+   {
+      uint8_t* outputs = (uint8_t*)malloc(noOutputs * sizeof(uint8_t));
 
-    auto start = std::chrono::steady_clock::now();
-    int direction = 1;
-    int value = 0;
-    int stepSize = 5;
+      auto start = std::chrono::steady_clock::now();
+      int direction = 1;
+      int value = 0;
+      int stepSize = 5;
 
-    while (std::chrono::steady_clock::now() - start < std::chrono::seconds(10))
-    {
-      for (int i = 0; i < noOutputs; ++i)
+      while (std::chrono::steady_clock::now() - start < std::chrono::seconds(10))
       {
-        outputs[i] = (uint8_t)value;
+         for (int i = 0; i < noOutputs; ++i)
+         {
+            outputs[i] = (uint8_t)value;
+         }
+
+         pPinscape->UpdateOutputs(outputs);
+
+         value += stepSize * direction;
+         if (value >= 255 || value <= 0)
+         {
+            direction *= -1;
+            value = std::max(0, std::min(value, 255));
+         }
+
+         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
 
-      pPinscape->UpdateOutputs(outputs);
+      pPinscape->Finish();
 
-      value += stepSize * direction;
-      if (value >= 255 || value <= 0)
-      {
-        direction *= -1;
-        value = std::max(0, std::min(value, 255));
-      }
-
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-
-    pPinscape->Finish();
-    
-    free(outputs);
-  }
+      free(outputs);
+   }
 }
 
-}  // namespace DOF
+} // namespace DOF

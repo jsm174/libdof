@@ -1,14 +1,13 @@
 #pragma once
 
-#define LIBDOF_VERSION_MAJOR 0  // X Digits
-#define LIBDOF_VERSION_MINOR 1  // Max 2 Digits
-#define LIBDOF_VERSION_PATCH 0  // Max 2 Digits
+#define LIBDOF_VERSION_MAJOR 0 // X Digits
+#define LIBDOF_VERSION_MINOR 1 // Max 2 Digits
+#define LIBDOF_VERSION_PATCH 0 // Max 2 Digits
 
 #define _LIBDOF_STR(x) #x
 #define LIBDOF_STR(x) _LIBDOF_STR(x)
 
-#define LIBDOF_VERSION \
-  LIBDOF_STR(LIBDOF_VERSION_MAJOR) "." LIBDOF_STR(LIBDOF_VERSION_MINOR) "." LIBDOF_STR(LIBDOF_VERSION_PATCH)
+#define LIBDOF_VERSION LIBDOF_STR(LIBDOF_VERSION_MAJOR) "." LIBDOF_STR(LIBDOF_VERSION_MINOR) "." LIBDOF_STR(LIBDOF_VERSION_PATCH)
 #define LIBDOF_MINOR_VERSION LIBDOF_STR(LIBDOF_VERSION_MAJOR) "." LIBDOF_STR(LIBDOF_VERSION_MINOR)
 
 #ifdef _MSC_VER
@@ -34,9 +33,7 @@
 #include <TargetConditionals.h>
 #endif
 
-#if !(                                                                                                                \
-    (defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || \
-    defined(__ANDROID__))
+#if !((defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || defined(__ANDROID__))
 #define __HIDAPI__
 #endif
 
@@ -47,6 +44,14 @@
 #undef max
 #endif
 
+#if !defined(PATH_SEPARATOR_CHAR)
+#ifdef _MSC_VER
+#define PATH_SEPARATOR_CHAR '\\'
+#else
+#define PATH_SEPARATOR_CHAR '/'
+#endif
+#endif
+
 namespace DOF
 {
 
@@ -54,16 +59,16 @@ class Pinball;
 
 class LIBDOFAPI DOF
 {
- public:
-  DOF();
-  ~DOF();
+public:
+   DOF();
+   ~DOF();
 
-  void Init(const char* szTableFilename, const char* szRomName);
-  void DataReceive(char type, int number, int value);
-  void Finish();
+   void Init(const char* tableFilename, const char* romName);
+   void DataReceive(char type, int number, int value);
+   void Finish();
 
- private:
-  Pinball* m_pPinball;
+private:
+   Pinball* m_pPinball;
 };
 
-}  // namespace DOF
+} // namespace DOF

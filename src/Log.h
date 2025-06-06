@@ -7,24 +7,24 @@ namespace DOF
 
 class Log
 {
- public:
-  static const std::string& GetFilename();
-  static void SetFilename(const std::string& szFilename) { m_szFilename = szFilename; }
+public:
+   static const std::string& GetFilename();
+   static void SetFilename(const std::string& filename) { m_filename = filename; }
 
-  static void Init();
-  static void AfterInit();
-  static void Finish();
-  static void WriteRaw(const char* format, ...);
-  static void Write(const char* format, ...);
-  static void Warning(const char* format, ...);
-  static void Exception(const char* format, ...);
-  static void Debug(const char* format, ...);
+   static void Init();
+   static void AfterInit();
+   static void Finish();
+   static void WriteRaw(const char* format, ...);
+   static void Write(const char* format, ...);
+   static void Warning(const char* format, ...);
+   static void Exception(const char* format, ...);
+   static void Debug(const char* format, ...);
 
- private:
-  Log();
-  ~Log(){};
+private:
+   Log();
+   ~Log() { };
 
-  static std::string m_szFilename;
+   static std::string m_filename;
 };
 
-}  // namespace DOF
+} // namespace DOF

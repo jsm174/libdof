@@ -7,18 +7,19 @@ Config* Config::m_pInstance = nullptr;
 
 Config* Config::GetInstance()
 {
-  if (!m_pInstance) m_pInstance = new Config();
+   if (!m_pInstance)
+      m_pInstance = new Config();
 
-  return m_pInstance;
+   return m_pInstance;
 }
 
 Config::Config()
 {
-  m_dofServer = false;
-  m_dofServerAddr = "localhost";
-  m_dofServerPort = 6789;
-  m_logLevel = DOF_LogLevel_INFO;
-  m_logCallback = nullptr;
+   m_dofServer = false;
+   m_dofServerAddr = "localhost";
+   m_dofServerPort = 6789;
+   m_logLevel = DOF_LogLevel_INFO;
+   m_logCallback = nullptr;
 }
 
-}  // namespace DOF
+} // namespace DOF

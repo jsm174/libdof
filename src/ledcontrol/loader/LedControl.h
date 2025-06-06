@@ -7,11 +7,11 @@ namespace DOF
 
 class LedControl
 {
- public:
-  LedControl() {}
-  ~LedControl() {}
+public:
+   LedControl() { }
+   ~LedControl() { }
 
- private:
+private:
 };
 
-}  // namespace DOF
+} // namespace DOF

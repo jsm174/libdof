@@ -6,9 +6,9 @@
 
 void LIBDOFCALLBACK LogCallback(DOF_LogLevel logLevel, const char* format, va_list args)
 {
-  char buffer[1024];
-  vsnprintf(buffer, sizeof(buffer), format, args);
-  printf("%s\n", buffer);
+   char buffer[1024];
+   vsnprintf(buffer, sizeof(buffer), format, args);
+   printf("%s\n", buffer);
 }
 
 void run(DOF::DOF* pDof) { DOF::Config* pConfig = DOF::Config::GetInstance(); }

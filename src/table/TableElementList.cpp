@@ -9,14 +9,16 @@ namespace DOF
 
 void TableElementList::InitAssignedEffects(Table* pTable)
 {
-  for (TableElement* pTableElement : *this) pTableElement->GetAssignedEffects()->Init(pTable);
+   for (TableElement* pTableElement : *this)
+      pTableElement->GetAssignedEffects()->Init(pTable);
 }
 
 void TableElementList::FinishAssignedEffects()
 {
-  for (TableElement* pTableElement : *this) pTableElement->GetAssignedEffects()->Finish();
+   for (TableElement* pTableElement : *this)
+      pTableElement->GetAssignedEffects()->Finish();
 }
 
-void TableElementList::UpdateState(TableElementData* pData) {}
+void TableElementList::UpdateState(TableElementData* pData) { }
 
-}  // namespace DOF
+} // namespace DOF

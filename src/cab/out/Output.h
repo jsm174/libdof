@@ -8,13 +8,13 @@ namespace DOF
 
 class Output : public IOutput
 {
- public:
-  Output() {}
-  ~Output() {}
+public:
+   Output() { }
+   ~Output() { }
 
-  void SetOutput(uint8_t value) override;
+   void SetOutput(uint8_t value) override;
 
-  void OnValueChanged();
+   void OnValueChanged();
 };
 
-}  // namespace DOF
+} // namespace DOF

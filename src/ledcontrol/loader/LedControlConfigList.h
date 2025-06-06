@@ -11,7 +11,7 @@ class LedControlConfig;
 
 class LedControlConfigList : public std::vector<LedControlConfig*>
 {
- public:
+public:
 };
 
-}  // namespace DOF
+} // namespace DOF

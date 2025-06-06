@@ -74,6 +74,18 @@ set(LIBDOF_SOURCES
    src/Log.cpp
    src/Logger.cpp
    
+   src/general/DirectoryInfo.cpp
+   src/general/DirectoryInfo.h
+   src/general/FileInfo.cpp
+   src/general/FileInfo.h
+   src/general/FileReader.cpp
+   src/general/FileReader.h
+   src/general/FilePattern.cpp
+   src/general/FilePattern.h
+   src/general/FilePatternList.cpp
+   src/general/FilePatternList.h
+   
+   
    src/globalconfiguration/GlobalConfig.cpp
 
    src/pinballsupport/AlarmHandler.cpp
@@ -108,6 +120,8 @@ set(LIBDOF_SOURCES
    src/ledcontrol/loader/LedControl.cpp
    src/ledcontrol/loader/LedControlConfig.cpp
    src/ledcontrol/loader/LedControlConfigList.cpp
+
+   third-party/include/tinyxml2/tinyxml2.cpp
 )
 
 if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")

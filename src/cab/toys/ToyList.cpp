@@ -11,29 +11,32 @@ void ToyList::ReadXml() { Log::Write("Not implemented"); }
 
 void ToyList::Init(Cabinet* pCabinet)
 {
-  for (IToy* pToy : *this) pToy->Init(pCabinet);
+   for (IToy* pToy : *this)
+      pToy->Init(pCabinet);
 }
 
 void ToyList::Reset()
 {
-  for (IToy* pToy : *this) pToy->Reset();
+   for (IToy* pToy : *this)
+      pToy->Reset();
 }
 
 void ToyList::Finish()
 {
-  for (IToy* pToy : *this) pToy->Finish();
+   for (IToy* pToy : *this)
+      pToy->Finish();
 }
 
 void ToyList::UpdateOutputs()
 {
-  for (IToy* pToy : *this)
-  {
-    IToyUpdatable* pToyUpdatable = dynamic_cast<IToyUpdatable*>(pToy);
-    if (pToyUpdatable)
-    {
-      pToyUpdatable->UpdateOutputs();
-    }
-  }
+   for (IToy* pToy : *this)
+   {
+      IToyUpdatable* pToyUpdatable = dynamic_cast<IToyUpdatable*>(pToy);
+      if (pToyUpdatable)
+      {
+         pToyUpdatable->UpdateOutputs();
+      }
+   }
 }
 
-}  // namespace DOF
+} // namespace DOF

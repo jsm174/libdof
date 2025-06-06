@@ -8,9 +8,9 @@ namespace DOF
 
 class OutputControllerBase : public IOutputController
 {
- public:
-  OutputControllerBase();
-  ~OutputControllerBase();
+public:
+   OutputControllerBase();
+   ~OutputControllerBase();
 };
 
-}  // namespace DOF
+} // namespace DOF

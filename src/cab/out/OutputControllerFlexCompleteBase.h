@@ -8,17 +8,17 @@ namespace DOF
 
 class OutputControllerFlexCompleteBase : public OutputControllerCompleteBase
 {
- public:
-  OutputControllerFlexCompleteBase();
-  ~OutputControllerFlexCompleteBase();
+public:
+   OutputControllerFlexCompleteBase();
+   ~OutputControllerFlexCompleteBase();
 
-  virtual int GetNumberOfOutputs() { return m_numberOfOutputs; }
-  virtual void SetNumberOfOutputs(int numberOfOutputs);
+   virtual int GetNumberOfOutputs() { return m_numberOfOutputs; }
+   virtual void SetNumberOfOutputs(int numberOfOutputs);
 
-  int GetNumberOfConfiguredOutputs() override;
+   int GetNumberOfConfiguredOutputs() override;
 
- private:
-  int m_numberOfOutputs;
+private:
+   int m_numberOfOutputs;
 };
 
-}  // namespace DOF
+} // namespace DOF
