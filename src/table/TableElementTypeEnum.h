@@ -22,4 +22,4 @@ enum class TableElementTypeEnum
    NamedElement = '$'
 };
 
-} // namespace DOF
+}

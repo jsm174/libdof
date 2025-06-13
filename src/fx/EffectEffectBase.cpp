@@ -1,0 +1,72 @@
+#include "EffectEffectBase.h"
+#include "../table/Table.h"
+#include "../table/TableElementData.h"
+#include "EffectList.h"
+#include "IEffect.h"
+#include "../Log.h"
+#include "../general/StringExtensions.h"
+#include <stdexcept>
+
+namespace DOF
+{
+
+EffectEffectBase::EffectEffectBase()
+   : m_table(nullptr)
+   , m_targetEffect(nullptr)
+{
+}
+
+void EffectEffectBase::SetTargetEffectName(const std::string& value)
+{
+   if (m_targetEffectName != value)
+   {
+      m_targetEffectName = value;
+      m_targetEffect = nullptr;
+   }
+}
+
+void EffectEffectBase::TriggerTargetEffect(TableElementData* triggerData)
+{
+   if (m_targetEffect != nullptr)
+   {
+      Log::Debug(StringExtensions::Build("EffectEffectBase::TriggerTargetEffect: Calling target effect '{0}'", m_targetEffect->GetName()));
+      try
+      {
+         m_targetEffect->Trigger(triggerData);
+         Log::Debug(StringExtensions::Build("EffectEffectBase::TriggerTargetEffect: Target effect '{0}' completed", m_targetEffect->GetName()));
+      }
+      catch (const std::exception& e)
+      {
+         Log::Exception(StringExtensions::Build(
+            "The target effect {0} of the {1} {2} has thrown a exception. Disabling further calls of the target effect.", m_targetEffectName, "EffectEffectBase", NamedItemBase::GetName()));
+         m_targetEffect = nullptr;
+      }
+   }
+}
+
+void EffectEffectBase::ResolveEffectName(Table* table)
+{
+   if (!StringExtensions::IsNullOrWhiteSpace(m_targetEffectName))
+   {
+      auto it = table->GetEffects()->find(m_targetEffectName);
+      if (it != table->GetEffects()->end())
+      {
+         m_targetEffect = it->second;
+      }
+   }
+}
+
+void EffectEffectBase::Init(Table* table)
+{
+   m_table = table;
+   ResolveEffectName(table);
+}
+
+void EffectEffectBase::Finish()
+{
+   m_targetEffect = nullptr;
+   m_table = nullptr;
+   EffectBase::Finish();
+}
+
+}

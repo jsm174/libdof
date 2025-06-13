@@ -24,4 +24,4 @@ bool FileInfo::Delete() const { return std::filesystem::remove(m_path); }
 
 DirectoryInfo* FileInfo::Directory() const { return new DirectoryInfo(m_path.parent_path().string()); }
 
-} // namespace DOF
+}

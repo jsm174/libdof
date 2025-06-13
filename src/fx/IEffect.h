@@ -1,17 +1,22 @@
 #pragma once
 
-#include "DOF/DOF.h"
+#include "../general/generic/INamedItem.h"
+#include "../general/generic/IXmlSerializable.h"
 
 namespace DOF
 {
 
-class IEffect
+class Table;
+class TableElementData;
+
+class IEffect : public virtual INamedItem, public virtual IXmlSerializable
 {
 public:
-   IEffect() { }
-   ~IEffect() { }
+   virtual ~IEffect() = default;
 
-private:
+   virtual void Trigger(TableElementData* tableElementData) = 0;
+   virtual void Init(Table* table) = 0;
+   virtual void Finish() = 0;
 };
 
-} // namespace DOF
+}

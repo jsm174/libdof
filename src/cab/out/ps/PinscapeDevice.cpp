@@ -1,8 +1,4 @@
-/*
- * Portions of this code was derived from Direct Output Framework
- *
- * https://github.com/mjrgh/DirectOutput/blob/master/DirectOutput/Cab/Out/PS/Pinscape.cs
- */
+
 
 #include "PinscapeDevice.h"
 
@@ -97,4 +93,4 @@ bool PinscapeDevice::WriteUSB(uint8_t* pBuf)
    return true;
 }
 
-} // namespace DOF
+}

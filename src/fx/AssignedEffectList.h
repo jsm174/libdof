@@ -12,10 +12,13 @@ class TableElementData;
 class AssignedEffectList : public std::vector<AssignedEffect*>
 {
 public:
+   AssignedEffectList() = default;
+   ~AssignedEffectList() { Finish(); }
+
    void Add(const std::string& effectName);
    void Trigger(TableElementData* pTableElementData);
    void Init(Table* pTable);
    void Finish();
 };
 
-} // namespace DOF
+}

@@ -15,11 +15,8 @@ Config* Config::GetInstance()
 
 Config::Config()
 {
-   m_dofServer = false;
-   m_dofServerAddr = "localhost";
-   m_dofServerPort = 6789;
    m_logLevel = DOF_LogLevel_INFO;
    m_logCallback = nullptr;
 }
 
-} // namespace DOF
+}

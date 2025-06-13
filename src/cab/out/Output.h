@@ -13,8 +13,6 @@ public:
    ~Output() { }
 
    void SetOutput(uint8_t value) override;
-
-   void OnValueChanged();
 };
 
-} // namespace DOF
+}

@@ -3,8 +3,28 @@
 namespace DOF
 {
 
-OutputControllerBase::OutputControllerBase() { }
+OutputControllerBase::OutputControllerBase()
+   : m_outputs(new OutputList())
+{
+   m_outputs->OutputValueChanged += [this](void* sender, const OutputEventArgs& args) { OnOutputsValueChanged(args); };
+}
 
-OutputControllerBase::~OutputControllerBase() { }
+OutputControllerBase::~OutputControllerBase() { delete m_outputs; }
 
-} // namespace DOF
+void OutputControllerBase::SetOutputs(OutputList* outputs)
+{
+   if (m_outputs != outputs)
+   {
+      delete m_outputs;
+      m_outputs = outputs;
+
+      if (m_outputs)
+      {
+         m_outputs->OutputValueChanged += [this](void* sender, const OutputEventArgs& args) { OnOutputsValueChanged(args); };
+      }
+   }
+}
+
+void OutputControllerBase::OnOutputsValueChanged(const OutputEventArgs& args) { OnOutputValueChanged(args.GetOutput()); }
+
+}

@@ -1,7 +1,10 @@
 #include "PinscapeAutoConfigurator.h"
 
 #include "../../../Log.h"
+#include "../../../general/StringExtensions.h"
 #include "../../Cabinet.h"
+#include "../../toys/ToyList.h"
+#include "../../toys/lwequivalent/LedWizEquivalent.h"
 #include "../OutputControllerList.h"
 #include "Pinscape.h"
 #include "PinscapeDevice.h"
@@ -11,84 +14,68 @@ namespace DOF
 
 void PinscapeAutoConfigurator::AutoConfig(Cabinet* pCabinet)
 {
-   int UnitBias = 50;
+   const int UnitBias = 50;
 
-   for (PinscapeDevice* pDevice : Pinscape::GetAllDevices())
+   std::vector<int> preconfigured;
+   for (IOutputController* controller : *pCabinet->GetOutputControllers())
    {
-      int unitNo = pDevice->GetUnitNo();
-      if (unitNo)
+      Pinscape* pinscape = dynamic_cast<Pinscape*>(controller);
+      if (pinscape)
+         preconfigured.push_back(pinscape->GetNumber());
+   }
+
+   std::vector<int> numbers;
+   for (PinscapeDevice* device : Pinscape::AllDevices())
+      numbers.push_back(device->GetUnitNo());
+
+   for (int N : numbers)
+   {
+      if (std::find(preconfigured.begin(), preconfigured.end(), N) == preconfigured.end())
       {
-         Pinscape* pPinscape = new Pinscape(unitNo);
-
-         if (!pCabinet->GetOutputControllers()->Contains(pPinscape->GetName()))
+         Pinscape* p = new Pinscape(N);
+         if (!pCabinet->GetOutputControllers()->Contains(p->GetName()))
          {
-            pCabinet->GetOutputControllers()->push_back(pPinscape);
+            pCabinet->GetOutputControllers()->push_back(p);
+            Log::Write(StringExtensions::Build("Detected and added Pinscape Controller Nr. {0} with name {1}", std::to_string(p->GetNumber()), p->GetName()));
 
-            Log::Write("Detected and added Pinscape Controller Nr. %d with name %s", pPinscape->GetNumber(), pPinscape->GetName().c_str());
+            bool toyExists = false;
+            int targetLedWizNumber = p->GetNumber() + UnitBias;
 
-            /*if (!Cabinet.Toys.Any(T = > T is LedWizEquivalent && ((LedWizEquivalent)T).LedWizNumber == p.Number +
-        UnitBias))
-        {
-          LedWizEquivalent LWE = new LedWizEquivalent();
-          LWE.LedWizNumber = p.Number + UnitBias;
-          LWE.Name = "{0} Equivalent".Build(p.Name);
+            for (IToy* toy : *pCabinet->GetToys())
+            {
+               LedWizEquivalent* lwe = dynamic_cast<LedWizEquivalent*>(toy);
+               if (lwe && lwe->GetLedWizNumber() == targetLedWizNumber)
+               {
+                  toyExists = true;
+                  break;
+               }
+            }
 
-          for (int i = 1; i <= p.NumberOfOutputs; i++)
-          {
-            LedWizEquivalentOutput LWEO = new LedWizEquivalentOutput(){OutputName = "{0}\\{0}.{1:00}".Build(p.Name, i),
-                                                                       LedWizEquivalentOutputNumber = i};
-            LWE.Outputs.Add(LWEO);
-          }
+            if (!toyExists)
+            {
+               LedWizEquivalent* lwe = new LedWizEquivalent();
+               lwe->SetLedWizNumber(p->GetNumber() + UnitBias);
+               lwe->SetName(p->GetName() + " Equivalent");
 
-          if (!Cabinet.Toys.Contains(LWE.Name))
-          {
-            Cabinet.Toys.Add(LWE);
-            Log.Write("Added LedwizEquivalent Nr. {0} with name {1} for Pinscape Controller Nr. {2}".Build(
-                          LWE.LedWizNumber, LWE.Name, p.Number) +
-                      ", {0}".Build(p.NumberOfOutputs));
-          }
-        }*/
+               for (int i = 1; i <= p->GetNumberOfOutputs(); i++)
+               {
+                  LedWizEquivalentOutput* LWEO = new LedWizEquivalentOutput();
+
+                  LWEO->SetOutputName(p->GetName() + "." + std::to_string(i));
+                  LWEO->SetLedWizEquivalentOutputNumber(i);
+                  lwe->GetOutputs().AddOutput(LWEO);
+               }
+
+               if (!pCabinet->GetToys()->Contains(lwe->GetName()))
+               {
+                  pCabinet->GetToys()->push_back(lwe);
+                  Log::Write(StringExtensions::Build("Added LedwizEquivalent Nr. {0} with name {1} for Pinscape Controller Nr. {2}, {3} outputs", std::to_string(lwe->GetLedWizNumber()),
+                     lwe->GetName(), std::to_string(p->GetNumber()), std::to_string(p->GetNumberOfOutputs())));
+               }
+            }
          }
       }
    }
 }
 
-void PinscapeAutoConfigurator::Test(Pinscape* pPinscape)
-{
-   int noOutputs = pPinscape->GetNumberOfConfiguredOutputs();
-
-   if (noOutputs > 0)
-   {
-      uint8_t* outputs = (uint8_t*)malloc(noOutputs * sizeof(uint8_t));
-
-      auto start = std::chrono::steady_clock::now();
-      int direction = 1;
-      int value = 0;
-      int stepSize = 5;
-
-      while (std::chrono::steady_clock::now() - start < std::chrono::seconds(10))
-      {
-         for (int i = 0; i < noOutputs; ++i)
-         {
-            outputs[i] = (uint8_t)value;
-         }
-
-         pPinscape->UpdateOutputs(outputs);
-
-         value += stepSize * direction;
-         if (value >= 255 || value <= 0)
-         {
-            direction *= -1;
-            value = std::max(0, std::min(value, 255));
-         }
-
-         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      }
-
-      pPinscape->Finish();
-
-      free(outputs);
-   }
 }
-
-} // namespace DOF

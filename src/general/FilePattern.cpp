@@ -107,4 +107,4 @@ bool FilePattern::IsValid() const noexcept
    }
    return !bracketOpen;
 }
-} // namespace DOF
+}

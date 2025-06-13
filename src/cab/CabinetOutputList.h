@@ -7,14 +7,63 @@ namespace DOF
 {
 
 class Cabinet;
+class OutputControllerList;
 
-class CabinetOutputList : public std::vector<IOutput*>
+class CabinetOutputList
 {
 public:
    CabinetOutputList(Cabinet* pCabinet);
+   ~CabinetOutputList();
+
+   IOutput* GetByName(const std::string& name);
+   const IOutput* GetByName(const std::string& name) const;
+   bool Contains(const std::string& name) const;
+   bool Contains(IOutput* output) const;
+   IOutput* operator[](const std::string& name);
+   const IOutput* operator[](const std::string& name) const;
+   IOutput* operator[](int index);
+   const IOutput* operator[](int index) const;
+   int GetCount() const;
+   void ConnectOutputsToControllers();
+
+   class Iterator
+   {
+   public:
+      Iterator(CabinetOutputList* list, int index);
+      IOutput* operator*();
+      Iterator& operator++();
+      bool operator!=(const Iterator& other) const;
+      bool operator==(const Iterator& other) const;
+
+   private:
+      CabinetOutputList* m_list;
+      int m_index;
+   };
+
+   class ConstIterator
+   {
+   public:
+      ConstIterator(const CabinetOutputList* list, int index);
+      const IOutput* operator*() const;
+      ConstIterator& operator++();
+      bool operator!=(const ConstIterator& other) const;
+      bool operator==(const ConstIterator& other) const;
+
+   private:
+      const CabinetOutputList* m_list;
+      int m_index;
+   };
+
+   Iterator begin();
+   Iterator end();
+   ConstIterator begin() const;
+   ConstIterator end() const;
+   ConstIterator cbegin() const;
+   ConstIterator cend() const;
 
 private:
    Cabinet* m_pCabinet;
+   OutputControllerList* GetOutputControllers() const;
 };
 
-} // namespace DOF
+}

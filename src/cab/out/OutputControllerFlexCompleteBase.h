@@ -21,4 +21,4 @@ private:
    int m_numberOfOutputs;
 };
 
-} // namespace DOF
+}

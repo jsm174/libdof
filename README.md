@@ -4,64 +4,60 @@ A cross platform library for performing Direct Output Framework tasks.
 
 This library is currently used by [Visual Pinball Standalone](https://github.com/vpinball/vpinball/tree/standalone) to support Direct Output Framework.
 
+## About:
+
+**Direct Output Framework (DOF)** is a system originally developed in C# for controlling feedback devices (like LEDs, solenoids, and motors) on virtual pinball machines. It is widely used in the virtual pinball community, especially in combination with Pinscape controllers and B2S-based backglasses.
+
+**libdof** is a cross-platform C++ library aiming to be a faithful 1:1 port of the original [DirectOutput](https://github.com/mjrgh/DirectOutput) C# codebase maintained by [@mjrgh](https://github.com/mjrgh). This work began on March 23, 2024, and builds on previous porting efforts like B2S and FlexDMD, where accuracy to the original code has always been a priority.
+
+> [!WARNING]
+> Given the scope of Direct Output Framework - over 250 C# files - this C++ port leveraged a large amount of AI assistance (ChatGPT and Claude). I know for sure it is **NOT** fully accurate and **DOES** contain bugs. Now that most of the files are in place, I will continue refining it until we achieve a true faithful 1:1 port.
+
+As of now, `libdof` can drive LEDs using @mjrgh's excellent [Pinscape](http://mjrnet.org/pinscape) boards, and is in use by [Visual Pinball Standalone](https://github.com/vpinball/vpinball/tree/standalone). It is based on commit [`294a3449c66da43b0cf762d07331704cdae25ba5`](https://github.com/mjrgh/DirectOutput/commit/294a3449c66da43b0cf762d07331704cdae25ba5), dated April 11, 2024.
+
 ## Usage:
 
 ```cpp
 #include "DOF/DOF.h"
 .
 .
-void setup()
+
+void LIBDOFCALLBACK LogCallback(DOF_LogLevel logLevel, const char* format, va_list args)
 {
-   DOF::Config* pConfig = DOF::Config::GetInstance();
-   pConfig->;
+   va_list args_copy;
+   va_copy(args_copy, args);
+   int size = vsnprintf(nullptr, 0, format, args_copy);
+   va_end(args_copy);
+
+   if (size > 0)
+   {
+      char* const buffer = static_cast<char*>(malloc(size + 1));
+      vsnprintf(buffer, size + 1, format, args);
+      printf("%s\n", buffer);
+      free(buffer);
+   }
 }
 
 void test()
 {
+   DOF::Config* pConfig = DOF::Config::GetInstance();
+   pConfig->SetLogCallback(LogCallback);
+   pConfig->SetLogLevel(DOF_LogLevel_DEBUG);
+   pConfig->SetBasePath("/Users/jmillard/.vpinball/");
+
+   DOF::DOF* pDof = new DOF::DOF();
+   pDof->Init("", "ij_l7");
+   .
+   .
+   pDof->DataReceive('L', 88, 1);
+   .
+   .
+   pDof->DataReceive('L', 88, 0);
+   .
+   .
+   pDof->Finish();
+   delete pDof;
 }
-```
-
-## dofserver
-
-`dofserver` provides a server process on top of `libdof`.
-Per default it listens on port 6789 on localhost and accepts "raw" TCP connections.
-
-`dofserver` accepts these command line options:
-* -c --config
-    * Config file
-    * optional
-    * default is no config file
-* -a --addr
-    * IP address or host name
-    * optional
-    * default is `localhost`
-* -p --port
-    * Port
-    * optional
-    * default is `6789`
-* -l --logging
-    * Enable logging to stderr
-    * optional
-    * default is no logging
-* -v --verbose
-    * Enables verbose logging, includes normal logging
-    * optional
-    * default is no logging
-* -h --help
-    * Show help
-
-### Notes
-
-### Examples
-
-### Config File
-
-```ini
-[DOFServer]
-# The address (interface) to listen for TCP connections.
-Addr = localhost
-# The port to listen for TCP connections.
-Port = 6789
 ```
 
 ## Building:

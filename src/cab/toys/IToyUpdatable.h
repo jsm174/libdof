@@ -6,10 +6,11 @@
 namespace DOF
 {
 
-class IToyUpdatable : public IToy
+class IToyUpdatable : public virtual IToy
 {
 public:
+   virtual void UpdateToy() = 0;
    virtual void UpdateOutputs() = 0;
 };
 
-} // namespace DOF
+}

@@ -1,8 +1,4 @@
-/*
- * Portions of this code was derived from Direct Output Framework
- *
- * https://github.com/mjrgh/DirectOutput/blob/master/DirectOutput/Cab/Out/PS/Pinscape.cs
- */
+
 
 #include "Pinscape.h"
 
@@ -15,6 +11,9 @@
 #include <thread>
 
 #include "../../../Log.h"
+#include "../../../general/StringExtensions.h"
+#include "../../Cabinet.h"
+
 #include "PinscapeDevice.h"
 
 namespace DOF
@@ -45,7 +44,7 @@ void Pinscape::SetNumber(int value)
 {
    if (value < 1 || value > 16)
    {
-      Log::Write("Pinscape Unit Numbers must be between 1-16. The supplied number %d is out of range.", value);
+      Log::Write(StringExtensions::Build("Pinscape Unit Numbers must be between 1-16. The supplied number {0} is out of range.", std::to_string(value)));
       return;
    }
 
@@ -69,11 +68,13 @@ void Pinscape::SetNumber(int value)
       if (m_pDevice)
       {
          SetNumberOfOutputs(m_pDevice->GetNumOutputs());
-      }
 
-      memset(m_oldOutputValues, 0, GetNumberOfOutputs());
+         m_oldOutputValues.resize(GetNumberOfOutputs(), 255);
+      }
    }
 }
+
+bool Pinscape::VerifySettings() { return true; }
 
 void Pinscape::SetMinCommandIntervalMs(int value)
 {
@@ -83,29 +84,59 @@ void Pinscape::SetMinCommandIntervalMs(int value)
 
 void Pinscape::Init(Cabinet* pCabinet)
 {
-   if (!m_minCommandIntervalMsSet 
-       /*&& Cabinet.Owner.ConfigurationSettings.ContainsKey("PinscapeDefaultMinCommandIntervalMs")
-         && Cabinet.Owner.ConfigurationSettings["PinscapeDefaultMinCommandIntervalMs"] is int*/)
+
+   if (!m_minCommandIntervalMsSet && pCabinet && pCabinet->GetOwner() && pCabinet->GetOwner()->HasConfigurationSetting("PinscapeDefaultMinCommandIntervalMs"))
    {
-      SetMinCommandIntervalMs(1); //(int)Cabinet.Owner.ConfigurationSettings["PinscapeDefaultMinCommandIntervalMs"];*/
+      std::string value = pCabinet->GetOwner()->GetConfigurationSetting("PinscapeDefaultMinCommandIntervalMs");
+      try
+      {
+         int intervalMs = std::stoi(value);
+         SetMinCommandIntervalMs(intervalMs);
+      }
+      catch (const std::exception&)
+      {
+      }
    }
 
-   OutputControllerFlexCompleteBase::Init(nullptr /*Cabinet*/);
+
+   OutputControllerFlexCompleteBase::Init(pCabinet);
 }
 
 void Pinscape::Finish()
 {
-   if (!m_pDevice)
-      return;
-
-   m_pDevice->AllOff();
-
+   if (m_pDevice)
+      m_pDevice->AllOff();
    OutputControllerFlexCompleteBase::Finish();
 }
 
-void Pinscape::UpdateOutputs(uint8_t* pNewOutputValues)
+void Pinscape::ConnectToController() { }
+
+void Pinscape::DisconnectFromController()
 {
-   if (!m_pDevice)
+   if (m_pDevice && m_inUseState == InUseState::Running)
+      m_pDevice->AllOff();
+
+   m_pDevice = nullptr;
+   m_oldOutputValues.clear();
+}
+
+void Pinscape::AllOff()
+{
+   if (m_pDevice)
+   {
+      m_pDevice->AllOff();
+
+      std::fill(m_oldOutputValues.begin(), m_oldOutputValues.end(), 0);
+   }
+}
+
+int Pinscape::GetNumberOfConfiguredOutputs() { return m_pDevice ? m_pDevice->GetNumOutputs() : 32; }
+
+int Pinscape::GetNumberOfOutputs() const { return m_pDevice ? m_pDevice->GetNumOutputs() : 32; }
+
+void Pinscape::UpdateOutputs(const std::vector<uint8_t>& outputValues)
+{
+   if (!m_pDevice || outputValues.empty())
       return;
 
    uint8_t buf[9];
@@ -116,18 +147,19 @@ void Pinscape::UpdateOutputs(uint8_t* pNewOutputValues)
       int lim = std::min(i + 7, GetNumberOfOutputs());
       for (int j = i; j < lim; ++j)
       {
-         if (pNewOutputValues[j] != m_oldOutputValues[j])
+         if (j < static_cast<int>(outputValues.size()) && outputValues[j] != m_oldOutputValues[j])
          {
             UpdateDelay();
 
             buf[0] = 0x00;
             buf[1] = pfx;
 
-            memcpy(buf + 2, pNewOutputValues + i, lim - i);
+            int copySize = std::min(lim - i, static_cast<int>(outputValues.size()) - i);
+            memcpy(buf + 2, outputValues.data() + i, copySize);
 
             m_pDevice->WriteUSB(buf);
 
-            memcpy(m_oldOutputValues + i, pNewOutputValues + i, lim - i);
+            memcpy(m_oldOutputValues.data() + i, outputValues.data() + i, copySize);
 
             break;
          }
@@ -159,9 +191,7 @@ void Pinscape::FindDevices()
       if ((isLedWiz || isPinscape) && pCurrentDevice->release_number > 7)
       {
          std::string productName = GetProductName(pCurrentDevice);
-         std::string lowerProductName = productName;
-
-         std::transform(lowerProductName.begin(), lowerProductName.end(), lowerProductName.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
+         std::string lowerProductName = StringExtensions::ToLower(productName);
 
          if (lowerProductName.find("pinscape") != std::string::npos)
          {
@@ -173,7 +203,7 @@ void Pinscape::FindDevices()
                   PinscapeDevice* pDevice
                      = new PinscapeDevice(pHandle, pCurrentDevice->path, productName, pCurrentDevice->vendor_id, pCurrentDevice->product_id, pCurrentDevice->release_number);
 
-                  Log::Write("Found Pinscape device: %s (path=%s)", pDevice->ToString().c_str(), pCurrentDevice->path);
+                  Log::Write(StringExtensions::Build("Found Pinscape device: {0} (path={1})", pDevice->ToString(), pCurrentDevice->path));
 
                   m_devices.push_back(pDevice);
                }
@@ -199,4 +229,30 @@ std::string Pinscape::GetProductName(hid_device_info* dev)
    return productName;
 }
 
-} // namespace DOF
+XMLElement* Pinscape::ToXml(XMLDocument& doc) const
+{
+   XMLElement* element = OutputControllerFlexCompleteBase::ToXml(doc);
+
+   element->SetAttribute("Number", m_number);
+   element->SetAttribute("MinCommandIntervalMs", m_minCommandIntervalMs);
+
+   return element;
+}
+
+bool Pinscape::FromXml(const XMLElement* element)
+{
+   if (!OutputControllerFlexCompleteBase::FromXml(element))
+      return false;
+
+   int number = m_number;
+   element->QueryIntAttribute("Number", &number);
+   SetNumber(number);
+
+   int minInterval = m_minCommandIntervalMs;
+   element->QueryIntAttribute("MinCommandIntervalMs", &minInterval);
+   SetMinCommandIntervalMs(minInterval);
+
+   return true;
+}
+
+}

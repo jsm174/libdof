@@ -28,4 +28,4 @@ private:
    std::filesystem::path m_path;
 };
 
-} // namespace DOF
+}

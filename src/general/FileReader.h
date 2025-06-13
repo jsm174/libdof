@@ -11,4 +11,4 @@ public:
    static std::string ReadFileToString(const std::string& filename);
 };
 
-} // namespace DOF
+}

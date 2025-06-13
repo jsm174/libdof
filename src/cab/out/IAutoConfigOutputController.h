@@ -14,4 +14,4 @@ public:
    virtual void AutoConfig(Cabinet* pCabinet) = 0;
 };
 
-} // namespace DOF
+}

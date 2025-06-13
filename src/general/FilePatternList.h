@@ -15,4 +15,4 @@ public:
    FileInfo* GetFirstMatchingFile(const std::unordered_map<std::string, std::string>& replaceValues = {}) const;
 };
 
-} // namespace DOF
+}

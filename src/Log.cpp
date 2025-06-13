@@ -12,38 +12,14 @@ void Log::AfterInit() { }
 void Log::Finish() { }
 void Log::WriteRaw(const char* format, ...) { }
 
-void Log::Write(const char* format, ...)
-{
-   va_list args;
-   va_start(args, format);
-   ::DOF::Log(DOF_LogLevel_INFO, format, args);
-   va_end(args);
-}
+void Log::Write(const std::string& message) { ::DOF::Log(DOF_LogLevel_INFO, "%s", message.c_str()); }
 
-void Log::Warning(const char* format, ...)
-{
-   va_list args;
-   va_start(args, format);
-   ::DOF::Log(DOF_LogLevel_WARN, format, args);
-   va_end(args);
-}
+void Log::Warning(const std::string& message) { ::DOF::Log(DOF_LogLevel_WARN, "%s", message.c_str()); }
 
-void Log::Exception(const char* format, ...)
-{
-   va_list args;
-   va_start(args, format);
-   ::DOF::Log(DOF_LogLevel_ERROR, format, args);
-   va_end(args);
-}
+void Log::Exception(const std::string& message) { ::DOF::Log(DOF_LogLevel_ERROR, "%s", message.c_str()); }
 
-void Log::Debug(const char* format, ...)
-{
-   va_list args;
-   va_start(args, format);
-   ::DOF::Log(DOF_LogLevel_DEBUG, format, args);
-   va_end(args);
-}
+void Log::Debug(const std::string& message) { ::DOF::Log(DOF_LogLevel_DEBUG, "%s", message.c_str()); }
 
 Log::Log() { }
 
-} // namespace DOF
+}

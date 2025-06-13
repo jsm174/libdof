@@ -3,4 +3,4 @@
 namespace DOF
 {
 
-} // namespace DOF
+}

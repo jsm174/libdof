@@ -15,4 +15,4 @@ void OutputControllerFlexCompleteBase::SetNumberOfOutputs(int numberOfOutputs)
 
 int OutputControllerFlexCompleteBase::GetNumberOfConfiguredOutputs() { return m_numberOfOutputs; }
 
-} // namespace DOF
+}

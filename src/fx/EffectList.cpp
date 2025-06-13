@@ -1,10 +1,106 @@
 #include "EffectList.h"
+#include "IEffect.h"
+#include "EffectFactory.h"
+#include "../Log.h"
+#include "../general/StringExtensions.h"
 
 namespace DOF
 {
 
-void EffectList::Init(Table* pTable) { }
+void EffectList::Init(Table* pTable)
+{
+   for (auto& pair : *this)
+   {
+      if (pair.second != nullptr)
+      {
+         pair.second->Init(pTable);
+      }
+   }
+}
 
-void EffectList::Finish() { }
+void EffectList::Finish()
+{
+   for (auto& pair : *this)
+   {
+      if (pair.second != nullptr)
+      {
+         pair.second->Finish();
+         delete pair.second;
+      }
+   }
+   clear();
+}
 
-} // namespace DOF
+XMLElement* EffectList::ToXml(XMLDocument& doc) const
+{
+   XMLElement* effectsElement = doc.NewElement(GetXmlElementName().c_str());
+
+
+   for (const auto& pair : *this)
+   {
+      if (pair.second != nullptr)
+      {
+         XMLElement* effectElement = pair.second->ToXml(doc);
+         if (effectElement)
+         {
+            effectsElement->InsertEndChild(effectElement);
+         }
+      }
+   }
+
+   return effectsElement;
+}
+
+bool EffectList::FromXml(const XMLElement* element)
+{
+   if (!element)
+      return false;
+
+
+   Finish();
+
+   const EffectFactory& factory = EffectFactory::GetInstance();
+
+
+   const XMLElement* effectElement = element->FirstChildElement();
+   while (effectElement)
+   {
+      std::string typeName = effectElement->Name();
+
+
+      IEffect* effect = factory.CreateEffect(typeName);
+      if (effect)
+      {
+
+         if (effect->FromXml(effectElement))
+         {
+            Add(effect);
+         }
+         else
+         {
+            Log::Warning(StringExtensions::Build("Failed to deserialize effect of type: {0}", typeName));
+            delete effect;
+         }
+      }
+      else
+      {
+         Log::Warning(StringExtensions::Build("Unknown effect type: {0}", typeName));
+      }
+
+      effectElement = effectElement->NextSiblingElement();
+   }
+
+   return true;
+}
+
+void EffectList::Add(IEffect* effect)
+{
+   if (effect && !effect->GetName().empty())
+   {
+      (*this)[effect->GetName()] = effect;
+   }
+}
+
+bool EffectList::Contains(const std::string& name) const { return find(name) != end(); }
+
+}

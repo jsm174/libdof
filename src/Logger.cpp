@@ -17,9 +17,9 @@ void Log(DOF_LogLevel logLevel, const char* format, va_list args)
 {
    static Config* pConfig = Config::GetInstance();
    auto callback = pConfig->GetLogCallback();
-   if (!callback || logLevel < pConfig->GetLogLevel())
+   if (!callback || logLevel > pConfig->GetLogLevel())
       return;
    callback(logLevel, format, args);
 }
 
-} // namespace DOF
+}
