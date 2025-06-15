@@ -9,17 +9,7 @@ void Output::SetOutput(uint8_t value)
    IOutput::SetOutput(value);
 
    if (oldValue != value)
-   {
       OnValueChanged();
-   }
 }
 
-void Output::OnValueChanged()
-{
-   // if (ValueChanged != null)
-   //{
-   //   ValueChanged(this, new OutputEventArgs(this));
-   // }
 }
-
-} // namespace DOF

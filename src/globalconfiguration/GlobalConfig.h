@@ -18,44 +18,48 @@ public:
    GlobalConfig();
    ~GlobalConfig() { };
 
-   int GetLedWizDefaultMinCommandIntervalMs() { return m_ledWizDefaultMinCommandIntervalMs; }
+   int GetLedWizDefaultMinCommandIntervalMs() const { return m_ledWizDefaultMinCommandIntervalMs; }
    void SetLedWizDefaultMinCommandIntervalMs(int value);
-   int GetLedControlMinimumEffectDurationMs() { return m_ledControlMinimumEffectDurationMs; }
+   int GetLedControlMinimumEffectDurationMs() const { return m_ledControlMinimumEffectDurationMs; }
    void SetLedControlMinimumEffectDurationMs(int value) { m_ledControlMinimumEffectDurationMs = value; }
-   int GetLedControlMinimumRGBEffectDurationMs() { return m_ledControlMinimumRGBEffectDurationMs; }
+   int GetLedControlMinimumRGBEffectDurationMs() const { return m_ledControlMinimumRGBEffectDurationMs; }
    void SetLedControlMinimumRGBEffectDurationMs(int value) { m_ledControlMinimumRGBEffectDurationMs = value; }
-   int GetPacLedDefaultMinCommandIntervalMs() { return m_pacLedDefaultMinCommandIntervalMs; }
+   int GetPacLedDefaultMinCommandIntervalMs() const { return m_pacLedDefaultMinCommandIntervalMs; }
    void SetPacLedDefaultMinCommandIntervalMs(int value);
-   const std::string& GetIniFilesPath() { return m_iniFilesPath; }
-   void SetIniFilesPath(std::string path) { m_iniFilesPath = path; }
-   std::unordered_map<int, FileInfo> GetIniFilesDictionary(const std::string& tableFilename);
-   FileInfo* GetTableMappingFile(const std::string& tableFilename);
-   const FilePattern& GetShapeDefinitionFilePattern() { return m_shapeDefinitionFilePattern; }
+   const std::string& GetIniFilesPath() const { return m_iniFilesPath; }
+   void SetIniFilesPath(const std::string& path) { m_iniFilesPath = path; }
+   std::unordered_map<int, FileInfo> GetIniFilesDictionary(const std::string& tableFilename) const;
+   FileInfo* GetTableMappingFile(const std::string& tableFilename) const;
+   const FilePattern& GetShapeDefinitionFilePattern() const { return m_shapeDefinitionFilePattern; }
    void SetShapeDefinitionFilePattern(const std::string& pattern) { m_shapeDefinitionFilePattern.SetPattern(pattern); }
-   FileInfo* GetShapeDefinitionFile(const std::string& tableFilename = "", const std::string& romName = "");
-   const FilePattern& GetCabinetConfigFilePattern() { return m_cabinetConfigFilePattern; }
+   FileInfo* GetShapeDefinitionFile(const std::string& tableFilename = "", const std::string& romName = "") const;
+   const FilePattern& GetCabinetConfigFilePattern() const { return m_cabinetConfigFilePattern; }
    void SetCabinetConfigFilePattern(const std::string& pattern) { m_cabinetConfigFilePattern.SetPattern(pattern); }
-   FileInfo* GetCabinetConfigFile();
-   DirectoryInfo* GetCabinetConfigDirectory();
+   FileInfo* GetCabinetConfigFile() const;
+   DirectoryInfo* GetCabinetConfigDirectory() const;
+   const FilePatternList& GetTableConfigFilePatterns() const { return m_tableConfigFilePatterns; }
    FilePatternList& GetTableConfigFilePatterns() { return m_tableConfigFilePatterns; }
-   FileInfo* GetTableConfigFile(const std::string& tableFilename);
-   bool IsEnableLogging() { return m_enableLog; }
+   FileInfo* GetTableConfigFile(const std::string& tableFilename) const;
+   bool IsEnableLogging() const { return m_enableLog; }
    void SetEnableLogging(bool enable) { m_enableLog = enable; }
-   bool IsClearLogOnSessionStart() { return m_clearLogOnSessionStart; }
+   bool IsClearLogOnSessionStart() const { return m_clearLogOnSessionStart; }
    void SetClearLogOnSessionStart(bool clear) { m_clearLogOnSessionStart = clear; }
-   const FilePattern& GetLogFilePattern() { return m_logFilePattern; }
+   const FilePattern& GetLogFilePattern() const { return m_logFilePattern; }
    void SetLogFilePattern(const std::string& pattern) { m_logFilePattern.SetPattern(pattern); }
-   std::string GetLogFilename(const std::string& tableFilename = "", const std::string& romName = "");
-   std::unordered_map<std::string, std::string> GetReplaceValuesDictionary(const std::string& tableFilename = "", const std::string& romName = "");
-   std::string GetGlobalConfigDirectoryName();
-   DirectoryInfo* GetGlobalConfigDirectory();
-   const std::string& GetGlobalConfigFilename() { return m_globalConfigFileName; }
+   std::string GetLogFilename(const std::string& tableFilename = "", const std::string& romName = "") const;
+   std::unordered_map<std::string, std::string> GetReplaceValuesDictionary(const std::string& tableFilename = "", const std::string& romName = "") const;
+   std::string GetGlobalConfigDirectoryName() const;
+   DirectoryInfo* GetGlobalConfigDirectory() const;
+   const std::string& GetGlobalConfigFilename() const { return m_globalConfigFileName; }
    void SetGlobalConfigFilename(const std::string& filename) { m_globalConfigFileName = filename; }
-   FileInfo* GetGlobalConfigFile();
-   std::string GetGlobalConfigXml();
+   FileInfo* GetGlobalConfigFile() const;
+   std::string GetGlobalConfigXml() const { return ToXml(); }
    static GlobalConfig* GetGlobalConfigFromConfigXmlFile(const std::string& globalConfigFileName);
    static GlobalConfig* GetGlobalConfigFromGlobalConfigXml(const std::string& configXml);
-   void SaveGlobalConfig(const std::string& globalConfigFilename = "");
+   void SaveGlobalConfig(const std::string& globalConfigFileName = "");
+
+   std::string ToXml() const;
+   static GlobalConfig* FromXml(const std::string& xml);
 
 private:
    int m_ledWizDefaultMinCommandIntervalMs;
@@ -72,4 +76,4 @@ private:
    std::string m_globalConfigFileName;
 };
 
-} // namespace DOF
+}

@@ -1,42 +1,167 @@
 #include "ToyList.h"
-
-#include "../../Log.h"
 #include "IToyUpdatable.h"
+#include "../Cabinet.h"
+#include "../../Log.h"
+#include "../../general/StringExtensions.h"
+
+#include <algorithm>
 
 namespace DOF
 {
-void ToyList::WriteXml() { Log::Write("Not implemented"); }
 
-void ToyList::ReadXml() { Log::Write("Not implemented"); }
+ToyList::ToyList() { }
 
-void ToyList::Init(Cabinet* pCabinet)
+ToyList::~ToyList()
 {
-   for (IToy* pToy : *this)
-      pToy->Init(pCabinet);
+
+   for (IToy* toy : *this)
+      delete toy;
+   clear();
 }
 
-void ToyList::Reset()
+void ToyList::Init(Cabinet* cabinet)
 {
-   for (IToy* pToy : *this)
-      pToy->Reset();
-}
+   Log::Write(StringExtensions::Build("Initializing {0} toys", std::to_string(size())));
 
-void ToyList::Finish()
-{
-   for (IToy* pToy : *this)
-      pToy->Finish();
-}
-
-void ToyList::UpdateOutputs()
-{
-   for (IToy* pToy : *this)
+   for (IToy* toy : *this)
    {
-      IToyUpdatable* pToyUpdatable = dynamic_cast<IToyUpdatable*>(pToy);
-      if (pToyUpdatable)
+      if (toy != nullptr)
       {
-         pToyUpdatable->UpdateOutputs();
+         try
+         {
+            toy->Init(cabinet);
+         }
+         catch (const std::exception& e)
+         {
+            Log::Exception(StringExtensions::Build("Error initializing toy {0}: {1}", toy->GetName(), e.what()));
+         }
       }
    }
 }
 
-} // namespace DOF
+void ToyList::Reset()
+{
+   Log::Write(StringExtensions::Build("Resetting {0} toys", std::to_string(size())));
+
+   for (IToy* toy : *this)
+   {
+      if (toy != nullptr)
+      {
+         try
+         {
+            toy->Reset();
+         }
+         catch (const std::exception& e)
+         {
+            Log::Exception(StringExtensions::Build("Error resetting toy {0}: {1}", toy->GetName(), e.what()));
+         }
+      }
+   }
+}
+
+void ToyList::Finish()
+{
+   Log::Write(StringExtensions::Build("Finishing {0} toys", std::to_string(size())));
+
+   for (IToy* toy : *this)
+   {
+      if (toy != nullptr)
+      {
+         try
+         {
+            toy->Finish();
+         }
+         catch (const std::exception& e)
+         {
+            Log::Exception(StringExtensions::Build("Error finishing toy {0}: {1}", toy->GetName(), e.what()));
+         }
+      }
+   }
+}
+
+void ToyList::UpdateToys()
+{
+   for (IToy* toy : *this)
+   {
+      if (toy != nullptr)
+      {
+
+         IToyUpdatable* updatableToy = dynamic_cast<IToyUpdatable*>(toy);
+         if (updatableToy != nullptr)
+         {
+            try
+            {
+               updatableToy->UpdateToy();
+            }
+            catch (const std::exception& e)
+            {
+               Log::Exception(StringExtensions::Build("Error updating toy {0}: {1}", toy->GetName(), e.what()));
+            }
+         }
+      }
+   }
+}
+
+void ToyList::UpdateOutputs() { UpdateToys(); }
+
+IToy* ToyList::FindByName(const std::string& name) const
+{
+   for (IToy* toy : *this)
+   {
+      if (toy != nullptr && toy->GetName() == name)
+         return toy;
+   }
+   return nullptr;
+}
+
+void ToyList::AddToy(IToy* toy)
+{
+   if (toy == nullptr)
+      return;
+
+
+   if (FindByName(toy->GetName()) != nullptr)
+   {
+      Log::Warning(StringExtensions::Build("Toy with name {0} already exists", toy->GetName()));
+      return;
+   }
+
+   push_back(toy);
+   Log::Debug(StringExtensions::Build("Added toy: {0}", toy->GetName()));
+}
+
+bool ToyList::RemoveToy(IToy* toy, bool deleteToy)
+{
+   if (toy == nullptr)
+      return false;
+
+   auto it = std::find(begin(), end(), toy);
+   if (it != end())
+   {
+      Log::Write(StringExtensions::Build("Removed toy: {0}", toy->GetName()));
+      erase(it);
+
+      if (deleteToy)
+         delete toy;
+      return true;
+   }
+
+   return false;
+}
+
+bool ToyList::RemoveToy(const std::string& name, bool deleteToy)
+{
+   IToy* toy = FindByName(name);
+   if (toy != nullptr)
+      return RemoveToy(toy, deleteToy);
+
+   return false;
+}
+
+bool ToyList::Contains(const std::string& name) const { return FindByName(name) != nullptr; }
+
+void ToyList::WriteXml() { Log::Write("ToyList::WriteXml not yet implemented"); }
+
+void ToyList::ReadXml() { Log::Write("ToyList::ReadXml not yet implemented"); }
+
+}

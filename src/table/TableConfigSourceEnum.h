@@ -14,4 +14,4 @@ enum class TableConfigSourceEnum
    TabbleConfigurationFileAndIniFile
 };
 
-} // namespace DOF
+}

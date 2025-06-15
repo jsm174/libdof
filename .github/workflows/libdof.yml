@@ -90,8 +90,6 @@ jobs:
                 cp build/Release/*.lib tmp
                 cp build/Release/*.dll tmp
              fi
-             cp build/Release/dofserver.exe tmp
-             cp build/Release/dofserver_test.exe tmp
              cp build/Release/dof_static.lib tmp
              cp build/Release/dof_test_s.exe tmp
              cp build/Release/dof_test.exe tmp
@@ -100,15 +98,11 @@ jobs:
             if [[ "${{ matrix.platform }}" == "macos" ]]; then
                cp build/libdof.a tmp
                cp -a build/*.dylib tmp
-               cp build/dofserver tmp
-               cp build/dofserver_test tmp
                cp build/dof_test_s tmp
                cp build/dof_test tmp
             elif [[ "${{ matrix.platform }}" == "linux" ]]; then
                cp build/libdof.a tmp
                cp -a build/*.{so,so.*} tmp
-               cp build/dofserver tmp
-               cp build/dofserver_test tmp
                cp build/dof_test_s tmp
                cp build/dof_test tmp
             elif [[ "${{ matrix.platform }}" == "ios" || "${{ matrix.platform }}" == "ios-simulator" || "${{ matrix.platform }}" == "tvos" ]]; then
@@ -153,11 +147,6 @@ jobs:
                 "libdof-${{ needs.version.outputs.tag }}-macos-arm64/$filename" \
                 "libdof-${{ needs.version.outputs.tag }}-macos-x64/$filename"
             fi
-          done
-          for filename in dofserver dofserver_test dof_test_s dof_test; do
-            lipo -create -output "tmp/$filename" \
-               "libdof-${{ needs.version.outputs.tag }}-macos-arm64/$filename" \
-               "libdof-${{ needs.version.outputs.tag }}-macos-x64/$filename"
           done
       - name: Prepare artifacts
         run: |

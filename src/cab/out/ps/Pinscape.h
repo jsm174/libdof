@@ -21,16 +21,34 @@ public:
 
    int GetNumber() { return m_number; }
    void SetNumber(int value);
+
+   int GetMinCommandIntervalMs() const { return m_minCommandIntervalMs; }
    void SetMinCommandIntervalMs(int value);
    void Init(Cabinet* pCabinet) override;
    void Finish() override;
-   bool VerifySettings() { return true; }
-   void UpdateOutputs(uint8_t* pNewOutputValues);
+
+   virtual bool VerifySettings() override;
+   virtual void ConnectToController() override;
+   virtual void DisconnectFromController() override;
+   virtual void UpdateOutputs(const std::vector<uint8_t>& outputValues) override;
+
+protected:
+   virtual int GetNumberOfConfiguredOutputs() override;
+
+public:
+   int GetNumberOfOutputs() const;
+
+
+   void AllOff();
    void UpdateDelay();
-   void ConnectToController() { }
-   void DisconnectFromController() { }
    static void FindDevices();
+   static std::vector<PinscapeDevice*> AllDevices() { return m_devices; }
    static std::vector<PinscapeDevice*> GetAllDevices() { return m_devices; }
+
+
+   virtual XMLElement* ToXml(XMLDocument& doc) const override;
+   virtual bool FromXml(const XMLElement* element) override;
+   virtual std::string GetXmlElementName() const override { return "Pinscape"; }
 
 private:
    static std::string GetProductName(hid_device_info* dev);
@@ -38,10 +56,10 @@ private:
    int m_number;
    int m_minCommandIntervalMs;
    bool m_minCommandIntervalMsSet;
-   uint8_t m_oldOutputValues[32];
+   std::vector<uint8_t> m_oldOutputValues;
    std::chrono::steady_clock::time_point m_lastUpdate;
    static std::vector<PinscapeDevice*> m_devices;
    PinscapeDevice* m_pDevice;
 };
 
-} // namespace DOF
+}

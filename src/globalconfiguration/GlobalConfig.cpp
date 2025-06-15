@@ -1,13 +1,14 @@
 #include "GlobalConfig.h"
 
 #include "../Log.h"
-#include "../general/Utils.h"
 #include "../general/FileReader.h"
 #include "../general/DirectoryInfo.h"
+#include "../general/StringExtensions.h"
 
 #include <tinyxml2/tinyxml2.h>
 
 #include <filesystem>
+#include <fstream>
 #include <iterator>
 #include <vector>
 
@@ -17,14 +18,14 @@ namespace DOF
 {
 
 GlobalConfig::GlobalConfig()
+   : m_ledWizDefaultMinCommandIntervalMs(10)
+   , m_ledControlMinimumEffectDurationMs(60)
+   , m_ledControlMinimumRGBEffectDurationMs(120)
+   , m_pacLedDefaultMinCommandIntervalMs(10)
+   , m_enableLog(true)
+   , m_clearLogOnSessionStart(true)
 {
-   m_ledWizDefaultMinCommandIntervalMs = 10;
-   m_ledControlMinimumEffectDurationMs = 60;
-   m_ledControlMinimumRGBEffectDurationMs = 120;
-   m_pacLedDefaultMinCommandIntervalMs = 10;
    m_tableConfigFilePatterns.clear();
-   m_enableLog = true;
-   m_clearLogOnSessionStart = true;
    m_logFilePattern.SetPattern("./DirectOutput.log");
 }
 
@@ -32,13 +33,13 @@ void GlobalConfig::SetLedWizDefaultMinCommandIntervalMs(int value) { m_ledWizDef
 
 void GlobalConfig::SetPacLedDefaultMinCommandIntervalMs(int value) { m_pacLedDefaultMinCommandIntervalMs = std::clamp(value, 0, 1000); }
 
-std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std::string& tableFilename)
+std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std::string& tableFilename) const
 {
-   //Build the array of possible paths for the ini files
+
 
    std::vector<std::string> lookupPaths;
 
-   if (!IsNullOrWhiteSpace(m_iniFilesPath))
+   if (!StringExtensions::IsNullOrWhiteSpace(m_iniFilesPath))
    {
       try
       {
@@ -48,11 +49,11 @@ std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std:
       }
       catch (...)
       {
-         Log::Exception("The specified IniFilesPath %s could not be used due to a exception.", m_iniFilesPath.c_str());
+         Log::Exception(StringExtensions::Build("The specified IniFilesPath {0} could not be used due to an exception.", m_iniFilesPath));
       }
    }
 
-   if (!IsNullOrWhiteSpace(tableFilename))
+   if (!StringExtensions::IsNullOrWhiteSpace(tableFilename))
    {
       try
       {
@@ -72,7 +73,6 @@ std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std:
 
    lookupPaths.push_back(std::filesystem::current_path().string());
 
-   //Build the dictionary of ini files
 
    std::unordered_map<int, FileInfo> iniFiles;
 
@@ -88,13 +88,13 @@ std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std:
          std::vector<FileInfo> files;
          for (FileInfo fi : di.EnumerateFiles())
          {
-            if (ToLower(fi.Name()).starts_with(ledControlFilename) && ToLower(fi.Name()).ends_with(".ini"))
+            if (StringExtensions::ToLower(fi.Name()).starts_with(ledControlFilename) && StringExtensions::ToLower(fi.Name()).ends_with(".ini"))
                files.push_back(fi);
          }
 
          for (FileInfo fi : files)
          {
-            if (ToLower(fi.Name() + ".ini") == ToLower(ledControlFilename))
+            if (StringExtensions::ToLower(fi.Name() + ".ini") == StringExtensions::ToLower(ledControlFilename))
             {
                if (!iniFiles.contains(1))
                {
@@ -109,10 +109,10 @@ std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std:
             else
             {
                std::string f = fi.Name().substr(ledControlFilename.length(), fi.Name().length() - ledControlFilename.length() - 4);
-               if (IsInteger(f))
+               if (StringExtensions::IsInteger(f))
                {
                   int ledWizNr = -1;
-                  if (TryParseInt(f, ledWizNr))
+                  if (StringExtensions::TryParseInt(f, ledWizNr))
                   {
                      if (!iniFiles.contains(ledWizNr))
                      {
@@ -121,7 +121,7 @@ std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std:
                      }
                      else
                      {
-                        Log::Warning("Found more than one ini file with number %d.", ledWizNr);
+                        Log::Warning(StringExtensions::Build("Found more than one ini file with number {0}.", std::to_string(ledWizNr)));
                      }
                   }
                }
@@ -137,7 +137,7 @@ std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std:
    return iniFiles;
 }
 
-FileInfo* GlobalConfig::GetTableMappingFile(const std::string& tableFilename)
+FileInfo* GlobalConfig::GetTableMappingFile(const std::string& tableFilename) const
 {
    std::unordered_map<int, FileInfo> iniFilesDict = GetIniFilesDictionary(tableFilename);
 
@@ -152,9 +152,9 @@ FileInfo* GlobalConfig::GetTableMappingFile(const std::string& tableFilename)
    }
 }
 
-FileInfo* GlobalConfig::GetShapeDefinitionFile(const std::string& tableFilename, const std::string& romName)
+FileInfo* GlobalConfig::GetShapeDefinitionFile(const std::string& tableFilename, const std::string& romName) const
 {
-   if (!IsNullOrWhiteSpace(m_shapeDefinitionFilePattern.GetPattern()) && m_shapeDefinitionFilePattern.IsValid())
+   if (!StringExtensions::IsNullOrWhiteSpace(m_shapeDefinitionFilePattern.GetPattern()) && m_shapeDefinitionFilePattern.IsValid())
       return m_shapeDefinitionFilePattern.GetFirstMatchingFile(GetReplaceValuesDictionary(tableFilename, romName));
 
    std::unordered_map<int, FileInfo> iniFilesDict = GetIniFilesDictionary(tableFilename);
@@ -172,14 +172,14 @@ FileInfo* GlobalConfig::GetShapeDefinitionFile(const std::string& tableFilename,
    return nullptr;
 }
 
-FileInfo* GlobalConfig::GetCabinetConfigFile()
+FileInfo* GlobalConfig::GetCabinetConfigFile() const
 {
-   if (!IsNullOrWhiteSpace(m_cabinetConfigFilePattern.GetPattern()) && m_cabinetConfigFilePattern.IsValid())
+   if (!StringExtensions::IsNullOrWhiteSpace(m_cabinetConfigFilePattern.GetPattern()) && m_cabinetConfigFilePattern.IsValid())
       return m_cabinetConfigFilePattern.GetFirstMatchingFile(GetReplaceValuesDictionary());
    return nullptr;
 }
 
-DirectoryInfo* GlobalConfig::GetCabinetConfigDirectory()
+DirectoryInfo* GlobalConfig::GetCabinetConfigDirectory() const
 {
    FileInfo* pCC = GetCabinetConfigFile();
    if (pCC != nullptr)
@@ -187,9 +187,12 @@ DirectoryInfo* GlobalConfig::GetCabinetConfigDirectory()
    return nullptr;
 }
 
-FileInfo* GlobalConfig::GetTableConfigFile(const std::string& fullTableFilename) { return m_tableConfigFilePatterns.GetFirstMatchingFile(GetReplaceValuesDictionary(fullTableFilename)); }
+FileInfo* GlobalConfig::GetTableConfigFile(const std::string& fullTableFilename) const
+{
+   return m_tableConfigFilePatterns.GetFirstMatchingFile(GetReplaceValuesDictionary(fullTableFilename));
+}
 
-std::string GlobalConfig::GetLogFilename(const std::string& tableFilename, const std::string& romName)
+std::string GlobalConfig::GetLogFilename(const std::string& tableFilename, const std::string& romName) const
 {
    std::unordered_map<std::string, std::string> r = GetReplaceValuesDictionary(tableFilename, romName);
    auto now = std::chrono::system_clock::now();
@@ -212,7 +215,7 @@ std::string GlobalConfig::GetLogFilename(const std::string& tableFilename, const
    return m_logFilePattern.ReplacePlaceholders(r);
 }
 
-std::unordered_map<std::string, std::string> GlobalConfig::GetReplaceValuesDictionary(const std::string& tableFilename, const std::string& romName)
+std::unordered_map<std::string, std::string> GlobalConfig::GetReplaceValuesDictionary(const std::string& tableFilename, const std::string& romName) const
 {
    std::unordered_map<std::string, std::string> d;
    if (GetGlobalConfigFile() != nullptr)
@@ -227,7 +230,7 @@ std::unordered_map<std::string, std::string> GlobalConfig::GetReplaceValuesDicti
    d.emplace("AssemblyDirectory", fi.Directory()->FullName());
    d.emplace("AssemblyDir", fi.Directory()->FullName());
 
-   if (!IsNullOrWhiteSpace(tableFilename))
+   if (!StringExtensions::IsNullOrWhiteSpace(tableFilename))
    {
       FileInfo fi(tableFilename);
       if (fi.Directory()->Exists())
@@ -237,16 +240,16 @@ std::unordered_map<std::string, std::string> GlobalConfig::GetReplaceValuesDicti
          d.emplace("TableDirectoryName", fi.Directory()->FullName());
          d.emplace("TableDirName", fi.Directory()->FullName());
       }
-      d.emplace("TableName", GetFileNameWithoutExtension(fi.FullName()));
+      d.emplace("TableName", StringExtensions::GetFileNameWithoutExtension(fi.FullName()));
    }
 
-   if (!IsNullOrWhiteSpace(romName))
+   if (!StringExtensions::IsNullOrWhiteSpace(romName))
       d.emplace("RomName", romName);
 
    return d;
 }
 
-std::string GlobalConfig::GetGlobalConfigDirectoryName()
+std::string GlobalConfig::GetGlobalConfigDirectoryName() const
 {
    DirectoryInfo* pDI = GetGlobalConfigDirectory();
    if (pDI == nullptr)
@@ -254,7 +257,7 @@ std::string GlobalConfig::GetGlobalConfigDirectoryName()
    return pDI->FullName();
 }
 
-DirectoryInfo* GlobalConfig::GetGlobalConfigDirectory()
+DirectoryInfo* GlobalConfig::GetGlobalConfigDirectory() const
 {
    FileInfo* pFI = GetGlobalConfigFile();
    if (pFI == nullptr)
@@ -262,16 +265,68 @@ DirectoryInfo* GlobalConfig::GetGlobalConfigDirectory()
    return pFI->Directory();
 }
 
-FileInfo* GlobalConfig::GetGlobalConfigFile()
+FileInfo* GlobalConfig::GetGlobalConfigFile() const
 {
-   if (IsNullOrWhiteSpace(m_globalConfigFileName))
+   if (StringExtensions::IsNullOrWhiteSpace(m_globalConfigFileName))
       return nullptr;
    return new FileInfo(m_globalConfigFileName);
 }
 
-std::string GlobalConfig::GetGlobalConfigXml()
+
+GlobalConfig* GlobalConfig::GetGlobalConfigFromConfigXmlFile(const std::string& globalConfigFileName)
 {
-   tinyxml2::XMLDocument doc;
+   try
+   {
+      if (std::filesystem::exists(globalConfigFileName))
+      {
+         std::string xml = FileReader::ReadFileToString(globalConfigFileName);
+
+
+         GlobalConfig* pGlobalConfig = FromXml(xml);
+         if (pGlobalConfig != nullptr)
+            pGlobalConfig->SetGlobalConfigFilename(globalConfigFileName);
+         return pGlobalConfig;
+      }
+      else
+      {
+         Log::Write(StringExtensions::Build("Global config file \"{0}\" does not exist; no global config loaded", globalConfigFileName));
+         return nullptr;
+      }
+   }
+   catch (...)
+   {
+      return nullptr;
+   }
+}
+
+GlobalConfig* GlobalConfig::GetGlobalConfigFromGlobalConfigXml(const std::string& configXml) { return FromXml(configXml); }
+
+void GlobalConfig::SaveGlobalConfig(const std::string& globalConfigFilename)
+{
+   std::string gcFileName = StringExtensions::IsNullOrWhiteSpace(globalConfigFilename) ? m_globalConfigFileName : globalConfigFilename;
+   if (StringExtensions::IsNullOrWhiteSpace(gcFileName))
+      throw std::runtime_error("No filename for GlobalConfig file has been supplied. Looking up the filename from the property GlobalConfigFilename failed as well");
+
+   std::filesystem::path p(gcFileName);
+   if (std::filesystem::exists(p))
+   {
+      auto now = std::chrono::system_clock::now();
+      auto t = std::chrono::system_clock::to_time_t(now);
+      std::ostringstream ts;
+      ts << std::put_time(std::localtime(&t), "%Y-%m-%d %H-%M-%S");
+      std::string backupName = p.stem().string() + " old (replaced " + ts.str() + ")" + p.extension().string();
+      std::filesystem::copy_file(p, p.parent_path() / backupName);
+   }
+
+   DirectoryInfo* pGCDirectory = FileInfo(gcFileName).Directory();
+   pGCDirectory->CreateDirectoryPath();
+
+   StringExtensions::WriteToFile(GetGlobalConfigXml(), gcFileName, false);
+}
+
+std::string GlobalConfig::ToXml() const
+{
+   XMLDocument doc;
    doc.InsertEndChild(doc.NewDeclaration());
 
    XMLElement* element = doc.NewElement("GlobalConfig");
@@ -329,46 +384,17 @@ std::string GlobalConfig::GetGlobalConfigXml()
    element->SetText(m_logFilePattern.GetPattern().c_str());
    doc.FirstChildElement("GlobalConfig")->InsertEndChild(element);
 
-   tinyxml2::XMLPrinter printer;
+   XMLPrinter printer;
    doc.Print(&printer);
    return std::string(printer.CStr());
 }
 
-GlobalConfig* GlobalConfig::GetGlobalConfigFromConfigXmlFile(const std::string& globalConfigFileName)
-{
-   try
-   {
-      if (std::filesystem::exists(globalConfigFileName))
-      {
-         std::string xml = FileReader::ReadFileToString(globalConfigFileName);
-
-         // For debug purposes only: copy the contents to the log to debug file sourcing issues
-         // Log::Write("Read global config from \"%s\", contents follow:\n====\n%s\n====",
-         //    globalConfigFileName.c_str(), xml.c_str());
-
-         GlobalConfig* pGlobalConfig = GetGlobalConfigFromGlobalConfigXml(xml);
-         if (pGlobalConfig != nullptr)
-            pGlobalConfig->SetGlobalConfigFilename(globalConfigFileName);
-         return pGlobalConfig;
-      }
-      else
-      {
-         Log::Write("Global config file \"%s\" does not exist; no global config loaded", globalConfigFileName.c_str());
-         return nullptr;
-      }
-   }
-   catch (...)
-   {
-      return nullptr;
-   }
-}
-
-GlobalConfig* GlobalConfig::GetGlobalConfigFromGlobalConfigXml(const std::string& configXml)
+GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
 {
    XMLDocument doc;
    if (doc.Parse(configXml.c_str()) != XML_SUCCESS)
    {
-      Log::Warning("GlobalConfig XML parse error: %s", doc.ErrorStr());
+      Log::Warning(StringExtensions::Build("GlobalConfig XML parse error: {0}", doc.ErrorStr()));
       return nullptr;
    }
 
@@ -461,27 +487,4 @@ GlobalConfig* GlobalConfig::GetGlobalConfigFromGlobalConfigXml(const std::string
    return pGlobalConfig;
 }
 
-void GlobalConfig::SaveGlobalConfig(const std::string& globalConfigFilename)
-{
-   std::string gcFileName = IsNullOrWhiteSpace(globalConfigFilename) ? m_globalConfigFileName : globalConfigFilename;
-   if (IsNullOrWhiteSpace(gcFileName))
-      throw std::runtime_error("No filename for GlobalConfig file has been supplied. Looking up the filename from the property GlobalConfigFilename failed as well");
-
-   std::filesystem::path p(gcFileName);
-   if (std::filesystem::exists(p))
-   {
-      auto now = std::chrono::system_clock::now();
-      auto t = std::chrono::system_clock::to_time_t(now);
-      std::ostringstream ts;
-      ts << std::put_time(std::localtime(&t), "%Y-%m-%d %H-%M-%S");
-      std::string backupName = p.stem().string() + " old (replaced " + ts.str() + ")" + p.extension().string();
-      std::filesystem::copy_file(p, p.parent_path() / backupName);
-   }
-
-   DirectoryInfo* pGCDirectory = FileInfo(gcFileName).Directory();
-   pGCDirectory->CreateDirectoryPath();
-
-   WriteToFile(GetGlobalConfigXml(), gcFileName, false);
 }
-
-} // namespace DOF

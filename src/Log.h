@@ -15,10 +15,10 @@ public:
    static void AfterInit();
    static void Finish();
    static void WriteRaw(const char* format, ...);
-   static void Write(const char* format, ...);
-   static void Warning(const char* format, ...);
-   static void Exception(const char* format, ...);
-   static void Debug(const char* format, ...);
+   static void Write(const std::string& message);
+   static void Warning(const std::string& message);
+   static void Exception(const std::string& message);
+   static void Debug(const std::string& message);
 
 private:
    Log();
@@ -27,4 +27,4 @@ private:
    static std::string m_filename;
 };
 
-} // namespace DOF
+}

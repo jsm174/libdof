@@ -23,6 +23,8 @@ public:
 
 private:
    int stringToInt(const std::string& s);
+   bool IsInteger(const std::string& s);
+   bool IsValidTableElementTypeChar(char c);
 };
 
-} // namespace DOF
+}

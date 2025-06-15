@@ -8,12 +8,8 @@
 
 namespace DOF
 {
-
 class InputQueue : public std::queue<TableElementData>
 {
-private:
-   std::mutex queueLocker;
-
 public:
    InputQueue();
 
@@ -24,6 +20,9 @@ public:
    TableElementData Peek();
    int Count();
    void Clear();
+
+private:
+   std::mutex m_queueLocker;
 };
 
-} // namespace DOF
+}

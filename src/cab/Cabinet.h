@@ -2,6 +2,7 @@
 
 #include "DOF/DOF.h"
 #include "ICabinetOwner.h"
+#include "../general/generic/IXmlSerializable.h"
 
 namespace DOF
 {
@@ -11,8 +12,10 @@ class CabinetOutputList;
 class OutputControllerList;
 class ToyList;
 class AlarmHandler;
+class ScheduledSettings;
+class SequentialOutputSettings;
 
-class Cabinet
+class Cabinet : public IXmlSerializable
 {
 public:
    Cabinet();
@@ -28,21 +31,13 @@ public:
    void SetCabinetConfigurationFilename(const std::string& cabinetConfigurationFilename) { m_cabinetConfigurationFilename = cabinetConfigurationFilename; }
    ToyList* GetToys() { return m_pToys; }
    void SetToys(ToyList* pToys) { m_pToys = pToys; }
-   // GetColorList
-   // SetColorList
-   // GetCurveList
-   // SetCurveList
    bool IsAutoConfigEnabled() const { return m_autoConfigEnabled; }
    void SetAutoConfigEnabled(bool autoConfigEnabled) { m_autoConfigEnabled = autoConfigEnabled; }
    CabinetOutputList* GetOutputs() { return m_pOutputs; }
    OutputControllerList* GetOutputControllers() { return m_pOutputControllers; }
    void SetOutputControllers(OutputControllerList* pOutputControllers) { m_pOutputControllers = pOutputControllers; }
-   // GetScheduledSettings
-   // SetScheduledSettings
-   // GetSequentialOutputSettings
-   // SetSequentialOutputSettings
-   // GetTableOverrideSettings
-   // SetTableOverrideSettings
+   ScheduledSettings* GetScheduledSettings();
+   SequentialOutputSettings* GetSequentialOutputSettings();
    std::string GetConfigXml();
    void SaveConfigXml(const std::string& filename);
    static Cabinet* GetCabinetFromConfigXmlFile(FileInfo* cabinetConfigFile);
@@ -52,6 +47,9 @@ public:
    void Init(ICabinetOwner* pCabinetOwner);
    void Update();
    void Finish();
+   virtual XMLElement* ToXml(XMLDocument& doc) const override;
+   virtual bool FromXml(const XMLElement* element) override;
+   virtual std::string GetXmlElementName() const override { return "Cabinet"; }
 
 private:
    ICabinetOwner* m_pOwner;
@@ -63,4 +61,4 @@ private:
    OutputControllerList* m_pOutputControllers;
 };
 
-} // namespace DOF
+}

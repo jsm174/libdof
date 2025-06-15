@@ -15,7 +15,6 @@ public:
    ~PinscapeAutoConfigurator() { }
 
    void AutoConfig(Cabinet* pCabinet) override;
-   void Test(Pinscape* pPinscape);
 };
 
-} // namespace DOF
+}

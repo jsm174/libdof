@@ -1,18 +1,22 @@
 # Third party libraries
 
 
-## ini-cpp
+## libserialport
 
-- Upstream: https://github.com/SSARCandy/ini-cpp
-- License: New BSD license
+- Upstream: https://github.com/sigrokproject/libserialport
+- License: GNU Lesser General Public License, version 3 or later
 
-## cargs
+## hidapi
 
-- Upstream: https://github.com/likle/cargs
+- Upstream: https://github.com/libusb/hidapi
+- License: GNU General Public License, version 3.0
+
+## tinyxml2
+
+- Upstream: https://github.com/leethomason/tinyxml2
+- License: Zlib license
+
+## exprtk
+
+- Upstream: https://github.com/ArashPartow/exprtk
 - License: MIT License
-
-## sockpp
-
-- Upstream: https://github.com/fpagliughi/sockpp
-- License: BSD 3-Clause License
-

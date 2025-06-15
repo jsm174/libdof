@@ -106,4 +106,4 @@ bool DirectoryInfo::CreateDirectoryPath() const
    return !ec;
 }
 
-} // namespace DOF
+}

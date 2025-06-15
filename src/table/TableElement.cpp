@@ -6,16 +6,19 @@
 
 #include "../fx/AssignedEffectList.h"
 #include "TableElementData.h"
+#include "../Log.h"
+#include "../general/StringExtensions.h"
 
 namespace DOF
 {
 
 TableElement::TableElement()
 {
-   m_pAssignedEffects = new AssignedEffectList();
-   // ValueChanged += new EventHandler<TableElementValueChangedEventArgs>(TableElement_ValueChanged);
-
+   m_tableElementType = TableElementTypeEnum::Lamp;
    m_number = (std::numeric_limits<int>::min)();
+   m_name = "";
+   m_value = (std::numeric_limits<int>::min)();
+   m_pAssignedEffects = new AssignedEffectList();
 }
 
 TableElement::TableElement(TableElementTypeEnum tableElementType, int number, int value)
@@ -37,15 +40,11 @@ TableElement::TableElement(const std::string& tableElementName, int value)
 
 void TableElement::SetName(const std::string& name)
 {
-   std::string upper = name;
-   std::transform(upper.begin(), upper.end(), upper.begin(), [](unsigned char c) { return std::toupper(c); });
+   std::string upper = StringExtensions::ToUpper(name);
 
    if (m_name != upper)
    {
       m_name = upper;
-      // if (NameChanged) {
-      // NameChanged(this, new EventArgs());
-      //}
    }
 }
 
@@ -54,11 +53,103 @@ void TableElement::SetValue(int value)
    if (m_value != value)
    {
       m_value = value;
-      // if (ValueChanged) {
-      // ValueChanged(this, new TableElementValueChangedEventArgs(m_value));
-      //}
+
+      if (m_pAssignedEffects)
+      {
+         TableElementData* pData = GetTableElementData();
+         m_pAssignedEffects->Trigger(pData);
+         delete pData;
+      }
    }
 }
 
+TableElement::~TableElement()
+{
+   delete m_pAssignedEffects;
+   m_pAssignedEffects = nullptr;
+}
+
 TableElementData* TableElement::GetTableElementData() { return new TableElementData(this); }
-} // namespace DOF
+
+std::string TableElement::ToXml() const
+{
+   XMLDocument doc;
+   doc.InsertEndChild(doc.NewDeclaration());
+
+   XMLElement* root = doc.NewElement("TableElement");
+   doc.InsertEndChild(root);
+
+   XMLElement* element = doc.NewElement("TableElementType");
+   element->SetText((int)m_tableElementType);
+   root->InsertEndChild(element);
+
+   element = doc.NewElement("Number");
+   element->SetText(m_number);
+   root->InsertEndChild(element);
+
+   if (!m_name.empty())
+   {
+      element = doc.NewElement("Name");
+      element->SetText(m_name.c_str());
+      root->InsertEndChild(element);
+   }
+
+   if (m_pAssignedEffects)
+   {
+      XMLElement* effectsElement = doc.NewElement("AssignedEffects");
+
+      root->InsertEndChild(effectsElement);
+   }
+
+   XMLPrinter printer;
+   doc.Print(&printer);
+   return std::string(printer.CStr());
+}
+
+TableElement* TableElement::FromXml(const std::string& xml)
+{
+   XMLDocument doc;
+   if (doc.Parse(xml.c_str()) != XML_SUCCESS)
+   {
+      Log::Warning(StringExtensions::Build("TableElement XML parse error: {0}", doc.ErrorStr()));
+      return nullptr;
+   }
+
+   XMLElement* root = doc.FirstChildElement("TableElement");
+   if (!root)
+   {
+      Log::Warning("TableElement root element not found");
+      return nullptr;
+   }
+
+   TableElement* pElement = new TableElement();
+
+   XMLElement* element = root->FirstChildElement("TableElementType");
+   if (element)
+   {
+      int value;
+      if (element->QueryIntText(&value) == XML_SUCCESS)
+         pElement->SetTableElementType((TableElementTypeEnum)value);
+   }
+
+   element = root->FirstChildElement("Number");
+   if (element)
+   {
+      int value;
+      if (element->QueryIntText(&value) == XML_SUCCESS)
+         pElement->SetNumber(value);
+   }
+
+   element = root->FirstChildElement("Name");
+   if (element && element->GetText())
+      pElement->SetName(element->GetText());
+
+   element = root->FirstChildElement("AssignedEffects");
+   if (element)
+   {
+   }
+
+   return pElement;
+}
+
+}

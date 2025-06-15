@@ -32,4 +32,4 @@ FileInfo* FilePatternList::GetFirstMatchingFile(const std::unordered_map<std::st
    return nullptr;
 }
 
-} // namespace DOF
+}

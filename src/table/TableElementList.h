@@ -17,8 +17,6 @@ public:
    void UpdateState(TableElementData* pData);
 
 private:
-   // Dictionary<TableElementTypeEnum, Dictionary<int, TableElement>> _NumberedTableElementsDictionary;
-   // Dictionary<string, TableElement> _NamedTableElementsDictionary;
 };
 
-} // namespace DOF
+}

@@ -24,4 +24,4 @@ std::string FileReader::ReadFileToString(const std::string& filename)
    return contents;
 }
 
-} // namespace DOF
+}

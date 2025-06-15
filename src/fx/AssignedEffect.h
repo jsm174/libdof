@@ -2,6 +2,7 @@
 
 #include "DOF/DOF.h"
 #include "IEffect.h"
+#include <functional>
 
 namespace DOF
 {
@@ -19,7 +20,7 @@ public:
    void InitAssignedEffects(Table* pTable);
    const std::string& GetEffectName() const { return m_effectName; }
    void SetEffectName(const std::string& effectName);
-   // event EventHandler<EventArgs> EffectNameChanged;
+   std::function<void()> m_effectNameChanged;
    IEffect* GetEffect() { return m_pEffect; }
    void SetEffect(IEffect* pEffect) { m_pEffect = pEffect; }
    void Trigger(TableElementData* pTableElementData);
@@ -27,7 +28,7 @@ public:
    void Finish();
 
 protected:
-   // void TableElementEffect_EffectNameChanged(object sender, EventArgs e)
+   void TableElementEffect_EffectNameChanged();
 
 private:
    void ResolveEffectName(Table* pTable);
@@ -36,4 +37,4 @@ private:
    IEffect* m_pEffect;
 };
 
-} // namespace DOF
+}
