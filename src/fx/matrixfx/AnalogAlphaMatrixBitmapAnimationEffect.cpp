@@ -17,7 +17,6 @@ AnalogAlpha AnalogAlphaMatrixBitmapAnimationEffect::GetPixelValue(const PixelDat
 
    int v = MathExtensions::Limit(triggerValue, 0, 255);
 
-
    int grayscale = (int)(0.299 * pixel.red + 0.587 * pixel.green + 0.114 * pixel.blue);
    d.SetValue(MathExtensions::Limit((int)((float)grayscale * v / 255), 0, 255));
    d.SetAlpha(MathExtensions::Limit((int)((float)pixel.alpha * v / 255), 0, 255));

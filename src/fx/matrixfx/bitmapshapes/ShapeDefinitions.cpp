@@ -8,8 +8,6 @@
 #include <fstream>
 #include <sstream>
 
-using namespace tinyxml2;
-
 namespace DOF
 {
 
@@ -34,26 +32,26 @@ void ShapeDefinitions::SetShapes(const ShapeList& value) { m_shapes = value; }
 
 std::string ShapeDefinitions::GetShapeDefinitionsXml()
 {
-   XMLDocument doc;
-   XMLElement* root = doc.NewElement("ShapeDefinitions");
+   tinyxml2::XMLDocument doc;
+   tinyxml2::XMLElement* root = doc.NewElement("ShapeDefinitions");
    doc.InsertFirstChild(root);
 
-   XMLElement* shapesElement = doc.NewElement("Shapes");
+   tinyxml2::XMLElement* shapesElement = doc.NewElement("Shapes");
    std::string shapesXml;
    m_shapes.WriteXml(shapesXml);
 
-   XMLDocument shapesDoc;
-   if (shapesDoc.Parse(shapesXml.c_str()) == XML_SUCCESS)
+   tinyxml2::XMLDocument shapesDoc;
+   if (shapesDoc.Parse(shapesXml.c_str()) == tinyxml2::XML_SUCCESS)
    {
-      XMLElement* shapesRoot = shapesDoc.FirstChildElement();
+      tinyxml2::XMLElement* shapesRoot = shapesDoc.FirstChildElement();
       if (shapesRoot)
       {
-         XMLElement* copiedElement = shapesRoot->DeepClone(&doc)->ToElement();
+         tinyxml2::XMLElement* copiedElement = shapesRoot->DeepClone(&doc)->ToElement();
          root->InsertEndChild(copiedElement);
       }
    }
 
-   XMLPrinter printer;
+   tinyxml2::XMLPrinter printer;
    doc.Print(&printer);
    return std::string(printer.CStr());
 }
@@ -103,17 +101,15 @@ bool ShapeDefinitions::TestShapeDefinitionsShapeDefinitionsXmlFile(const std::st
 
 ShapeDefinitions* ShapeDefinitions::GetShapeDefinitionsFromShapeDefinitionsXml(const std::string& shapeDefinitionsXml)
 {
-   using namespace tinyxml2;
-
-   XMLDocument doc;
-   XMLError result = doc.Parse(shapeDefinitionsXml.c_str());
-   if (result != XML_SUCCESS)
+   tinyxml2::XMLDocument doc;
+   tinyxml2::XMLError result = doc.Parse(shapeDefinitionsXml.c_str());
+   if (result != tinyxml2::XML_SUCCESS)
    {
       Log::Exception("Could not deserialize the ShapeDefinitions from XML data.");
       throw std::runtime_error("Could not deserialize the ShapeDefinitions from XML data.");
    }
 
-   XMLElement* root = doc.FirstChildElement("ShapeDefinitions");
+   tinyxml2::XMLElement* root = doc.FirstChildElement("ShapeDefinitions");
    if (!root)
    {
       throw std::runtime_error("Could not find ShapeDefinitions root element.");
@@ -121,10 +117,10 @@ ShapeDefinitions* ShapeDefinitions::GetShapeDefinitionsFromShapeDefinitionsXml(c
 
    ShapeDefinitions* shapeDefinitions = new ShapeDefinitions();
 
-   XMLElement* shapesElement = root->FirstChildElement("Shapes");
+   tinyxml2::XMLElement* shapesElement = root->FirstChildElement("Shapes");
    if (shapesElement)
    {
-      XMLPrinter printer;
+      tinyxml2::XMLPrinter printer;
       shapesElement->Accept(&printer);
       std::string shapesXml = printer.CStr();
       shapeDefinitions->m_shapes.ReadXml(shapesXml);

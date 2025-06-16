@@ -14,12 +14,10 @@
 
 #ifdef __HIDAPI__
 #include <hidapi/hidapi.h>
-
 #include "out/ps/Pinscape.h"
 #include "out/ps/PinscapeAutoConfigurator.h"
-#endif
-
-#ifdef __LIBSERIALPORT__
+#include "out/pspico/PinscapePico.h"
+#include "out/pspico/PinscapePicoAutoConfigurator.h"
 #include "out/lw/LedWizAutoConfigurator.h"
 #endif
 
@@ -33,11 +31,11 @@ Cabinet::Cabinet()
    m_pOutputs = new CabinetOutputList(this);
    m_pToys = new ToyList();
 
-
 #ifdef __HIDAPI__
    hid_init();
 
    Pinscape::Initialize();
+   PinscapePico::Initialize();
 #endif
 }
 
@@ -56,9 +54,7 @@ void Cabinet::AutoConfig()
 
 #ifdef __HIDAPI__
    items.push_back(new PinscapeAutoConfigurator());
-#endif
-
-#ifdef __LIBSERIALPORT__
+   items.push_back(new PinscapePicoAutoConfigurator());
    items.push_back(new LedWizAutoConfigurator());
 #endif
 
@@ -72,14 +68,14 @@ void Cabinet::AutoConfig()
 
 std::string Cabinet::GetConfigXml()
 {
-   XMLDocument doc;
-   XMLElement* root = ToXml(doc);
+   tinyxml2::XMLDocument doc;
+   tinyxml2::XMLElement* root = ToXml(doc);
    if (!root)
       return "";
 
    doc.InsertFirstChild(root);
 
-   XMLPrinter printer;
+   tinyxml2::XMLPrinter printer;
    doc.Print(&printer);
    return printer.CStr();
 }
@@ -93,14 +89,14 @@ void Cabinet::SaveConfigXml(const std::string& filename)
       return;
    }
 
-   XMLDocument doc;
-   if (doc.Parse(xml.c_str()) != XML_SUCCESS)
+   tinyxml2::XMLDocument doc;
+   if (doc.Parse(xml.c_str()) != tinyxml2::XML_SUCCESS)
    {
       Log::Warning("Cannot save cabinet config - XML parsing failed");
       return;
    }
 
-   if (doc.SaveFile(filename.c_str()) != XML_SUCCESS)
+   if (doc.SaveFile(filename.c_str()) != tinyxml2::XML_SUCCESS)
    {
       Log::Warning(StringExtensions::Build("Failed to save cabinet config to file: {0}", filename));
    }
@@ -136,14 +132,14 @@ Cabinet* Cabinet::GetCabinetFromConfigXml(const std::string& configXml)
       return nullptr;
    }
 
-   XMLDocument doc;
-   if (doc.Parse(configXml.c_str()) != XML_SUCCESS)
+   tinyxml2::XMLDocument doc;
+   if (doc.Parse(configXml.c_str()) != tinyxml2::XML_SUCCESS)
    {
       Log::Exception(StringExtensions::Build("Could not parse cabinet config XML: {0}", doc.ErrorStr()));
       return nullptr;
    }
 
-   XMLElement* root = doc.FirstChildElement("Cabinet");
+   tinyxml2::XMLElement* root = doc.FirstChildElement("Cabinet");
    if (!root)
    {
       Log::Exception("Cabinet config XML missing root Cabinet element");
@@ -188,7 +184,6 @@ void Cabinet::Init(ICabinetOwner* pCabinetOwner)
    m_pOutputControllers->Init(this);
    m_pToys->Init(this);
 
-
    m_pOutputs->ConnectOutputsToControllers();
 
    Log::Write("Cabinet initialized");
@@ -213,9 +208,9 @@ ScheduledSettings* Cabinet::GetScheduledSettings() { return &ScheduledSettings::
 
 SequentialOutputSettings* Cabinet::GetSequentialOutputSettings() { return &SequentialOutputSettings::GetInstance(); }
 
-XMLElement* Cabinet::ToXml(XMLDocument& doc) const
+tinyxml2::XMLElement* Cabinet::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
 
    if (!m_name.empty())
       element->SetAttribute("Name", m_name.c_str());
@@ -225,36 +220,32 @@ XMLElement* Cabinet::ToXml(XMLDocument& doc) const
 
    element->SetAttribute("AutoConfigEnabled", m_autoConfigEnabled);
 
-
    if (m_pOutputControllers)
    {
-      XMLElement* controllersElement = m_pOutputControllers->ToXml(doc);
+      tinyxml2::XMLElement* controllersElement = m_pOutputControllers->ToXml(doc);
       if (controllersElement)
          element->InsertEndChild(controllersElement);
    }
 
-
    if (m_pToys)
    {
-      XMLElement* toysElement = doc.NewElement("Toys");
+      tinyxml2::XMLElement* toysElement = doc.NewElement("Toys");
 
       element->InsertEndChild(toysElement);
    }
 
-
    ScheduledSettings* scheduledSettings = &ScheduledSettings::GetInstance();
    if (scheduledSettings && !scheduledSettings->empty())
    {
-      XMLElement* scheduledElement = scheduledSettings->ToXml(doc);
+      tinyxml2::XMLElement* scheduledElement = scheduledSettings->ToXml(doc);
       if (scheduledElement)
          element->InsertEndChild(scheduledElement);
    }
 
-
    SequentialOutputSettings* sequentialSettings = &SequentialOutputSettings::GetInstance();
    if (sequentialSettings && !sequentialSettings->empty())
    {
-      XMLElement* sequentialElement = sequentialSettings->ToXml(doc);
+      tinyxml2::XMLElement* sequentialElement = sequentialSettings->ToXml(doc);
       if (sequentialElement)
          element->InsertEndChild(sequentialElement);
    }
@@ -262,7 +253,7 @@ XMLElement* Cabinet::ToXml(XMLDocument& doc) const
    return element;
 }
 
-bool Cabinet::FromXml(const XMLElement* element)
+bool Cabinet::FromXml(const tinyxml2::XMLElement* element)
 {
    if (!element)
       return false;
@@ -277,29 +268,25 @@ bool Cabinet::FromXml(const XMLElement* element)
 
    element->QueryBoolAttribute("AutoConfigEnabled", &m_autoConfigEnabled);
 
-
-   const XMLElement* scheduledElement = element->FirstChildElement("ScheduledSettings");
+   const tinyxml2::XMLElement* scheduledElement = element->FirstChildElement("ScheduledSettings");
    if (scheduledElement)
    {
       ScheduledSettings& scheduledSettings = ScheduledSettings::GetInstance();
       scheduledSettings.FromXml(scheduledElement);
    }
 
-
-   const XMLElement* sequentialElement = element->FirstChildElement("SequentialOutputSettings");
+   const tinyxml2::XMLElement* sequentialElement = element->FirstChildElement("SequentialOutputSettings");
    if (sequentialElement)
    {
       SequentialOutputSettings& sequentialSettings = SequentialOutputSettings::GetInstance();
       sequentialSettings.FromXml(sequentialElement);
    }
 
-
-   const XMLElement* controllersElement = element->FirstChildElement("OutputControllers");
+   const tinyxml2::XMLElement* controllersElement = element->FirstChildElement("OutputControllers");
    if (controllersElement && m_pOutputControllers)
    {
       m_pOutputControllers->FromXml(controllersElement);
    }
-
 
    return true;
 }

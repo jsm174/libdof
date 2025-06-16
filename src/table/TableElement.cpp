@@ -73,13 +73,13 @@ TableElementData* TableElement::GetTableElementData() { return new TableElementD
 
 std::string TableElement::ToXml() const
 {
-   XMLDocument doc;
+   tinyxml2::XMLDocument doc;
    doc.InsertEndChild(doc.NewDeclaration());
 
-   XMLElement* root = doc.NewElement("TableElement");
+   tinyxml2::XMLElement* root = doc.NewElement("TableElement");
    doc.InsertEndChild(root);
 
-   XMLElement* element = doc.NewElement("TableElementType");
+   tinyxml2::XMLElement* element = doc.NewElement("TableElementType");
    element->SetText((int)m_tableElementType);
    root->InsertEndChild(element);
 
@@ -96,26 +96,26 @@ std::string TableElement::ToXml() const
 
    if (m_pAssignedEffects)
    {
-      XMLElement* effectsElement = doc.NewElement("AssignedEffects");
+      tinyxml2::XMLElement* effectsElement = doc.NewElement("AssignedEffects");
 
       root->InsertEndChild(effectsElement);
    }
 
-   XMLPrinter printer;
+   tinyxml2::XMLPrinter printer;
    doc.Print(&printer);
    return std::string(printer.CStr());
 }
 
 TableElement* TableElement::FromXml(const std::string& xml)
 {
-   XMLDocument doc;
-   if (doc.Parse(xml.c_str()) != XML_SUCCESS)
+   tinyxml2::XMLDocument doc;
+   if (doc.Parse(xml.c_str()) != tinyxml2::XML_SUCCESS)
    {
       Log::Warning(StringExtensions::Build("TableElement XML parse error: {0}", doc.ErrorStr()));
       return nullptr;
    }
 
-   XMLElement* root = doc.FirstChildElement("TableElement");
+   tinyxml2::XMLElement* root = doc.FirstChildElement("TableElement");
    if (!root)
    {
       Log::Warning("TableElement root element not found");
@@ -124,11 +124,11 @@ TableElement* TableElement::FromXml(const std::string& xml)
 
    TableElement* pElement = new TableElement();
 
-   XMLElement* element = root->FirstChildElement("TableElementType");
+   tinyxml2::XMLElement* element = root->FirstChildElement("TableElementType");
    if (element)
    {
       int value;
-      if (element->QueryIntText(&value) == XML_SUCCESS)
+      if (element->QueryIntText(&value) == tinyxml2::XML_SUCCESS)
          pElement->SetTableElementType((TableElementTypeEnum)value);
    }
 
@@ -136,7 +136,7 @@ TableElement* TableElement::FromXml(const std::string& xml)
    if (element)
    {
       int value;
-      if (element->QueryIntText(&value) == XML_SUCCESS)
+      if (element->QueryIntText(&value) == tinyxml2::XML_SUCCESS)
          pElement->SetNumber(value);
    }
 

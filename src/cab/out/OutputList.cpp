@@ -142,13 +142,13 @@ void OutputList::RemoveFromNameDict(IOutput* output)
    }
 }
 
-XMLElement* OutputList::ToXml(XMLDocument& doc) const
+tinyxml2::XMLElement* OutputList::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
    return element;
 }
 
-bool OutputList::FromXml(const XMLElement* element)
+bool OutputList::FromXml(const tinyxml2::XMLElement* element)
 {
    if (!element)
       return false;

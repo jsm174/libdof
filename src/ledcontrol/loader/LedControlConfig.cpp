@@ -174,7 +174,6 @@ void LedControlConfig::ParseLedControlIni(const std::string& ledControlIniFilena
       }
    }
 
-
    if (colorData.empty())
    {
       Log::Warning(StringExtensions::Build("Could not find color definition section in file {0}.", ledControlIniFilename));
@@ -190,7 +189,6 @@ void LedControlConfig::ParseLedControlIni(const std::string& ledControlIniFilena
          throw std::runtime_error(StringExtensions::Build("File {0} does not contain data in the table config section.", ledControlIniFilename));
       return;
    }
-
 
    if (!tableVariableData.empty())
    {

@@ -47,23 +47,21 @@ uint8_t ScheduledSettings::GetNewRecalculatedOutput(const std::string& configPos
    if (!activeSetting)
       return originalOutput;
 
-
    int strength = activeSetting->GetOutputStrength();
    if (strength == 100)
       return originalOutput;
-
 
    int newValue = (originalOutput * strength) / 100;
    return static_cast<uint8_t>(MathExtensions::Limit(newValue, 0, 255));
 }
 
-XMLElement* ScheduledSettings::ToXml(XMLDocument& doc) const
+tinyxml2::XMLElement* ScheduledSettings::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
 
    for (const ScheduledSetting* setting : *this)
    {
-      XMLElement* settingElement = setting->ToXml(doc);
+      tinyxml2::XMLElement* settingElement = setting->ToXml(doc);
       if (settingElement)
          element->InsertEndChild(settingElement);
    }
@@ -71,14 +69,14 @@ XMLElement* ScheduledSettings::ToXml(XMLDocument& doc) const
    return element;
 }
 
-bool ScheduledSettings::FromXml(const XMLElement* element)
+bool ScheduledSettings::FromXml(const tinyxml2::XMLElement* element)
 {
    if (!element)
       return false;
 
    Clear();
 
-   const XMLElement* settingElement = element->FirstChildElement("ScheduledSetting");
+   const tinyxml2::XMLElement* settingElement = element->FirstChildElement("ScheduledSetting");
    while (settingElement)
    {
       ScheduledSetting* setting = new ScheduledSetting();

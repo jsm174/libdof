@@ -1,5 +1,3 @@
-
-
 #include "Pinscape.h"
 
 #include <algorithm>
@@ -14,18 +12,16 @@
 #include "../../../general/StringExtensions.h"
 #include "../../Cabinet.h"
 
-#include "PinscapeDevice.h"
-
 namespace DOF
 {
 
-std::vector<PinscapeDevice*> Pinscape::m_devices = {};
+std::vector<Pinscape::Device*> Pinscape::s_devices = {};
 
 void Pinscape::Initialize() { FindDevices(); }
 
 Pinscape::Pinscape()
 {
-   m_pDevice = nullptr;
+   m_dev = nullptr;
    m_number = -1;
    m_minCommandIntervalMs = 1;
    m_minCommandIntervalMsSet = false;
@@ -50,25 +46,25 @@ void Pinscape::SetNumber(int value)
 
    if (m_number != value)
    {
-      std::ostringstream oss;
-      oss << "Pinscape Controller " << std::setfill('0') << std::setw(2) << value;
+      if (GetName().empty() || GetName() == StringExtensions::Build("Pinscape Controller {0:00}", std::to_string(m_number)))
+      {
+         SetName(StringExtensions::Build("Pinscape Controller {0:00}", std::to_string(value)));
+      }
 
-      SetName(oss.str());
       m_number = value;
 
-      for (PinscapeDevice* pDevice : m_devices)
+      for (Device* device : s_devices)
       {
-         if (pDevice->GetUnitNo() == value)
+         if (device->GetUnitNo() == value)
          {
-            m_pDevice = pDevice;
+            m_dev = device;
             break;
          }
       }
 
-      if (m_pDevice)
+      if (m_dev)
       {
-         SetNumberOfOutputs(m_pDevice->GetNumOutputs());
-
+         SetNumberOfOutputs(m_dev->GetNumOutputs());
          m_oldOutputValues.resize(GetNumberOfOutputs(), 255);
       }
    }
@@ -82,12 +78,11 @@ void Pinscape::SetMinCommandIntervalMs(int value)
    m_minCommandIntervalMsSet = true;
 }
 
-void Pinscape::Init(Cabinet* pCabinet)
+void Pinscape::Init(Cabinet* cabinet)
 {
-
-   if (!m_minCommandIntervalMsSet && pCabinet && pCabinet->GetOwner() && pCabinet->GetOwner()->HasConfigurationSetting("PinscapeDefaultMinCommandIntervalMs"))
+   if (!m_minCommandIntervalMsSet && cabinet && cabinet->GetOwner() && cabinet->GetOwner()->HasConfigurationSetting("PinscapeDefaultMinCommandIntervalMs"))
    {
-      std::string value = pCabinet->GetOwner()->GetConfigurationSetting("PinscapeDefaultMinCommandIntervalMs");
+      std::string value = cabinet->GetOwner()->GetConfigurationSetting("PinscapeDefaultMinCommandIntervalMs");
       try
       {
          int intervalMs = std::stoi(value);
@@ -98,14 +93,13 @@ void Pinscape::Init(Cabinet* pCabinet)
       }
    }
 
-
-   OutputControllerFlexCompleteBase::Init(pCabinet);
+   OutputControllerFlexCompleteBase::Init(cabinet);
 }
 
 void Pinscape::Finish()
 {
-   if (m_pDevice)
-      m_pDevice->AllOff();
+   if (m_dev)
+      m_dev->AllOff();
    OutputControllerFlexCompleteBase::Finish();
 }
 
@@ -113,53 +107,48 @@ void Pinscape::ConnectToController() { }
 
 void Pinscape::DisconnectFromController()
 {
-   if (m_pDevice && m_inUseState == InUseState::Running)
-      m_pDevice->AllOff();
-
-   m_pDevice = nullptr;
-   m_oldOutputValues.clear();
+   if (m_dev && m_inUseState == InUseState::Running)
+      m_dev->AllOff();
 }
 
 void Pinscape::AllOff()
 {
-   if (m_pDevice)
+   if (m_dev)
    {
-      m_pDevice->AllOff();
-
+      m_dev->AllOff();
       std::fill(m_oldOutputValues.begin(), m_oldOutputValues.end(), 0);
    }
 }
 
-int Pinscape::GetNumberOfConfiguredOutputs() { return m_pDevice ? m_pDevice->GetNumOutputs() : 32; }
+int Pinscape::GetNumberOfConfiguredOutputs() { return GetNumberOfOutputs(); }
 
-int Pinscape::GetNumberOfOutputs() const { return m_pDevice ? m_pDevice->GetNumOutputs() : 32; }
+int Pinscape::GetNumberOfOutputs() const { return m_dev ? m_dev->GetNumOutputs() : 32; }
 
-void Pinscape::UpdateOutputs(const std::vector<uint8_t>& outputValues)
+void Pinscape::UpdateOutputs(const std::vector<uint8_t>& newOutputValues)
 {
-   if (!m_pDevice || outputValues.empty())
+   if (!m_dev)
       return;
 
-   uint8_t buf[9];
    uint8_t pfx = 200;
-
    for (int i = 0; i < GetNumberOfOutputs(); i += 7, ++pfx)
    {
       int lim = std::min(i + 7, GetNumberOfOutputs());
       for (int j = i; j < lim; ++j)
       {
-         if (j < static_cast<int>(outputValues.size()) && outputValues[j] != m_oldOutputValues[j])
+         if (j < static_cast<int>(newOutputValues.size()) && newOutputValues[j] != m_oldOutputValues[j])
          {
             UpdateDelay();
 
-            buf[0] = 0x00;
+            uint8_t buf[9] = { 0 };
+            buf[0] = 0;
             buf[1] = pfx;
 
-            int copySize = std::min(lim - i, static_cast<int>(outputValues.size()) - i);
-            memcpy(buf + 2, outputValues.data() + i, copySize);
+            int copySize = std::min(lim - i, static_cast<int>(newOutputValues.size()) - i);
+            memcpy(buf + 2, newOutputValues.data() + i, copySize);
 
-            m_pDevice->WriteUSB(buf);
+            m_dev->WriteUSB(buf);
 
-            memcpy(m_oldOutputValues.data() + i, outputValues.data() + i, copySize);
+            memcpy(m_oldOutputValues.data() + i, newOutputValues.data() + i, copySize);
 
             break;
          }
@@ -190,7 +179,7 @@ void Pinscape::FindDevices()
 
       if ((isLedWiz || isPinscape) && pCurrentDevice->release_number > 7)
       {
-         std::string productName = GetProductName(pCurrentDevice);
+         std::string productName = GetDeviceProductName(pCurrentDevice);
          std::string lowerProductName = StringExtensions::ToLower(productName);
 
          if (lowerProductName.find("pinscape") != std::string::npos)
@@ -200,12 +189,11 @@ void Pinscape::FindDevices()
                hid_device* pHandle = hid_open_path(pCurrentDevice->path);
                if (pHandle)
                {
-                  PinscapeDevice* pDevice
-                     = new PinscapeDevice(pHandle, pCurrentDevice->path, productName, pCurrentDevice->vendor_id, pCurrentDevice->product_id, pCurrentDevice->release_number);
+                  Device* pDevice = new Device(pHandle, pCurrentDevice->path, productName, pCurrentDevice->vendor_id, pCurrentDevice->product_id, pCurrentDevice->release_number);
 
                   Log::Write(StringExtensions::Build("Found Pinscape device: {0} (path={1})", pDevice->ToString(), pCurrentDevice->path));
 
-                  m_devices.push_back(pDevice);
+                  s_devices.push_back(pDevice);
                }
             }
          }
@@ -217,7 +205,7 @@ void Pinscape::FindDevices()
    hid_free_enumeration(pDevices);
 }
 
-std::string Pinscape::GetProductName(hid_device_info* dev)
+std::string Pinscape::GetDeviceProductName(hid_device_info* dev)
 {
    std::string productName;
    if (dev->product_string)
@@ -229,9 +217,9 @@ std::string Pinscape::GetProductName(hid_device_info* dev)
    return productName;
 }
 
-XMLElement* Pinscape::ToXml(XMLDocument& doc) const
+tinyxml2::XMLElement* Pinscape::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   XMLElement* element = OutputControllerFlexCompleteBase::ToXml(doc);
+   tinyxml2::XMLElement* element = OutputControllerFlexCompleteBase::ToXml(doc);
 
    element->SetAttribute("Number", m_number);
    element->SetAttribute("MinCommandIntervalMs", m_minCommandIntervalMs);
@@ -239,7 +227,7 @@ XMLElement* Pinscape::ToXml(XMLDocument& doc) const
    return element;
 }
 
-bool Pinscape::FromXml(const XMLElement* element)
+bool Pinscape::FromXml(const tinyxml2::XMLElement* element)
 {
    if (!OutputControllerFlexCompleteBase::FromXml(element))
       return false;
@@ -253,6 +241,104 @@ bool Pinscape::FromXml(const XMLElement* element)
    SetMinCommandIntervalMs(minInterval);
 
    return true;
+}
+
+std::vector<void*> Pinscape::GetAllDevices()
+{
+   std::vector<void*> devicePointers;
+   for (Device* pDevice : s_devices)
+   {
+      devicePointers.push_back(static_cast<void*>(pDevice));
+   }
+   return devicePointers;
+}
+
+Pinscape::Device::Device(hid_device* pDevice, const std::string& path, const std::string& name, uint16_t vendorID, uint16_t productID, uint16_t version)
+{
+   m_pDevice = pDevice;
+   m_path = path;
+   m_name = name;
+   m_vendorID = vendorID;
+   m_productID = productID;
+   m_version = version;
+   m_plungerEnabled = true;
+   m_numOutputs = 32;
+
+   if (vendorID == 0xFAFA && (productID & 0xFFF0) == 0x00F0)
+      m_unitNo = (int)((productID & 0x000f) + 1);
+   else
+      m_unitNo = 1;
+
+   uint8_t buf[15];
+   if (ReadUSB(buf))
+   {
+      m_plungerEnabled = (buf[1] & 0x01) != 0;
+   }
+
+   SpecialRequest(0x04);
+
+   for (int i = 0; i < 16; ++i)
+   {
+      if (ReadUSB(buf))
+      {
+         if ((buf[2] & 0xF8) == 0x88)
+         {
+            m_numOutputs = (int)buf[3] | (((int)buf[4]) << 8);
+            m_unitNo = (int)(((uint16_t)buf[5] | (((uint16_t)buf[6]) << 8)) + 1);
+
+            break;
+         }
+      }
+   }
+}
+
+Pinscape::Device::~Device() { hid_close(m_pDevice); }
+
+bool Pinscape::Device::IsLedWizEmulator(int unitNum) { return (uint16_t)m_vendorID == 0xFAFA && m_productID == 0x00F1 + unitNum; }
+
+bool Pinscape::Device::ReadUSB(uint8_t* pBuf)
+{
+   memset(pBuf, 0x00, 15);
+
+   int actual = hid_read(m_pDevice, pBuf + 1, 14);
+   if (actual != 14)
+   {
+      Log::Write("Pinscape Controller USB error reading from device: not all bytes received");
+      return false;
+   }
+
+   return true;
+}
+
+void Pinscape::Device::AllOff() { SpecialRequest(0x05); }
+
+bool Pinscape::Device::SpecialRequest(uint8_t id)
+{
+   uint8_t buf[9];
+   memset(buf, 0x00, sizeof(buf));
+
+   buf[1] = 0x41;
+   buf[2] = id;
+
+   return WriteUSB(buf);
+}
+
+bool Pinscape::Device::WriteUSB(uint8_t* pBuf)
+{
+   int actual = hid_write(m_pDevice, pBuf, 9);
+   if (actual != 9)
+   {
+      Log::Write("Pinscape Controller USB error sending request: not all bytes sent");
+      return false;
+   }
+
+   return true;
+}
+
+void Pinscape::Device::UpdateOutputs(uint8_t* NewOutputValues)
+{
+   // Device-specific update implementation would go here
+   // For now, this can be empty as UpdateOutputs is handled at the controller level
 }
 
 }

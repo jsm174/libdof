@@ -179,7 +179,6 @@ void TableConfigSetting::ParseSettingData(const std::string& settingData)
 
       std::string trigger = StringExtensions::Trim(s.substr(0, triggerEndPos));
 
-
       bool parseOK = true;
       std::string triggerUpper = StringExtensions::ToUpper(trigger);
       if (triggerUpper == "ON" || triggerUpper == "1")
@@ -276,7 +275,6 @@ void TableConfigSetting::ParseSettingData(const std::string& settingData)
          Log::Warning(StringExtensions::Build("Cant parse the trigger part {0} of the ledcontrol table config setting {1}.", trigger, settingData));
          throw std::runtime_error(StringExtensions::Build("Cant parse the part {0} of the ledcontrol table config setting {1}.", trigger, settingData));
       }
-
 
       s = StringExtensions::Trim(s.substr(trigger.length()));
    }
@@ -578,19 +576,20 @@ void TableConfigSetting::ParseSettingData(const std::string& settingData)
    }
 }
 
-
 OutputTypeEnum TableConfigSetting::GetOutputType() const
 {
    if (!StringExtensions::IsNullOrWhiteSpace(m_colorName))
       return OutputTypeEnum::RGBOutput;
    return OutputTypeEnum::AnalogOutput;
 }
+
 int TableConfigSetting::GetIntensity() const
 {
    if (!StringExtensions::IsNullOrWhiteSpace(m_colorName))
       return -1;
    return m_intensity;
 }
+
 void TableConfigSetting::SetBlinkPulseWidth(int width) { m_blinkPulseWidth = MathExtensions::Limit(width, 1, 99); }
 void TableConfigSetting::SetBlinkPulseWidthNested(int width) { m_blinkPulseWidthNested = MathExtensions::Limit(width, 1, 99); }
 

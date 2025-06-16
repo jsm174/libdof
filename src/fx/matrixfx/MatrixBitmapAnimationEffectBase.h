@@ -240,17 +240,6 @@ template <typename MatrixElementType> int MatrixBitmapAnimationEffectBase<Matrix
          return std::min(m_currentStep / m_animationStepSize, frameCount - 1);
       }
 
-   case MatrixAnimationStepDirectionEnum::FrameBackward:
-
-      if (m_animationBehaviour == AnimationBehaviourEnum::Loop)
-      {
-         return frameCount - 1 - ((m_currentStep / m_animationStepSize) % frameCount);
-      }
-      else
-      {
-         return std::max(frameCount - 1 - (m_currentStep / m_animationStepSize), 0);
-      }
-
    default: return 0;
    }
 }

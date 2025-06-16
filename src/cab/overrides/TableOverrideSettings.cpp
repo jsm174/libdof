@@ -68,7 +68,6 @@ TableOverrideSettingDevice* TableOverrideSettings::GetActiveDevice(IOutput* curr
       }
    }
 
-
    if (foundActiveDevice && recalculateOutputValue)
    {
       double strengthFactor = foundActiveDevice->GetOutputPercent() / 100.0;

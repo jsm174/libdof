@@ -30,10 +30,8 @@ int SequentialOutputDevice::GetNextOutput(int currentOutputNumber)
    auto now = std::chrono::steady_clock::now();
    auto timeDelta = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_outputTimestamp).count();
 
-
    if (timeDelta <= m_outputMaxTime)
    {
-
       m_outputIndex = (m_outputIndex + 1) % m_outputNumbers.size();
       m_outputTimestamp = now;
       return m_outputNumbers[m_outputIndex];
@@ -47,15 +45,14 @@ int SequentialOutputDevice::GetNextOutput(int currentOutputNumber)
    }
 }
 
-XMLElement* SequentialOutputDevice::ToXml(XMLDocument& doc) const
+tinyxml2::XMLElement* SequentialOutputDevice::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
 
    if (!m_configPostfixID.empty())
       element->SetAttribute("ConfigPostfixID", m_configPostfixID.c_str());
 
    element->SetAttribute("OutputMaxTime", m_outputMaxTime);
-
 
    if (!m_outputNumbers.empty())
    {
@@ -72,7 +69,7 @@ XMLElement* SequentialOutputDevice::ToXml(XMLDocument& doc) const
    return element;
 }
 
-bool SequentialOutputDevice::FromXml(const XMLElement* element)
+bool SequentialOutputDevice::FromXml(const tinyxml2::XMLElement* element)
 {
    if (!element)
       return false;
@@ -82,7 +79,6 @@ bool SequentialOutputDevice::FromXml(const XMLElement* element)
       m_configPostfixID = configPostfixID;
 
    element->QueryIntAttribute("OutputMaxTime", &m_outputMaxTime);
-
 
    const char* outputNumbers = element->Attribute("OutputNumbers");
    if (outputNumbers)
@@ -109,7 +105,6 @@ bool SequentialOutputDevice::FromXml(const XMLElement* element)
 
    return true;
 }
-
 
 SequentialOutputSetting::SequentialOutputSetting() { }
 
@@ -138,13 +133,13 @@ void SequentialOutputSetting::ClearDevices()
    m_devices.clear();
 }
 
-XMLElement* SequentialOutputSetting::ToXml(XMLDocument& doc) const
+tinyxml2::XMLElement* SequentialOutputSetting::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
 
    for (const SequentialOutputDevice* device : m_devices)
    {
-      XMLElement* deviceElement = device->ToXml(doc);
+      tinyxml2::XMLElement* deviceElement = device->ToXml(doc);
       if (deviceElement)
          element->InsertEndChild(deviceElement);
    }
@@ -152,14 +147,14 @@ XMLElement* SequentialOutputSetting::ToXml(XMLDocument& doc) const
    return element;
 }
 
-bool SequentialOutputSetting::FromXml(const XMLElement* element)
+bool SequentialOutputSetting::FromXml(const tinyxml2::XMLElement* element)
 {
    if (!element)
       return false;
 
    ClearDevices();
 
-   const XMLElement* deviceElement = element->FirstChildElement("SequentialOutputDevice");
+   const tinyxml2::XMLElement* deviceElement = element->FirstChildElement("SequentialOutputDevice");
    while (deviceElement)
    {
       SequentialOutputDevice* device = new SequentialOutputDevice();

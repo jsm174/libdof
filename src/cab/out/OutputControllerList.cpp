@@ -4,12 +4,10 @@
 #include "../../general/StringExtensions.h"
 #include "NullOutputController.h"
 
-#ifdef __LIBSERIALPORT__
-#include "lw/LedWiz.h"
-#endif
-
 #ifdef __HIDAPI__
 #include "ps/Pinscape.h"
+#include "pspico/PinscapePico.h"
+#include "lw/LedWiz.h"
 #endif
 
 namespace DOF
@@ -71,8 +69,8 @@ IOutputController* OutputControllerList::CreateController(const std::string& typ
 #ifdef __HIDAPI__
    else if (typeName == "Pinscape")
       return new Pinscape();
-#endif
-#ifdef __LIBSERIALPORT__
+   else if (typeName == "PinscapePico")
+      return new PinscapePico();
    else if (typeName == "LedWiz")
       return new LedWiz();
 #endif
@@ -83,15 +81,15 @@ IOutputController* OutputControllerList::CreateController(const std::string& typ
    }
 }
 
-XMLElement* OutputControllerList::ToXml(XMLDocument& doc) const
+tinyxml2::XMLElement* OutputControllerList::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
 
    for (const IOutputController* controller : *this)
    {
       if (controller)
       {
-         XMLElement* controllerElement = controller->ToXml(doc);
+         tinyxml2::XMLElement* controllerElement = controller->ToXml(doc);
          if (controllerElement)
             element->InsertEndChild(controllerElement);
       }
@@ -100,14 +98,14 @@ XMLElement* OutputControllerList::ToXml(XMLDocument& doc) const
    return element;
 }
 
-bool OutputControllerList::FromXml(const XMLElement* element)
+bool OutputControllerList::FromXml(const tinyxml2::XMLElement* element)
 {
    if (!element)
       return false;
 
    Clear();
 
-   const XMLElement* controllerElement = element->FirstChildElement();
+   const tinyxml2::XMLElement* controllerElement = element->FirstChildElement();
    while (controllerElement)
    {
       std::string typeName = controllerElement->Name();

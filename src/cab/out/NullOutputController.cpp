@@ -45,9 +45,9 @@ void NullOutputController::Finish()
 
 void NullOutputController::Update() { OutputControllerCompleteBase::Update(); }
 
-XMLElement* NullOutputController::ToXml(XMLDocument& doc) const
+tinyxml2::XMLElement* NullOutputController::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
 
    if (!GetName().empty())
       element->SetAttribute("Name", GetName().c_str());
@@ -58,7 +58,7 @@ XMLElement* NullOutputController::ToXml(XMLDocument& doc) const
    return element;
 }
 
-bool NullOutputController::FromXml(const XMLElement* element)
+bool NullOutputController::FromXml(const tinyxml2::XMLElement* element)
 {
    if (!element)
       return false;
@@ -75,7 +75,6 @@ bool NullOutputController::FromXml(const XMLElement* element)
 
    return true;
 }
-
 
 bool NullOutputController::VerifySettings() { return m_numberOfOutputs > 0 && m_numberOfOutputs <= 256; }
 

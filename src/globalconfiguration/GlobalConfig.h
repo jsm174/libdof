@@ -30,9 +30,9 @@ public:
    void SetIniFilesPath(const std::string& path) { m_iniFilesPath = path; }
    std::unordered_map<int, FileInfo> GetIniFilesDictionary(const std::string& tableFilename) const;
    FileInfo* GetTableMappingFile(const std::string& tableFilename) const;
-   const FilePattern& GetShapeDefinitionFilePattern() const { return m_shapeDefinitionFilePattern; }
-   void SetShapeDefinitionFilePattern(const std::string& pattern) { m_shapeDefinitionFilePattern.SetPattern(pattern); }
-   FileInfo* GetShapeDefinitionFile(const std::string& tableFilename = "", const std::string& romName = "") const;
+   const FilePattern& GetShapeDefintionFilePattern() const { return m_shapeDefinitionFilePattern; }
+   void SetShapeDefintionFilePattern(const std::string& pattern) { m_shapeDefinitionFilePattern.SetPattern(pattern); }
+   FileInfo* GetShapeDefintionFile(const std::string& tableFilename = "", const std::string& romName = "") const;
    const FilePattern& GetCabinetConfigFilePattern() const { return m_cabinetConfigFilePattern; }
    void SetCabinetConfigFilePattern(const std::string& pattern) { m_cabinetConfigFilePattern.SetPattern(pattern); }
    FileInfo* GetCabinetConfigFile() const;

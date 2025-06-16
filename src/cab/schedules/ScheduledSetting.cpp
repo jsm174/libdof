@@ -41,20 +41,17 @@ ScheduledSetting::TimeRange ScheduledSetting::ParseTimeframe(const std::string& 
    std::string startTime = timeframe.substr(0, dashPos);
    std::string endTime = timeframe.substr(dashPos + 1);
 
-
    if (startTime.length() >= 4)
    {
       range.startHour = std::stoi(startTime.substr(0, 2));
       range.startMinute = std::stoi(startTime.substr(2, 2));
    }
 
-
    if (endTime.length() >= 4)
    {
       range.endHour = std::stoi(endTime.substr(0, 2));
       range.endMinute = std::stoi(endTime.substr(2, 2));
    }
-
 
    int startMinutes = range.startHour * 60 + range.startMinute;
    int endMinutes = range.endHour * 60 + range.endMinute;
@@ -81,9 +78,9 @@ bool ScheduledSetting::IsTimeInRange(const TimeRange& range, int hour, int minut
    }
 }
 
-XMLElement* ScheduledSetting::ToXml(XMLDocument& doc) const
+tinyxml2::XMLElement* ScheduledSetting::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
 
    if (!m_configPostfixID.empty())
       element->SetAttribute("ConfigPostfixID", m_configPostfixID.c_str());
@@ -98,7 +95,7 @@ XMLElement* ScheduledSetting::ToXml(XMLDocument& doc) const
    return element;
 }
 
-bool ScheduledSetting::FromXml(const XMLElement* element)
+bool ScheduledSetting::FromXml(const tinyxml2::XMLElement* element)
 {
    if (!element)
       return false;

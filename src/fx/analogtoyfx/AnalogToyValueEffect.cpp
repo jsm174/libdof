@@ -16,8 +16,6 @@ AnalogToyValueEffect::AnalogToyValueEffect()
 
 void AnalogToyValueEffect::Trigger(TableElementData* tableElementData)
 {
-   Log::Debug(
-      StringExtensions::Build("AnalogToyValueEffect::Trigger called with value={0}, layer={1}", std::to_string(tableElementData->m_value), StringExtensions::ToAddressString(m_layer)));
    if (m_layer != nullptr)
    {
       int fadeValue = tableElementData->m_value;
@@ -27,7 +25,6 @@ void AnalogToyValueEffect::Trigger(TableElementData* tableElementData)
       int newValue = m_inactiveValue.GetValue() + MathExtensions::Limit((int)((float)(m_activeValue.GetValue() - m_inactiveValue.GetValue()) * fadeValue / 255), 0, 255);
       int newAlpha = m_inactiveValue.GetAlpha() + MathExtensions::Limit((int)((float)(m_activeValue.GetAlpha() - m_inactiveValue.GetAlpha()) * fadeValue / 255), 0, 255);
 
-      Log::Debug(StringExtensions::Build("Setting layer: newValue={0}, newAlpha={1}", std::to_string(newValue), std::to_string(newAlpha)));
       m_layer->SetValue(newValue);
       m_layer->SetAlpha(newAlpha);
    }

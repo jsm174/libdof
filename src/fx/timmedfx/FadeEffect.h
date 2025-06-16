@@ -1,9 +1,7 @@
 #pragma once
 
 #include "../EffectEffectBase.h"
-#include "../RetriggerBehaviourEnum.h"
-
-#include <chrono>
+#include "FadeEffectDurationModeEnum.h"
 
 namespace DOF
 {
@@ -16,38 +14,29 @@ public:
    FadeEffect();
    virtual ~FadeEffect();
 
-   RetriggerBehaviourEnum GetRetriggerBehaviour() const { return m_retriggerBehaviour; }
-   void SetRetriggerBehaviour(RetriggerBehaviourEnum value) { m_retriggerBehaviour = value; }
-   int GetFadeUpDurationMs() const { return m_fadeUpDurationMs; }
-   void SetFadeUpDurationMs(int value) { m_fadeUpDurationMs = value; }
-   int GetFadeDownDurationMs() const { return m_fadeDownDurationMs; }
-   void SetFadeDownDurationMs(int value) { m_fadeDownDurationMs = value; }
-   int GetFadeRefreshIntervalMs() const { return m_fadeRefreshIntervalMs; }
-   void SetFadeRefreshIntervalMs(int value) { m_fadeRefreshIntervalMs = value; }
-   bool GetActive() const { return m_active; }
+   int GetFadeUpDuration() const { return m_fadeUpDuration; }
+   void SetFadeUpDuration(int value) { m_fadeUpDuration = value; }
+   int GetFadeDownDuration() const { return m_fadeDownDuration; }
+   void SetFadeDownDuration(int value) { m_fadeDownDuration = value; }
+   FadeEffectDurationModeEnum GetFadeDurationMode() const { return m_fadeDurationMode; }
+   void SetFadeDurationMode(FadeEffectDurationModeEnum value) { m_fadeDurationMode = value; }
    virtual void Trigger(TableElementData* tableElementData) override;
    virtual void Finish() override;
 
    virtual std::string GetXmlElementName() const override { return "FadeEffect"; }
 
 private:
-   void FadeStep();
-   void StartFadeUp(TableElementData* tableElementData);
-   void StartFadeDown();
+   static const int FadingRefreshIntervalMs = 30;
+   void FadingStep();
 
-   RetriggerBehaviourEnum m_retriggerBehaviour;
-   int m_fadeUpDurationMs;
-   int m_fadeDownDurationMs;
-   int m_fadeRefreshIntervalMs;
-   bool m_active;
-   bool m_fadingUp;
-   bool m_fadingDown;
-   int m_targetValue;
-   int m_currentValue;
-   int m_fadeStartValue;
-   double m_fadeStepValue;
-   TableElementData* m_fadeTableElementData;
-   std::chrono::steady_clock::time_point m_fadeStartTime;
+   int m_fadeUpDuration;
+   int m_fadeDownDuration;
+   FadeEffectDurationModeEnum m_fadeDurationMode;
+   float m_targetValue;
+   float m_currentValue;
+   float m_stepValue;
+   int m_lastTargetTriggerValue;
+   TableElementData* m_tableElementData;
 };
 
 }

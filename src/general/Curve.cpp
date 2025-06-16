@@ -111,5 +111,4 @@ void Curve::BuildCurve(CurveTypeEnum curveType)
    }
 }
 
-
 }

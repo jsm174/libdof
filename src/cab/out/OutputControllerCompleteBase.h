@@ -21,8 +21,8 @@ public:
    void Update() override;
 
 
-   virtual XMLElement* ToXml(XMLDocument& doc) const override;
-   virtual bool FromXml(const XMLElement* element) override;
+   virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;
+   virtual bool FromXml(const tinyxml2::XMLElement* element) override;
 
 
    virtual void SetValues(int firstOutput, const uint8_t* values, int valueCount) override;

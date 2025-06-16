@@ -119,7 +119,6 @@ void ToyList::AddToy(IToy* toy)
    if (toy == nullptr)
       return;
 
-
    if (FindByName(toy->GetName()) != nullptr)
    {
       Log::Warning(StringExtensions::Build("Toy with name {0} already exists", toy->GetName()));

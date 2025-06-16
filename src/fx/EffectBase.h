@@ -20,8 +20,8 @@ public:
    void SetName(const std::string& name) override { NamedItemBase::SetName(name); }
 
 
-   virtual XMLElement* ToXml(XMLDocument& doc) const override;
-   virtual bool FromXml(const XMLElement* element) override;
+   virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;
+   virtual bool FromXml(const tinyxml2::XMLElement* element) override;
    virtual std::string GetXmlElementName() const override = 0;
 
    virtual void Trigger(TableElementData* tableElementData) override = 0;
@@ -29,8 +29,8 @@ public:
    virtual void Finish() override;
 
 protected:
-   virtual void SerializeToXml(XMLElement* element, XMLDocument& doc) const;
-   virtual void DeserializeFromXml(const XMLElement* element);
+   virtual void SerializeToXml(tinyxml2::XMLElement* element, tinyxml2::XMLDocument& doc) const;
+   virtual void DeserializeFromXml(const tinyxml2::XMLElement* element);
 };
 
 }

@@ -48,13 +48,13 @@ int SequentialOutputSettings::GetNextOutput(const std::string& configPostfixID, 
    return currentOutputNumber;
 }
 
-XMLElement* SequentialOutputSettings::ToXml(XMLDocument& doc) const
+tinyxml2::XMLElement* SequentialOutputSettings::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
 
    for (const SequentialOutputSetting* setting : *this)
    {
-      XMLElement* settingElement = setting->ToXml(doc);
+      tinyxml2::XMLElement* settingElement = setting->ToXml(doc);
       if (settingElement)
          element->InsertEndChild(settingElement);
    }
@@ -62,14 +62,14 @@ XMLElement* SequentialOutputSettings::ToXml(XMLDocument& doc) const
    return element;
 }
 
-bool SequentialOutputSettings::FromXml(const XMLElement* element)
+bool SequentialOutputSettings::FromXml(const tinyxml2::XMLElement* element)
 {
    if (!element)
       return false;
 
    Clear();
 
-   const XMLElement* settingElement = element->FirstChildElement("SequentialOutputSetting");
+   const tinyxml2::XMLElement* settingElement = element->FirstChildElement("SequentialOutputSetting");
    while (settingElement)
    {
       SequentialOutputSetting* setting = new SequentialOutputSetting();

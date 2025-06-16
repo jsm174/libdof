@@ -52,7 +52,6 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
 {
    bool globalConfigLoaded = true;
 
-
    try
    {
       Log::Write(StringExtensions::Build("Global config filename is \"{0}\"", globalConfigFileName));
@@ -64,7 +63,6 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
          {
             Log::Write("No global config file loaded");
             globalConfigLoaded = false;
-
 
             m_pGlobalConfig = new GlobalConfig();
          }
@@ -105,7 +103,6 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
          throw std::runtime_error("DirectOutput framework could initialize the log file.");
       }
    }
-
 
    Log::AfterInit();
 
@@ -183,7 +180,6 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
 
       Log::Write("Loading table config");
 
-
       m_pTable = new Table();
       m_pTable->SetAddLedControlConfig(true);
 
@@ -251,7 +247,6 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
                pConfigurator->Setup(l, m_pTable, m_pCabinet, romName);
                delete pConfigurator;
 
-
                std::string dofVersion = LIBDOF_VERSION;
 
                if (true)
@@ -298,7 +293,6 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
          m_pTable->SetRomName(romName);
       Log::Write(StringExtensions::Build("Table config loading finished: romname={0}, tablename={1}", romName, m_pTable->GetTableName()));
 
-
       TableOverrideSettings::GetInstance()->SetActiveRomName(romName);
       TableOverrideSettings::GetInstance()->SetActiveTableName(m_pTable->GetTableName());
       TableOverrideSettings::GetInstance()->ActivateOverrides();
@@ -329,7 +323,6 @@ void Pinball::Init()
       m_pAlarms->Init(this);
 
       m_pCabinet->Update();
-
 
       InitMainThread();
       Log::Write("Framework initialized.");
@@ -418,7 +411,6 @@ void Pinball::MainThreadDoIt()
          bool updateRequired = false;
          auto start = std::chrono::steady_clock::now();
 
-
          while (m_pInputQueue->Count() > 0 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() <= MAX_INPUT_DATA_PROCESSING_TIME_MS
             && m_keepMainThreadAlive)
          {
@@ -447,7 +439,6 @@ void Pinball::MainThreadDoIt()
                Log::Exception(StringExtensions::Build("An unhandled exception occured while executing timer events: {0}", e.what()));
             }
          }
-
 
          if (updateRequired && m_keepMainThreadAlive)
          {

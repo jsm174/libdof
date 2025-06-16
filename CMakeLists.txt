@@ -76,6 +76,7 @@ set(LIBDOF_SOURCES
    src/Pinball.cpp
    src/Log.cpp
    src/Logger.cpp
+   src/DirectOutputHandler.cpp
    
    src/general/DirectoryInfo.cpp
    src/general/FileInfo.cpp
@@ -226,8 +227,10 @@ set(LIBDOF_SOURCES
 if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
    list(APPEND LIBDOF_SOURCES
       src/cab/out/ps/Pinscape.cpp
-      src/cab/out/ps/PinscapeDevice.cpp
       src/cab/out/ps/PinscapeAutoConfigurator.cpp
+
+      src/cab/out/pspico/PinscapePico.cpp
+      src/cab/out/pspico/PinscapePicoAutoConfigurator.cpp
 
       src/cab/out/lw/LedWiz.cpp
       src/cab/out/lw/LedWizAutoConfigurator.cpp

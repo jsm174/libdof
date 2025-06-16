@@ -21,7 +21,6 @@ void InputQueue::Enqueue(const std::string& tableElementName, int value)
    if (StringExtensions::IsNullOrWhiteSpace(tableElementName))
       return;
 
-
    std::string cleanedName = StringExtensions::Replace(tableElementName, " ", "_");
 
    std::lock_guard<std::mutex> lock(m_queueLocker);

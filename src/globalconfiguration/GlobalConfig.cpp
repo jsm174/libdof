@@ -1,6 +1,7 @@
 #include "GlobalConfig.h"
 
 #include "../Log.h"
+#include "../DirectOutputHandler.h"
 #include "../general/FileReader.h"
 #include "../general/DirectoryInfo.h"
 #include "../general/StringExtensions.h"
@@ -11,8 +12,17 @@
 #include <fstream>
 #include <iterator>
 #include <vector>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 
-using namespace tinyxml2;
+#ifdef _WIN32
+#include <windows.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#include <climits>
+#endif
+
 
 namespace DOF
 {
@@ -35,8 +45,6 @@ void GlobalConfig::SetPacLedDefaultMinCommandIntervalMs(int value) { m_pacLedDef
 
 std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std::string& tableFilename) const
 {
-
-
    std::vector<std::string> lookupPaths;
 
    if (!StringExtensions::IsNullOrWhiteSpace(m_iniFilesPath))
@@ -73,7 +81,6 @@ std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std:
 
    lookupPaths.push_back(std::filesystem::current_path().string());
 
-
    std::unordered_map<int, FileInfo> iniFiles;
 
    bool foundIt = false;
@@ -94,7 +101,7 @@ std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std:
 
          for (FileInfo fi : files)
          {
-            if (StringExtensions::ToLower(fi.Name() + ".ini") == StringExtensions::ToLower(ledControlFilename))
+            if (StringExtensions::ToLower(fi.Name()) == StringExtensions::ToLower(StringExtensions::Build("{0}.ini", ledControlFilename)))
             {
                if (!iniFiles.contains(1))
                {
@@ -141,7 +148,7 @@ FileInfo* GlobalConfig::GetTableMappingFile(const std::string& tableFilename) co
 {
    std::unordered_map<int, FileInfo> iniFilesDict = GetIniFilesDictionary(tableFilename);
 
-   if (iniFilesDict.count(1) > 0)
+   if (iniFilesDict.size() > 0)
    {
       auto [firstKey, firstValue] = *iniFilesDict.begin();
       return new FileInfo(firstValue.Directory()->GetFiles("tablemappings.*").front());
@@ -152,7 +159,7 @@ FileInfo* GlobalConfig::GetTableMappingFile(const std::string& tableFilename) co
    }
 }
 
-FileInfo* GlobalConfig::GetShapeDefinitionFile(const std::string& tableFilename, const std::string& romName) const
+FileInfo* GlobalConfig::GetShapeDefintionFile(const std::string& tableFilename, const std::string& romName) const
 {
    if (!StringExtensions::IsNullOrWhiteSpace(m_shapeDefinitionFilePattern.GetPattern()) && m_shapeDefinitionFilePattern.IsValid())
       return m_shapeDefinitionFilePattern.GetFirstMatchingFile(GetReplaceValuesDictionary(tableFilename, romName));
@@ -224,11 +231,60 @@ std::unordered_map<std::string, std::string> GlobalConfig::GetReplaceValuesDicti
       d.emplace("GlobalConfigDir", GetGlobalConfigDirectory()->FullName());
    }
 
-   FileInfo fi(std::filesystem::current_path().string());
+   std::string executablePath;
+   try
+   {
+#ifdef _WIN32
+      char path[MAX_PATH];
+      DWORD result = GetModuleFileNameA(NULL, path, MAX_PATH);
+      if (result > 0)
+      {
+         executablePath = std::filesystem::path(path).parent_path().string();
+      }
+      else
+      {
+         executablePath = std::filesystem::current_path().string();
+      }
+#elif defined(__APPLE__)
+      char path[PATH_MAX];
+      uint32_t size = sizeof(path);
+      if (_NSGetExecutablePath(path, &size) == 0)
+      {
+         executablePath = std::filesystem::path(path).parent_path().string();
+      }
+      else
+      {
+         executablePath = std::filesystem::current_path().string();
+      }
+#else
+      executablePath = std::filesystem::canonical("/proc/self/exe").parent_path().string();
+#endif
+   }
+   catch (...)
+   {
+      try
+      {
+         executablePath = std::filesystem::current_path().string();
+      }
+      catch (...)
+      {
+         executablePath = ".";
+      }
+   }
+
+   FileInfo fi(executablePath);
    d.emplace("DllDirectory", fi.Directory()->FullName());
    d.emplace("DllDir", fi.Directory()->FullName());
    d.emplace("AssemblyDirectory", fi.Directory()->FullName());
    d.emplace("AssemblyDir", fi.Directory()->FullName());
+
+   // Add InstallDir and BinDir path resolution
+   std::string installFolder = DirectOutputHandler::GetInstallFolder();
+   if (!installFolder.empty())
+   {
+      d.emplace("InstallDir", installFolder);
+      d.emplace("BinDir", fi.Directory()->FullName());
+   }
 
    if (!StringExtensions::IsNullOrWhiteSpace(tableFilename))
    {
@@ -237,8 +293,8 @@ std::unordered_map<std::string, std::string> GlobalConfig::GetReplaceValuesDicti
       {
          d.emplace("TableDirectory", fi.Directory()->FullName());
          d.emplace("TableDir", fi.Directory()->FullName());
-         d.emplace("TableDirectoryName", fi.Directory()->FullName());
-         d.emplace("TableDirName", fi.Directory()->FullName());
+         d.emplace("TableDirectoryName", fi.Directory()->Name());
+         d.emplace("TableDirName", fi.Directory()->Name());
       }
       d.emplace("TableName", StringExtensions::GetFileNameWithoutExtension(fi.FullName()));
    }
@@ -272,7 +328,6 @@ FileInfo* GlobalConfig::GetGlobalConfigFile() const
    return new FileInfo(m_globalConfigFileName);
 }
 
-
 GlobalConfig* GlobalConfig::GetGlobalConfigFromConfigXmlFile(const std::string& globalConfigFileName)
 {
    try
@@ -280,7 +335,6 @@ GlobalConfig* GlobalConfig::GetGlobalConfigFromConfigXmlFile(const std::string& 
       if (std::filesystem::exists(globalConfigFileName))
       {
          std::string xml = FileReader::ReadFileToString(globalConfigFileName);
-
 
          GlobalConfig* pGlobalConfig = FromXml(xml);
          if (pGlobalConfig != nullptr)
@@ -326,10 +380,18 @@ void GlobalConfig::SaveGlobalConfig(const std::string& globalConfigFilename)
 
 std::string GlobalConfig::ToXml() const
 {
-   XMLDocument doc;
+   tinyxml2::XMLDocument doc;
    doc.InsertEndChild(doc.NewDeclaration());
 
-   XMLElement* element = doc.NewElement("GlobalConfig");
+   auto now = std::chrono::system_clock::now();
+   auto time_t = std::chrono::system_clock::to_time_t(now);
+   std::stringstream ss;
+   ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H-%M-%S");
+
+   doc.InsertEndChild(doc.NewComment("Global configuration for the DirectOutput framework."));
+   doc.InsertEndChild(doc.NewComment(StringExtensions::Build("Saved by DirectOutput Version libdof-cpp: {0}", ss.str()).c_str()));
+
+   tinyxml2::XMLElement* element = doc.NewElement("GlobalConfig");
    doc.InsertEndChild(element);
 
    element = doc.NewElement("LedWizDefaultMinCommandIntervalMs");
@@ -353,7 +415,7 @@ std::string GlobalConfig::ToXml() const
       element->SetText(m_iniFilesPath.c_str());
    doc.FirstChildElement("GlobalConfig")->InsertEndChild(element);
 
-   element = doc.NewElement("ShapeDefinitionFilePattern");
+   element = doc.NewElement("ShapeDefintionFilePattern");
    if (!m_shapeDefinitionFilePattern.GetPattern().empty())
       element->SetText(m_shapeDefinitionFilePattern.GetPattern().c_str());
    doc.FirstChildElement("GlobalConfig")->InsertEndChild(element);
@@ -366,7 +428,7 @@ std::string GlobalConfig::ToXml() const
    element = doc.NewElement("TableConfigFilePatterns");
    for (auto& fp : m_tableConfigFilePatterns)
    {
-      XMLElement* filePattern = doc.NewElement("FilePattern");
+      tinyxml2::XMLElement* filePattern = doc.NewElement("FilePattern");
       filePattern->SetText(fp.GetPattern().c_str());
       element->InsertEndChild(filePattern);
    }
@@ -384,21 +446,21 @@ std::string GlobalConfig::ToXml() const
    element->SetText(m_logFilePattern.GetPattern().c_str());
    doc.FirstChildElement("GlobalConfig")->InsertEndChild(element);
 
-   XMLPrinter printer;
+   tinyxml2::XMLPrinter printer;
    doc.Print(&printer);
    return std::string(printer.CStr());
 }
 
 GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
 {
-   XMLDocument doc;
-   if (doc.Parse(configXml.c_str()) != XML_SUCCESS)
+   tinyxml2::XMLDocument doc;
+   if (doc.Parse(configXml.c_str()) != tinyxml2::XML_SUCCESS)
    {
-      Log::Warning(StringExtensions::Build("GlobalConfig XML parse error: {0}", doc.ErrorStr()));
+      Log::Warning(StringExtensions::Build("GlobalConfig XML parse error: {0}", std::string(doc.ErrorStr() ? doc.ErrorStr() : "unknown error")));
       return nullptr;
    }
 
-   XMLElement* root = doc.FirstChildElement("GlobalConfig");
+   tinyxml2::XMLElement* root = doc.FirstChildElement("GlobalConfig");
    if (!root)
    {
       Log::Warning("GlobalConfig root element not found");
@@ -407,11 +469,11 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
 
    GlobalConfig* pGlobalConfig = new GlobalConfig();
 
-   XMLElement* element = root->FirstChildElement("LedWizDefaultMinCommandIntervalMs");
+   tinyxml2::XMLElement* element = root->FirstChildElement("LedWizDefaultMinCommandIntervalMs");
    if (element && element->GetText())
    {
       int value;
-      if (element->QueryIntText(&value) == XML_SUCCESS)
+      if (element->QueryIntText(&value) == tinyxml2::XML_SUCCESS)
          pGlobalConfig->SetLedWizDefaultMinCommandIntervalMs(value);
    }
 
@@ -419,7 +481,7 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    if (element && element->GetText())
    {
       int value;
-      if (element->QueryIntText(&value) == XML_SUCCESS)
+      if (element->QueryIntText(&value) == tinyxml2::XML_SUCCESS)
          pGlobalConfig->SetLedControlMinimumEffectDurationMs(value);
    }
 
@@ -427,7 +489,7 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    if (element && element->GetText())
    {
       int value;
-      if (element->QueryIntText(&value) == XML_SUCCESS)
+      if (element->QueryIntText(&value) == tinyxml2::XML_SUCCESS)
          pGlobalConfig->SetLedControlMinimumRGBEffectDurationMs(value);
    }
 
@@ -435,7 +497,7 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    if (element && element->GetText())
    {
       int value;
-      if (element->QueryIntText(&value) == XML_SUCCESS)
+      if (element->QueryIntText(&value) == tinyxml2::XML_SUCCESS)
          pGlobalConfig->SetPacLedDefaultMinCommandIntervalMs(value);
    }
 
@@ -443,9 +505,9 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    if (element && element->GetText())
       pGlobalConfig->SetIniFilesPath(element->GetText());
 
-   element = root->FirstChildElement("ShapeDefinitionFilePattern");
+   element = root->FirstChildElement("ShapeDefintionFilePattern");
    if (element && element->GetText())
-      pGlobalConfig->SetShapeDefinitionFilePattern(element->GetText());
+      pGlobalConfig->SetShapeDefintionFilePattern(element->GetText());
 
    element = root->FirstChildElement("CabinetConfigFilePattern");
    if (element && element->GetText())
@@ -454,7 +516,7 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    element = root->FirstChildElement("TableConfigFilePatterns");
    if (element)
    {
-      XMLElement* patternElement = element->FirstChildElement("FilePattern");
+      tinyxml2::XMLElement* patternElement = element->FirstChildElement("FilePattern");
       while (patternElement)
       {
          if (patternElement->GetText())
@@ -468,7 +530,7 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    if (element && element->GetText())
    {
       bool value;
-      if (element->QueryBoolText(&value) == XML_SUCCESS)
+      if (element->QueryBoolText(&value) == tinyxml2::XML_SUCCESS)
          pGlobalConfig->SetEnableLogging(value);
    }
 
@@ -476,7 +538,7 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    if (element && element->GetText())
    {
       bool value;
-      if (element->QueryBoolText(&value) == XML_SUCCESS)
+      if (element->QueryBoolText(&value) == tinyxml2::XML_SUCCESS)
          pGlobalConfig->SetClearLogOnSessionStart(value);
    }
 

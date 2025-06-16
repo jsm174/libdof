@@ -9,8 +9,6 @@ namespace DOF
 
 void TableConfig::ParseLedControlDataLine(const std::string& ledControlData, bool throwExceptions)
 {
-
-
    std::vector<std::string> dataColumns = StringExtensions::Split(ledControlData, { ',' });
    if (dataColumns.size() < 1)
    {
