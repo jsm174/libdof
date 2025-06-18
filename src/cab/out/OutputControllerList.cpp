@@ -10,6 +10,11 @@
 #include "lw/LedWiz.h"
 #endif
 
+#ifdef __LIBSERIALPORT__
+#include "adressableledstrip/TeensyStripController.h"
+#include "adressableledstrip/WemosD1StripController.h"
+#endif
+
 namespace DOF
 {
 
@@ -62,6 +67,20 @@ bool OutputControllerList::Contains(const std::string& name) const
    return false;
 }
 
+IOutputController* OutputControllerList::GetByName(const std::string& name) const
+{
+   for (IOutputController* pController : *this)
+   {
+      if (pController->GetName() == name)
+      {
+         return pController;
+      }
+   }
+   return nullptr;
+}
+
+IOutputController* OutputControllerList::operator[](const std::string& name) const { return GetByName(name); }
+
 IOutputController* OutputControllerList::CreateController(const std::string& typeName)
 {
    if (typeName == "NullOutputController")
@@ -73,6 +92,12 @@ IOutputController* OutputControllerList::CreateController(const std::string& typ
       return new PinscapePico();
    else if (typeName == "LedWiz")
       return new LedWiz();
+#endif
+#ifdef __LIBSERIALPORT__
+   else if (typeName == "TeensyStripController")
+      return new TeensyStripController();
+   else if (typeName == "WemosD1MPStripController")
+      return new WemosD1MPStripController();
 #endif
    else
    {

@@ -13,6 +13,8 @@ public:
    AnalogAlphaMatrixValueEffect();
    virtual ~AnalogAlphaMatrixValueEffect() = default;
 
+   virtual std::string GetXmlElementName() const override { return "AnalogAlphaMatrixValueEffect"; }
+
    const AnalogAlpha& GetActiveValue() const { return m_activeValue; }
    void SetActiveValue(const AnalogAlpha& value) { m_activeValue = value; }
    const AnalogAlpha& GetInactiveValue() const { return m_inactiveValue; }

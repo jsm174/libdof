@@ -8,6 +8,8 @@
 #include "out/IAutoConfigOutputController.h"
 #include "out/OutputControllerList.h"
 #include "toys/ToyList.h"
+#include "toys/lwequivalent/LedWizEquivalent.h"
+#include "toys/hardware/LedStrip.h"
 #include "schedules/ScheduledSettings.h"
 #include "sequencer/SequentialOutputSettings.h"
 #include <sstream>
@@ -286,6 +288,42 @@ bool Cabinet::FromXml(const tinyxml2::XMLElement* element)
    if (controllersElement && m_pOutputControllers)
    {
       m_pOutputControllers->FromXml(controllersElement);
+   }
+
+   const tinyxml2::XMLElement* toysElement = element->FirstChildElement("Toys");
+   if (toysElement && m_pToys)
+   {
+      for (const tinyxml2::XMLElement* toyElement = toysElement->FirstChildElement(); toyElement; toyElement = toyElement->NextSiblingElement())
+      {
+         const char* toyType = toyElement->Name();
+         if (toyType)
+         {
+            if (std::string(toyType) == "LedWizEquivalent")
+            {
+               LedWizEquivalent* ledWizEquivalent = new LedWizEquivalent();
+               if (ledWizEquivalent->FromXml(toyElement))
+               {
+                  m_pToys->push_back(ledWizEquivalent);
+               }
+               else
+               {
+                  delete ledWizEquivalent;
+               }
+            }
+            else if (std::string(toyType) == "LedStrip")
+            {
+               LedStrip* ledStrip = new LedStrip();
+               if (ledStrip->FromXml(toyElement))
+               {
+                  m_pToys->push_back(ledStrip);
+               }
+               else
+               {
+                  delete ledStrip;
+               }
+            }
+         }
+      }
    }
 
    return true;

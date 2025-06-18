@@ -234,6 +234,13 @@ if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "li
 
       src/cab/out/lw/LedWiz.cpp
       src/cab/out/lw/LedWizAutoConfigurator.cpp
+
+      src/cab/out/adressableledstrip/TeensyStripController.cpp
+      src/cab/out/adressableledstrip/LedStripOutput.cpp
+      src/cab/out/adressableledstrip/DirectStripController.cpp
+      src/cab/out/adressableledstrip/DirectStripControllerApi.cpp
+      src/cab/out/adressableledstrip/WS2811StripController.cpp
+      src/cab/out/adressableledstrip/WemosD1StripController.cpp
    )
 endif()
 

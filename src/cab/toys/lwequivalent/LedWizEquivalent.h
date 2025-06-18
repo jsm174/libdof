@@ -5,6 +5,12 @@
 #include <vector>
 #include <string>
 
+namespace tinyxml2
+{
+class XMLDocument;
+class XMLElement;
+}
+
 namespace DOF
 {
 
@@ -22,6 +28,9 @@ public:
    IOutput* GetOutput() const { return m_output; }
    void SetOutput(IOutput* output) { m_output = output; }
 
+   tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const;
+   bool FromXml(const tinyxml2::XMLElement* element);
+
 private:
    std::string m_outputName;
    int m_ledWizEquivalentOutputNumber;
@@ -38,6 +47,9 @@ public:
    LedWizEquivalentOutput* FindByName(const std::string& name) const;
    void AddOutput(LedWizEquivalentOutput* output);
    LedWizEquivalentOutput* GetOrCreateOutput(int number);
+
+   tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const;
+   bool FromXml(const tinyxml2::XMLElement* element);
 };
 
 class LedWizEquivalent : public ToyBase
@@ -57,6 +69,9 @@ public:
    void SetLedWizNumber(int number) { m_ledWizNumber = number; }
    IOutput* GetOutput(int outputNumber);
    void SetupOutputs(int numberOfOutputs = 32);
+
+   virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const;
+   virtual bool FromXml(const tinyxml2::XMLElement* element);
 
 private:
    LedWizEquivalentOutputList m_outputs;

@@ -1,5 +1,7 @@
 #include "RGBAMatrixColorEffect.h"
 #include "../../general/MathExtensions.h"
+#include "../../Log.h"
+#include "../../general/StringExtensions.h"
 
 namespace DOF
 {

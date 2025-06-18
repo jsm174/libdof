@@ -7,6 +7,7 @@
 #include "../layer/MatrixDictionaryBase.h"
 #include "../../../general/color/RGBAColor.h"
 #include "../../../general/Curve.h"
+#include <tinyxml2/tinyxml2.h>
 #include <vector>
 #include <string>
 #include <memory>
@@ -55,6 +56,8 @@ public:
    MatrixDictionaryBase<RGBAColor>& GetLayers() { return m_layers; }
    const MatrixDictionaryBase<RGBAColor>& GetLayers() const { return m_layers; }
 
+   virtual bool FromXml(const tinyxml2::XMLElement* element);
+
 protected:
    virtual void UpdateOutputs() override;
 
@@ -71,7 +74,7 @@ private:
 
 
    MatrixDictionaryBase<RGBAColor> m_layers;
-   std::unique_ptr<Curve> m_fadingCurve;
+   Curve* m_fadingCurve;
 
 
    std::vector<uint8_t> m_outputData;
@@ -84,9 +87,8 @@ private:
    void SetOutputData();
    int CalculateLedNumber(int x, int y) const;
    void ApplyColorOrder(uint8_t& r, uint8_t& g, uint8_t& b) const;
-   RGBAColor BlendLayers(int x, int y) const;
    uint8_t ApplyFadingCurve(uint8_t value) const;
-   float ApplyGammaCorrection(float value) const;
+   Curve GetFadingTableFromPercent(int outputPercent) const;
 };
 
 }

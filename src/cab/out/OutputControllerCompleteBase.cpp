@@ -113,7 +113,7 @@ void OutputControllerCompleteBase::SetupOutputs()
          output->SetOutput(0);
 
          std::string outputName = GetName().empty() ? "" : GetName();
-         outputName += "." + std::to_string(i);
+         outputName += StringExtensions::Build(".{0:00}", std::to_string(i));
          output->SetName(outputName);
 
          outputList->Add(output);
@@ -166,7 +166,17 @@ bool OutputControllerCompleteBase::FromXml(const tinyxml2::XMLElement* element)
 
    const char* name = element->Attribute("Name");
    if (name)
+   {
       SetName(name);
+   }
+   else
+   {
+      const tinyxml2::XMLElement* nameElement = element->FirstChildElement("Name");
+      if (nameElement && nameElement->GetText())
+      {
+         SetName(nameElement->GetText());
+      }
+   }
 
    return true;
 }

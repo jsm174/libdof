@@ -1,11 +1,23 @@
 #include "LedStrip.h"
 #include "../../out/ISupportsSetValues.h"
+#include "../../out/IOutputController.h"
+#include "../../out/OutputControllerList.h"
+#include "../../out/Output.h"
 #include "../../Cabinet.h"
+#include "../../overrides/TableOverrideSettings.h"
+#include "../../schedules/ScheduledSettings.h"
 #include "../layer/AlphaMappingTable.h"
+#include "../lwequivalent/LedWizEquivalent.h"
+#include "../ToyList.h"
 #include "../../../general/MathExtensions.h"
+#include "../../../Log.h"
+#include "../../../general/StringExtensions.h"
+#include <tinyxml2/tinyxml2.h>
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
+#include <vector>
 
 namespace DOF
 {
@@ -27,7 +39,14 @@ LedStrip::LedStrip()
 {
 }
 
-LedStrip::~LedStrip() { }
+LedStrip::~LedStrip()
+{
+   if (m_fadingCurve)
+   {
+      delete m_fadingCurve;
+      m_fadingCurve = nullptr;
+   }
+}
 
 void LedStrip::Init(Cabinet* cabinet)
 {
@@ -36,7 +55,7 @@ void LedStrip::Init(Cabinet* cabinet)
    m_layers.SetWidth(m_width);
    m_layers.SetHeight(m_height);
 
-   m_fadingCurve = std::make_unique<Curve>(Curve::CurveTypeEnum::Linear);
+   m_fadingCurve = new Curve(Curve::CurveTypeEnum::Linear);
    if (!m_fadingCurveName.empty() && m_fadingCurveName != "Linear")
    {
       if (m_fadingCurveName == "SwissLizardsLedCurve")
@@ -51,7 +70,11 @@ void LedStrip::Init(Cabinet* cabinet)
 
    if (!m_outputControllerName.empty() && cabinet != nullptr)
    {
-      m_outputController = nullptr;
+      if (cabinet->GetOutputControllers()->Contains(m_outputControllerName))
+      {
+         IOutputController* controller = cabinet->GetOutputControllers()->GetByName(m_outputControllerName);
+         m_outputController = dynamic_cast<ISupportsSetValues*>(controller);
+      }
    }
 
    int outputCount = GetNumberOfOutputs();
@@ -71,6 +94,11 @@ void LedStrip::Finish()
 {
    Reset();
    m_outputController = nullptr;
+   if (m_fadingCurve)
+   {
+      delete m_fadingCurve;
+      m_fadingCurve = nullptr;
+   }
 }
 
 void LedStrip::UpdateToy() { UpdateOutputs(); }
@@ -146,47 +174,167 @@ void LedStrip::UpdateOutputs()
 void LedStrip::BuildMappingTables()
 {
    m_outputMappingTable.clear();
-   m_outputMappingTable.resize(m_height, std::vector<int>(m_width, 0));
+   m_outputMappingTable.resize(m_width, std::vector<int>(m_height, 0));
 
    for (int y = 0; y < m_height; y++)
    {
       for (int x = 0; x < m_width; x++)
       {
          int ledNumber = CalculateLedNumber(x, y);
-         m_outputMappingTable[y][x] = ledNumber;
+         m_outputMappingTable[x][y] = ledNumber * 3;
       }
    }
 }
 
 void LedStrip::SetOutputData()
 {
-   for (int y = 0; y < m_height; y++)
+   if (!m_layers.empty())
    {
-      for (int x = 0; x < m_width; x++)
+      if (m_brightness == 0.0f)
       {
-         RGBAColor blendedColor = BlendLayers(x, y);
+         std::fill(m_outputData.begin(), m_outputData.end(), 0);
+         return;
+      }
 
-         float brightnessMultiplier = ApplyGammaCorrection(m_brightness);
+      std::array<float, 3> defaultValue = { { 0.0f, 0.0f, 0.0f } };
+      std::vector<std::vector<std::array<float, 3>>> value(m_width, std::vector<std::array<float, 3>>(m_height, defaultValue));
 
-         uint8_t red = static_cast<uint8_t>(MathExtensions::Limit(blendedColor.GetRed() * brightnessMultiplier, 0.0f, 255.0f));
-         uint8_t green = static_cast<uint8_t>(MathExtensions::Limit(blendedColor.GetGreen() * brightnessMultiplier, 0.0f, 255.0f));
-         uint8_t blue = static_cast<uint8_t>(MathExtensions::Limit(blendedColor.GetBlue() * brightnessMultiplier, 0.0f, 255.0f));
+      for (const auto& [layerNr, data] : m_layers)
+      {
+         if (!data)
+            continue;
 
-         red = ApplyFadingCurve(red);
-         green = ApplyFadingCurve(green);
-         blue = ApplyFadingCurve(blue);
-
-         ApplyColorOrder(red, green, blue);
-
-         int ledPosition = m_outputMappingTable[y][x];
-         int baseOutputIndex = ledPosition * 3;
-
-         if (baseOutputIndex >= 0 && baseOutputIndex + 2 < static_cast<int>(m_outputData.size()))
+         for (int y = 0; y < m_height; y++)
          {
-            m_outputData[baseOutputIndex] = red;
-            m_outputData[baseOutputIndex + 1] = green;
-            m_outputData[baseOutputIndex + 2] = blue;
+            for (int x = 0; x < m_width; x++)
+            {
+               int idx = y * m_width + x;
+               const RGBAColor& d = data[idx];
+
+               int alpha = MathExtensions::Limit(d.GetAlpha(), 0, 255);
+               if (alpha != 0)
+               {
+                  value[x][y][0]
+                     = AlphaMappingTable::AlphaMapping[255 - alpha][static_cast<int>(value[x][y][0])] + AlphaMappingTable::AlphaMapping[alpha][MathExtensions::Limit(d.GetRed(), 0, 255)];
+                  value[x][y][1]
+                     = AlphaMappingTable::AlphaMapping[255 - alpha][static_cast<int>(value[x][y][1])] + AlphaMappingTable::AlphaMapping[alpha][MathExtensions::Limit(d.GetGreen(), 0, 255)];
+                  value[x][y][2]
+                     = AlphaMappingTable::AlphaMapping[255 - alpha][static_cast<int>(value[x][y][2])] + AlphaMappingTable::AlphaMapping[alpha][MathExtensions::Limit(d.GetBlue(), 0, 255)];
+               }
+            }
          }
+      }
+
+      const uint8_t* fadingTable = m_fadingCurve->GetData();
+
+      Output newOutput;
+
+      LedWizEquivalent* lwe = nullptr;
+      if (m_cabinet && m_cabinet->GetToys())
+      {
+         ToyList* toys = m_cabinet->GetToys();
+         for (auto it = toys->begin(); it != toys->end(); ++it)
+         {
+            lwe = dynamic_cast<LedWizEquivalent*>(*it);
+            if (lwe)
+               break;
+         }
+      }
+
+      newOutput.SetNumber(m_firstLedNumber);
+      newOutput.SetOutput(100);
+
+      if (lwe)
+      {
+         IOutput* overriddenOutput = TableOverrideSettings::GetInstance()->GetNewRecalculatedOutput(&newOutput, 30, lwe->GetLedWizNumber() - 30);
+         newOutput.SetOutput(overriddenOutput->GetOutput());
+         if (overriddenOutput != &newOutput)
+            delete overriddenOutput;
+
+         IOutput* scheduledOutput = ScheduledSettings::GetInstance().GetNewRecalculatedOutput(&newOutput, 30, lwe->GetLedWizNumber() - 30);
+         newOutput.SetOutput(scheduledOutput->GetOutput());
+         if (scheduledOutput != &newOutput)
+            delete scheduledOutput;
+      }
+
+      Curve finalFadingTable = GetFadingTableFromPercent(newOutput.GetOutput());
+      fadingTable = finalFadingTable.GetData();
+
+      switch (m_colorOrder)
+      {
+      case RGBOrderEnum::RBG:
+         for (int y = 0; y < m_height; y++)
+         {
+            for (int x = 0; x < m_width; x++)
+            {
+               int outputNumber = m_outputMappingTable[x][y];
+               m_outputData[outputNumber] = fadingTable[static_cast<int>(value[x][y][0])];
+               m_outputData[outputNumber + 2] = fadingTable[static_cast<int>(value[x][y][1])];
+               m_outputData[outputNumber + 1] = fadingTable[static_cast<int>(value[x][y][2])];
+            }
+         }
+         break;
+      case RGBOrderEnum::GRB:
+         for (int y = 0; y < m_height; y++)
+         {
+            for (int x = 0; x < m_width; x++)
+            {
+               int outputNumber = m_outputMappingTable[x][y];
+               m_outputData[outputNumber + 1] = fadingTable[static_cast<int>(value[x][y][0])];
+               m_outputData[outputNumber] = fadingTable[static_cast<int>(value[x][y][1])];
+               m_outputData[outputNumber + 2] = fadingTable[static_cast<int>(value[x][y][2])];
+            }
+         }
+         break;
+      case RGBOrderEnum::GBR:
+         for (int y = 0; y < m_height; y++)
+         {
+            for (int x = 0; x < m_width; x++)
+            {
+               int outputNumber = m_outputMappingTable[x][y];
+               m_outputData[outputNumber + 1] = fadingTable[static_cast<int>(value[x][y][0])];
+               m_outputData[outputNumber + 2] = fadingTable[static_cast<int>(value[x][y][1])];
+               m_outputData[outputNumber] = fadingTable[static_cast<int>(value[x][y][2])];
+            }
+         }
+         break;
+      case RGBOrderEnum::BRG:
+         for (int y = 0; y < m_height; y++)
+         {
+            for (int x = 0; x < m_width; x++)
+            {
+               int outputNumber = m_outputMappingTable[x][y];
+               m_outputData[outputNumber + 2] = fadingTable[static_cast<int>(value[x][y][0])];
+               m_outputData[outputNumber] = fadingTable[static_cast<int>(value[x][y][1])];
+               m_outputData[outputNumber + 1] = fadingTable[static_cast<int>(value[x][y][2])];
+            }
+         }
+         break;
+      case RGBOrderEnum::BGR:
+         for (int y = 0; y < m_height; y++)
+         {
+            for (int x = 0; x < m_width; x++)
+            {
+               int outputNumber = m_outputMappingTable[x][y];
+               m_outputData[outputNumber + 2] = fadingTable[static_cast<int>(value[x][y][0])];
+               m_outputData[outputNumber + 1] = fadingTable[static_cast<int>(value[x][y][1])];
+               m_outputData[outputNumber] = fadingTable[static_cast<int>(value[x][y][2])];
+            }
+         }
+         break;
+      case RGBOrderEnum::RGB:
+      default:
+         for (int y = 0; y < m_height; y++)
+         {
+            for (int x = 0; x < m_width; x++)
+            {
+               int outputNumber = m_outputMappingTable[x][y];
+               m_outputData[outputNumber] = fadingTable[static_cast<int>(value[x][y][0])];
+               m_outputData[outputNumber + 1] = fadingTable[static_cast<int>(value[x][y][1])];
+               m_outputData[outputNumber + 2] = fadingTable[static_cast<int>(value[x][y][2])];
+            }
+         }
+         break;
       }
    }
 }
@@ -317,41 +465,6 @@ void LedStrip::ApplyColorOrder(uint8_t& r, uint8_t& g, uint8_t& b) const
    }
 }
 
-RGBAColor LedStrip::BlendLayers(int x, int y) const
-{
-   RGBAColor result(0, 0, 0, 0);
-
-   for (const auto& pair : m_layers)
-   {
-      int layerNr = pair.first;
-      RGBAColor* layerData = pair.second;
-
-      if (layerData != nullptr)
-      {
-         int index = y * m_width + x;
-         if (index >= 0 && index < m_width * m_height)
-         {
-            const RGBAColor& layerColor = layerData[index];
-
-            if (layerColor.GetAlpha() > 0)
-            {
-               float alpha = static_cast<float>(layerColor.GetAlpha()) / 255.0f;
-               float invAlpha = 1.0f - alpha;
-
-               int newRed = static_cast<int>(result.GetRed() * invAlpha + layerColor.GetRed() * alpha);
-               int newGreen = static_cast<int>(result.GetGreen() * invAlpha + layerColor.GetGreen() * alpha);
-               int newBlue = static_cast<int>(result.GetBlue() * invAlpha + layerColor.GetBlue() * alpha);
-               int newAlpha = std::max(result.GetAlpha(), layerColor.GetAlpha());
-
-               result.SetRGBA(
-                  MathExtensions::Limit(newRed, 0, 255), MathExtensions::Limit(newGreen, 0, 255), MathExtensions::Limit(newBlue, 0, 255), MathExtensions::Limit(newAlpha, 0, 255));
-            }
-         }
-      }
-   }
-
-   return result;
-}
 
 uint8_t LedStrip::ApplyFadingCurve(uint8_t value) const
 {
@@ -362,6 +475,119 @@ uint8_t LedStrip::ApplyFadingCurve(uint8_t value) const
    return value;
 }
 
-float LedStrip::ApplyGammaCorrection(float value) const { return std::pow(value, 1.0f / m_brightnessGammaCorrection); }
+Curve LedStrip::GetFadingTableFromPercent(int outputPercent) const
+{
+   if (outputPercent == 100)
+   {
+      return *m_fadingCurve;
+   }
+   else if (outputPercent >= 89)
+   {
+      return Curve(Curve::CurveTypeEnum::Linear0To224);
+   }
+   else if (outputPercent >= 78)
+   {
+      return Curve(Curve::CurveTypeEnum::Linear0To192);
+   }
+   else if (outputPercent >= 67)
+   {
+      return Curve(Curve::CurveTypeEnum::Linear0To160);
+   }
+   else if (outputPercent >= 56)
+   {
+      return Curve(Curve::CurveTypeEnum::Linear0To128);
+   }
+   else if (outputPercent >= 45)
+   {
+      return Curve(Curve::CurveTypeEnum::Linear0To96);
+   }
+   else if (outputPercent >= 34)
+   {
+      return Curve(Curve::CurveTypeEnum::Linear0To64);
+   }
+   else if (outputPercent >= 23)
+   {
+      return Curve(Curve::CurveTypeEnum::Linear0To32);
+   }
+   else
+   {
+      return Curve(Curve::CurveTypeEnum::Linear0To16);
+   }
+}
+
+
+bool LedStrip::FromXml(const tinyxml2::XMLElement* element)
+{
+   if (!element)
+      return false;
+
+   auto loadElement = [&](const char* name, auto setter)
+   {
+      const tinyxml2::XMLElement* elem = element->FirstChildElement(name);
+      if (elem && elem->GetText())
+      {
+         try
+         {
+            setter(elem->GetText());
+         }
+         catch (...)
+         {
+            return false;
+         }
+      }
+      return true;
+   };
+
+   loadElement("Name", [this](const char* text) { SetName(text); });
+   loadElement("Width", [this](const char* text) { SetWidth(std::stoi(text)); });
+   loadElement("Height", [this](const char* text) { SetHeight(std::stoi(text)); });
+   loadElement("FirstLedNumber", [this](const char* text) { SetFirstLedNumber(std::stoi(text)); });
+   loadElement("OutputControllerName", [this](const char* text) { SetOutputControllerName(text); });
+   loadElement("FadingCurveName", [this](const char* text) { SetFadingCurveName(text); });
+   loadElement("Brightness", [this](const char* text) { SetBrightness(std::stoi(text)); });
+   loadElement("BrightnessGammaCorrection", [this](const char* text) { SetBrightnessGammaCorrection(std::stof(text)); });
+
+   loadElement("LedStripArrangement",
+      [this](const char* text)
+      {
+         std::string arrangement = text;
+         if (arrangement == "LeftRightTopDown")
+            SetLedStripArrangement(LedStripArrangementEnum::LeftRightTopDown);
+         else if (arrangement == "LeftRightBottomUp")
+            SetLedStripArrangement(LedStripArrangementEnum::LeftRightBottomUp);
+         else if (arrangement == "RightLeftTopDown")
+            SetLedStripArrangement(LedStripArrangementEnum::RightLeftTopDown);
+         else if (arrangement == "RightLeftBottomUp")
+            SetLedStripArrangement(LedStripArrangementEnum::RightLeftBottomUp);
+         else if (arrangement == "TopDownLeftRight")
+            SetLedStripArrangement(LedStripArrangementEnum::TopDownLeftRight);
+         else if (arrangement == "TopDownRightLeft")
+            SetLedStripArrangement(LedStripArrangementEnum::TopDownRightLeft);
+         else if (arrangement == "BottomUpLeftRight")
+            SetLedStripArrangement(LedStripArrangementEnum::BottomUpLeftRight);
+         else if (arrangement == "BottomUpRightLeft")
+            SetLedStripArrangement(LedStripArrangementEnum::BottomUpRightLeft);
+      });
+
+   loadElement("ColorOrder",
+      [this](const char* text)
+      {
+         std::string colorOrder = text;
+         if (colorOrder == "RGB")
+            SetColorOrder(RGBOrderEnum::RGB);
+         else if (colorOrder == "RBG")
+            SetColorOrder(RGBOrderEnum::RBG);
+         else if (colorOrder == "GRB")
+            SetColorOrder(RGBOrderEnum::GRB);
+         else if (colorOrder == "GBR")
+            SetColorOrder(RGBOrderEnum::GBR);
+         else if (colorOrder == "BRG")
+            SetColorOrder(RGBOrderEnum::BRG);
+         else if (colorOrder == "BGR")
+            SetColorOrder(RGBOrderEnum::BGR);
+      });
+
+   return true;
+}
 
 }

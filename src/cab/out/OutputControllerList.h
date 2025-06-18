@@ -17,6 +17,8 @@ public:
    void Finish();
    void Update();
    bool Contains(const std::string& name) const;
+   IOutputController* GetByName(const std::string& name) const;
+   IOutputController* operator[](const std::string& name) const;
    static IOutputController* CreateController(const std::string& typeName);
    virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;
    virtual bool FromXml(const tinyxml2::XMLElement* element) override;
