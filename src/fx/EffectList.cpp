@@ -31,16 +31,15 @@ void EffectList::Finish()
    clear();
 }
 
-XMLElement* EffectList::ToXml(XMLDocument& doc) const
+tinyxml2::XMLElement* EffectList::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   XMLElement* effectsElement = doc.NewElement(GetXmlElementName().c_str());
-
+   tinyxml2::XMLElement* effectsElement = doc.NewElement(GetXmlElementName().c_str());
 
    for (const auto& pair : *this)
    {
       if (pair.second != nullptr)
       {
-         XMLElement* effectElement = pair.second->ToXml(doc);
+         tinyxml2::XMLElement* effectElement = pair.second->ToXml(doc);
          if (effectElement)
          {
             effectsElement->InsertEndChild(effectElement);
@@ -51,22 +50,19 @@ XMLElement* EffectList::ToXml(XMLDocument& doc) const
    return effectsElement;
 }
 
-bool EffectList::FromXml(const XMLElement* element)
+bool EffectList::FromXml(const tinyxml2::XMLElement* element)
 {
    if (!element)
       return false;
-
 
    Finish();
 
    const EffectFactory& factory = EffectFactory::GetInstance();
 
-
-   const XMLElement* effectElement = element->FirstChildElement();
+   const tinyxml2::XMLElement* effectElement = element->FirstChildElement();
    while (effectElement)
    {
       std::string typeName = effectElement->Name();
-
 
       IEffect* effect = factory.CreateEffect(typeName);
       if (effect)

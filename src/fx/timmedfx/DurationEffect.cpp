@@ -17,32 +17,23 @@ DurationEffect::DurationEffect()
 
 void DurationEffect::Trigger(TableElementData* tableElementData)
 {
-   if (m_targetEffect != nullptr)
+   if (m_targetEffect != nullptr && tableElementData->m_value != 0)
    {
-      if (tableElementData->m_value != 0)
-      {
-         if (!m_active)
-         {
-            TriggerTargetEffect(tableElementData);
-            m_active = true;
-         }
-         else if (m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
-         {
-            TriggerTargetEffect(tableElementData);
-         }
-         else
-         {
-            TriggerTargetEffect(tableElementData);
-         }
-      }
-      else if (m_active)
-      {
-         m_durationTableElementData = new TableElementData(tableElementData->m_tableElementType, tableElementData->m_number, tableElementData->m_value);
-         m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, [this]() { this->DurationEnd(); });
-      }
-      else
+      if (!m_active)
       {
          TriggerTargetEffect(tableElementData);
+         m_durationTableElementData = new TableElementData(tableElementData->m_tableElementType, tableElementData->m_number, tableElementData->m_value);
+         m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, [this]() { this->DurationEnd(); });
+         m_active = true;
+      }
+      else if (m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
+      {
+         if (m_durationTableElementData)
+         {
+            delete m_durationTableElementData;
+         }
+         m_durationTableElementData = new TableElementData(tableElementData->m_tableElementType, tableElementData->m_number, tableElementData->m_value);
+         m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, [this]() { this->DurationEnd(); });
       }
    }
 }

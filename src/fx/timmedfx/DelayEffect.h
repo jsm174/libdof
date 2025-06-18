@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../EffectEffectBase.h"
+#include <functional>
 
 namespace DOF
 {
@@ -25,6 +26,7 @@ private:
    void AfterDelay(TableElementData* data);
 
    int m_delayMs;
+   std::function<void()> m_afterDelayCallback;
 };
 
 }

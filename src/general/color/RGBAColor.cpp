@@ -76,7 +76,6 @@ bool RGBAColor::SetColor(const std::string& color)
       return true;
    }
 
-
    if ((color.length() == 6 && IsHexString(color)) || (color.length() == 7 && color[0] == '#' && IsHexString(color, 1)))
    {
       int offset = (color[0] == '#') ? 1 : 0;
@@ -86,7 +85,6 @@ bool RGBAColor::SetColor(const std::string& color)
       SetColor(red, green, blue);
       return true;
    }
-
 
    std::vector<std::string> splitColors = Split(color, ',');
    if (splitColors.size() == 3)

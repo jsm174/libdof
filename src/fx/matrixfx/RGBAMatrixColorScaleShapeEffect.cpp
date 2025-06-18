@@ -12,7 +12,6 @@ RGBAMatrixColorScaleShapeEffect::RGBAMatrixColorScaleShapeEffect()
 {
 }
 
-
 RGBAColor RGBAMatrixColorScaleShapeEffect::ApplyColorScaling(const RGBAColor& baseColor) const
 {
    switch (m_colorScaleMode)

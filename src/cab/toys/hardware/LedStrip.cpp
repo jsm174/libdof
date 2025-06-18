@@ -364,5 +364,4 @@ uint8_t LedStrip::ApplyFadingCurve(uint8_t value) const
 
 float LedStrip::ApplyGammaCorrection(float value) const { return std::pow(value, 1.0f / m_brightnessGammaCorrection); }
 
-
 }

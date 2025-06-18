@@ -65,9 +65,7 @@ void Configurator::Setup(LedControlConfigList* ledControlConfigList, Table* tabl
       iniFilePath = (*ledControlConfigList)[0]->GetLedControlIniFile();
       size_t lastSlash = iniFilePath.find_last_of("/\\");
       if (lastSlash != std::string::npos)
-      {
          iniFilePath = iniFilePath.substr(0, lastSlash);
-      }
    }
 
    std::unordered_map<int, std::unordered_map<int, IToy*>> toyAssignments = SetupCabinet(tableConfigDict, cabinet);
@@ -95,9 +93,7 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
             }
          }
          if (!found)
-         {
             ledWizEquivalentDict[ledWizEquivalent->GetLedWizNumber()] = ledWizEquivalent;
-         }
          else
          {
             Log::Warning(StringExtensions::Build("Found more than one ledwiz with number {0}.", std::to_string(ledWizEquivalent->GetLedWizNumber())));
@@ -134,9 +130,7 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
                   {
                      int cnt = 1;
                      while (cabinet->GetToys()->Contains(StringExtensions::Build("{0} {1}", toyName, std::to_string(cnt))))
-                     {
                         cnt++;
-                     }
                      toyName = StringExtensions::Build("{0} {1}", toyName, std::to_string(cnt));
                   }
                   targetToy = new RGBAToy();
@@ -146,13 +140,10 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
                }
                case 1:
                {
-
-
                   auto* lweOutput = lwe->GetOutputs().FindByNumber(tcc->GetFirstOutputNumber());
                   if (lweOutput != nullptr)
                   {
                      std::string outputName = lweOutput->GetOutputName();
-
 
                      for (IToy* toy : *cabinet->GetToys())
                      {
@@ -163,7 +154,6 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
                            break;
                         }
                      }
-
 
                      if (targetToy == nullptr)
                      {
@@ -178,7 +168,6 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
                         }
                      }
 
-
                      if (targetToy == nullptr)
                      {
                         std::string toyName = StringExtensions::Build("LedWiz {0} Column {1}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()));
@@ -186,9 +175,7 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
                         {
                            int cnt = 1;
                            while (cabinet->GetToys()->Contains(StringExtensions::Build("{0} {1}", toyName, std::to_string(cnt))))
-                           {
                               cnt++;
-                           }
                            toyName = StringExtensions::Build("{0} {1}", toyName, std::to_string(cnt));
                         }
 
@@ -213,9 +200,7 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
             }
 
             if (targetToy != nullptr)
-            {
                toyAssignments[ledWizNr][tcc->GetNumber()] = targetToy;
-            }
          }
       }
    }
@@ -246,19 +231,16 @@ void Configurator::SetupTable(
                   IEffect* effect = nullptr;
                   std::string effectName;
 
-
                   IRGBAToy* rgbaToy = dynamic_cast<IRGBAToy*>(toy);
                   IAnalogAlphaToy* analogToy = dynamic_cast<IAnalogAlphaToy*>(toy);
 
                   if (rgbaToy != nullptr)
                   {
-
                      RGBAColorEffect* rgbaEffect = new RGBAColorEffect();
                      effectName = StringExtensions::Build(
                         "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                      rgbaEffect->SetName(effectName);
                      rgbaEffect->SetToyName(toy->GetName());
-
 
                      if (tcs->GetColorConfig() != nullptr)
                      {
@@ -266,9 +248,8 @@ void Configurator::SetupTable(
                         rgbaEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
                      }
                      else
-                     {
                         rgbaEffect->SetActiveColor(RGBAColor(255, 255, 255, 255));
-                     }
+
                      rgbaEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
                      rgbaEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
 
@@ -284,7 +265,6 @@ void Configurator::SetupTable(
 
                      effect = analogEffect;
                   }
-
 
                   if (effect != nullptr)
                   {
@@ -304,8 +284,8 @@ void Configurator::SetupTable(
                            "Ledwiz {0:00} Column {1:00} Setting {2:00} FadeEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                         fadeEffect->SetName(fadeName);
                         fadeEffect->SetTargetEffectName(finalEffect->GetName());
-                        fadeEffect->SetFadeDownDurationMs(tcs->GetFadingDownDurationMs());
-                        fadeEffect->SetFadeUpDurationMs(tcs->GetFadingUpDurationMs());
+                        fadeEffect->SetFadeDownDuration(tcs->GetFadingDownDurationMs());
+                        fadeEffect->SetFadeUpDuration(tcs->GetFadingUpDurationMs());
                         MakeEffectNameUnique(fadeEffect, table);
                         table->GetEffects()->insert(std::make_pair(fadeEffect->GetName(), fadeEffect));
                         finalEffect = fadeEffect;
@@ -331,8 +311,8 @@ void Configurator::SetupTable(
                         finalEffect = blinkEffect;
                      }
 
-                     // 4. DurationEffect (if duration or blink count is set)
-                     if (tcs->GetDurationMs() > 0 || tcs->GetBlink() > 0 || (rgbaToy != nullptr && m_effectRGBMinDurationMs > 0) || (rgbaToy == nullptr && m_effectMinDurationMs > 0))
+                     // 4. DurationEffect (if duration or positive blink count is set)
+                     if (tcs->GetDurationMs() > 0 || tcs->GetBlink() > 0)
                      {
                         DurationEffect* durationEffect = new DurationEffect();
                         std::string durationName = StringExtensions::Build(
@@ -468,31 +448,24 @@ void Configurator::SetupTable(
 void Configurator::MakeEffectNameUnique(IEffect* effect, Table* table)
 {
    if (effect == nullptr || table == nullptr)
-   {
       return;
-   }
 
    EffectList* effects = table->GetEffects();
    if (effects == nullptr)
-   {
       return;
-   }
 
    std::string originalName = effect->GetName();
-
 
    if (effects->find(originalName) != effects->end())
    {
       int cnt = 1;
       std::string newName;
 
-
       do
       {
          newName = StringExtensions::Build("{0} {1}", originalName, std::to_string(cnt));
          cnt++;
       } while (effects->find(newName) != effects->end());
-
 
       effect->SetName(newName);
    }
@@ -501,36 +474,26 @@ void Configurator::MakeEffectNameUnique(IEffect* effect, Table* table)
 void Configurator::AssignEffectToTableElements(Table* table, const std::vector<std::string>& tableElementDescriptors, IEffect* effect)
 {
    if (table == nullptr || effect == nullptr)
-   {
       return;
-   }
 
    TableElementList* tableElements = table->GetTableElements();
    if (tableElements == nullptr)
-   {
       return;
-   }
 
    for (const std::string& descriptor : tableElementDescriptors)
    {
       Log::Write(StringExtensions::Build("Processing table element descriptor: '{0}'", descriptor));
       if (descriptor.empty())
-      {
          continue;
-      }
 
       TableElement* tableElement = nullptr;
 
-
       if (descriptor[0] == '$')
       {
-
          std::string elementName = descriptor.substr(1);
-
 
          TableElementData* elementData = new TableElementData(elementName, 0);
          tableElements->UpdateState(elementData);
-
 
          for (TableElement* te : *tableElements)
          {
@@ -545,7 +508,6 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
       }
       else if (descriptor.find('.') != std::string::npos)
       {
-
          std::vector<std::string> parts = StringExtensions::Split(descriptor, { '.' });
          if (parts.size() == 3)
          {
@@ -555,14 +517,11 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
                int columnNumber = std::stoi(parts[1]);
                int settingNumber = std::stoi(parts[2]);
 
-
                TableElementTypeEnum elementType = TableElementTypeEnum::Solenoid;
                int elementNumber = ledWizNumber * 100 + columnNumber;
 
-
                TableElementData* elementData = new TableElementData(elementType, elementNumber, 0);
                tableElements->UpdateState(elementData);
-
 
                for (TableElement* te : *tableElements)
                {
@@ -577,14 +536,12 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
             }
             catch (const std::exception&)
             {
-
                continue;
             }
          }
       }
       else
       {
-
          if (descriptor.length() > 1)
          {
             char typeChar = descriptor[0];
@@ -644,11 +601,9 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
                {
                   int number = std::stoi(numberStr);
 
-
                   TableElementData* elementData = new TableElementData(elementType, number, 0);
                   Log::Write(StringExtensions::Build("Configuration: Creating table element type={0}, number={1}", std::string(1, (char)elementType), std::to_string(number)));
                   tableElements->UpdateState(elementData);
-
 
                   for (TableElement* te : *tableElements)
                   {
@@ -663,13 +618,11 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
                }
                catch (const std::exception&)
                {
-
                   continue;
                }
             }
          }
       }
-
 
       if (tableElement != nullptr)
       {

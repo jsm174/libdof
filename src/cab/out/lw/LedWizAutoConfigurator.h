@@ -11,7 +11,7 @@ public:
    LedWizAutoConfigurator();
    virtual ~LedWizAutoConfigurator();
 
-   virtual void AutoConfig(Cabinet* pCabinet) override;
+   virtual void AutoConfig(Cabinet* cabinet) override;
 };
 
 }

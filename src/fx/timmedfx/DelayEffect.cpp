@@ -22,7 +22,8 @@ void DelayEffect::Trigger(TableElementData* tableElementData)
    {
       if (m_delayMs > 0)
       {
-         m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_delayMs, [this, tableElementData]() { this->AfterDelay(tableElementData); }, true);
+         m_afterDelayCallback = [this, tableElementData]() { this->AfterDelay(tableElementData); };
+         m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_delayMs, m_afterDelayCallback, true);
       }
       else
       {
@@ -39,6 +40,7 @@ void DelayEffect::Finish()
 {
    try
    {
+      m_table->GetPinball()->GetAlarms()->UnregisterAlarm(m_afterDelayCallback);
    }
    catch (...)
    {

@@ -6,184 +6,105 @@
 #include "../../general/MathExtensions.h"
 #include "../../general/StringExtensions.h"
 #include "../../Log.h"
-#include <chrono>
+#include <cmath>
 
 namespace DOF
 {
 
 FadeEffect::FadeEffect()
-   : m_retriggerBehaviour(RetriggerBehaviourEnum::Restart)
-   , m_fadeUpDurationMs(500)
-   , m_fadeDownDurationMs(500)
-   , m_fadeRefreshIntervalMs(20)
-   , m_active(false)
-   , m_fadingUp(false)
-   , m_fadingDown(false)
-   , m_targetValue(0)
+   : m_fadeUpDuration(300)
+   , m_fadeDownDuration(300)
+   , m_fadeDurationMode(FadeEffectDurationModeEnum::CurrentToTarget)
+   , m_targetValue(-1)
    , m_currentValue(0)
-   , m_fadeStartValue(0)
-   , m_fadeStepValue(0.0)
-   , m_fadeTableElementData(nullptr)
+   , m_stepValue(0)
+   , m_lastTargetTriggerValue(-1)
+   , m_tableElementData(nullptr)
 {
 }
 
 FadeEffect::~FadeEffect()
 {
-   if (m_fadeTableElementData)
+   if (m_tableElementData)
    {
-      delete m_fadeTableElementData;
-      m_fadeTableElementData = nullptr;
+      delete m_tableElementData;
+      m_tableElementData = nullptr;
    }
 }
 
 void FadeEffect::Trigger(TableElementData* tableElementData)
 {
-   Log::Debug(StringExtensions::Build("FadeEffect::Trigger: value={0}, active={1}", std::to_string(tableElementData->m_value), std::to_string(m_active)));
-   if (m_targetEffect != nullptr)
+   if (m_targetEffect != nullptr && tableElementData->m_value != m_targetValue)
    {
-      if (tableElementData->m_value != 0)
+      m_targetValue = MathExtensions::Limit(tableElementData->m_value, 0, 255);
+
+      if (m_tableElementData)
       {
-         Log::Debug("FadeEffect::Trigger: Non-zero value, checking fade up");
-         if (!m_active)
-         {
-            Log::Debug("FadeEffect::Trigger: Starting fade up (not active)");
-            StartFadeUp(tableElementData);
-         }
-         else if (m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
-         {
-            Log::Debug("FadeEffect::Trigger: Restarting fade up (retrigger)");
-            StartFadeUp(tableElementData);
-         }
+         delete m_tableElementData;
+      }
+      m_tableElementData = new TableElementData(*tableElementData);
+
+      double duration = (m_currentValue < m_targetValue ? m_fadeUpDuration : m_fadeDownDuration);
+      if (m_fadeDurationMode == FadeEffectDurationModeEnum::FullValueRange)
+      {
+         duration = duration / 255.0 * std::abs(m_targetValue - m_currentValue);
+      }
+      int steps = (int)(duration > 0 ? (duration / FadingRefreshIntervalMs) : 0);
+
+      if (steps > 0)
+      {
+         m_stepValue = (float)(m_targetValue - m_currentValue) / steps;
+         m_lastTargetTriggerValue = -1;
+         FadingStep();
       }
       else
       {
-         Log::Debug("FadeEffect::Trigger: Zero value, checking fade down");
-         if (m_active)
-         {
-            Log::Debug("FadeEffect::Trigger: Starting fade down");
-            StartFadeDown();
-         }
-      }
-   }
-}
-
-void FadeEffect::StartFadeUp(TableElementData* tableElementData)
-{
-   m_fadeStartValue = m_currentValue;
-   m_targetValue = tableElementData->m_value;
-   if (m_fadeTableElementData)
-   {
-      delete m_fadeTableElementData;
-   }
-   m_fadeTableElementData = new TableElementData(tableElementData->m_tableElementType, tableElementData->m_number, tableElementData->m_value);
-   m_active = true;
-   m_fadingUp = true;
-   m_fadingDown = false;
-   m_fadeStartTime = std::chrono::steady_clock::now();
-
-   if (m_fadeUpDurationMs > 0)
-   {
-      int steps = m_fadeUpDurationMs / m_fadeRefreshIntervalMs;
-      m_fadeStepValue = (double)(m_targetValue - m_currentValue) / steps;
-
-      m_table->GetPinball()->GetAlarms()->RegisterAlarmForEffect(m_fadeRefreshIntervalMs, [this]() { this->FadeStep(); }, this);
-   }
-   else
-   {
-      m_currentValue = m_targetValue;
-      m_fadeTableElementData->m_value = m_currentValue;
-      TriggerTargetEffect(m_fadeTableElementData);
-      m_fadingUp = false;
-   }
-}
-
-void FadeEffect::StartFadeDown()
-{
-   m_fadeStartValue = m_currentValue;
-   m_targetValue = 0;
-   m_fadingUp = false;
-   m_fadingDown = true;
-   m_fadeStartTime = std::chrono::steady_clock::now();
-
-   if (m_fadeDownDurationMs > 0)
-   {
-      int steps = m_fadeDownDurationMs / m_fadeRefreshIntervalMs;
-      m_fadeStepValue = (double)(m_targetValue - m_currentValue) / steps;
-
-      m_table->GetPinball()->GetAlarms()->RegisterAlarmForEffect(m_fadeRefreshIntervalMs, [this]() { this->FadeStep(); }, this);
-   }
-   else
-   {
-      m_currentValue = m_targetValue;
-      m_fadeTableElementData->m_value = m_currentValue;
-      TriggerTargetEffect(m_fadeTableElementData);
-      m_fadingDown = false;
-      m_active = false;
-   }
-}
-
-void FadeEffect::FadeStep()
-{
-   if (!m_active || m_fadeTableElementData == nullptr)
-      return;
-
-   auto now = std::chrono::steady_clock::now();
-   auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_fadeStartTime).count();
-
-   bool fadeComplete = false;
-
-   if (m_fadingUp)
-   {
-      if (elapsed >= m_fadeUpDurationMs)
-      {
+         m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm([this]() { this->FadingStep(); });
          m_currentValue = m_targetValue;
-         fadeComplete = true;
-         m_fadingUp = false;
-      }
-      else
-      {
-         double progress = (double)elapsed / m_fadeUpDurationMs;
-         m_currentValue = (int)(m_fadeStartValue + (m_targetValue - m_fadeStartValue) * progress);
-         m_currentValue = MathExtensions::Limit(m_currentValue, 0, 255);
+         m_lastTargetTriggerValue = -1;
+         TriggerTargetEffect(m_tableElementData);
       }
    }
-   else if (m_fadingDown)
+}
+
+void FadeEffect::FadingStep()
+{
+   m_currentValue += m_stepValue;
+
+   if ((m_currentValue < m_targetValue && m_stepValue > 0) || (m_currentValue > m_targetValue && m_stepValue < 0))
    {
-      if (elapsed >= m_fadeDownDurationMs)
-      {
-         m_currentValue = 0;
-         fadeComplete = true;
-         m_fadingDown = false;
-         m_active = false;
-      }
-      else
-      {
-         double progress = (double)elapsed / m_fadeDownDurationMs;
-         m_currentValue = (int)(m_fadeStartValue + (m_targetValue - m_fadeStartValue) * progress);
-         m_currentValue = MathExtensions::Limit(m_currentValue, 0, 255);
-      }
+      m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(FadingRefreshIntervalMs, [this]() { this->FadingStep(); });
+   }
+   else
+   {
+      m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm([this]() { this->FadingStep(); });
+      m_currentValue = m_targetValue;
    }
 
-   m_fadeTableElementData->m_value = m_currentValue;
-   TriggerTargetEffect(m_fadeTableElementData);
-
-   if (!fadeComplete)
-      m_table->GetPinball()->GetAlarms()->RegisterAlarmForEffect(m_fadeRefreshIntervalMs, [this]() { this->FadeStep(); }, this);
+   if (m_lastTargetTriggerValue != (int)m_currentValue)
+   {
+      m_lastTargetTriggerValue = (int)m_currentValue;
+      m_tableElementData->m_value = m_lastTargetTriggerValue;
+      TriggerTargetEffect(m_tableElementData);
+   }
 }
 
 void FadeEffect::Finish()
 {
    try
    {
-      m_table->GetPinball()->GetAlarms()->UnregisterAlarmsForEffect(this);
+      m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm([this]() { this->FadingStep(); });
    }
    catch (...)
    {
    }
-   m_active = false;
-   m_fadingUp = false;
-   m_fadingDown = false;
-   m_fadeTableElementData = nullptr;
+
+   if (m_tableElementData)
+   {
+      delete m_tableElementData;
+      m_tableElementData = nullptr;
+   }
+
    EffectEffectBase::Finish();
 }
 

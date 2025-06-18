@@ -112,7 +112,6 @@ RGBAColor ColorScale::TintColor(const RGBAColor& base, const RGBAColor& tint, do
 {
    tintStrength = MathExtensions::Limit((float)tintStrength, 0.0f, 1.0f);
 
-
    return BlendColors(base, tint, tintStrength);
 }
 
@@ -137,36 +136,21 @@ void ColorScale::RGBToHSB(int r, int g, int b, double& h, double& s, double& br)
    double minVal = std::min({ rf, gf, bf });
    double delta = maxVal - minVal;
 
-
    br = maxVal;
 
-
    if (maxVal == 0.0)
-   {
       s = 0.0;
-   }
    else
-   {
       s = delta / maxVal;
-   }
-
 
    if (delta == 0.0)
-   {
       h = 0.0;
-   }
    else if (maxVal == rf)
-   {
       h = 60.0 * std::fmod((gf - bf) / delta, 6.0);
-   }
    else if (maxVal == gf)
-   {
       h = 60.0 * ((bf - rf) / delta + 2.0);
-   }
    else
-   {
       h = 60.0 * ((rf - gf) / delta + 4.0);
-   }
 
    if (h < 0.0)
       h += 360.0;

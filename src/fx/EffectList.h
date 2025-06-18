@@ -21,8 +21,8 @@ public:
    void Init(Table* pTable);
 
 
-   virtual XMLElement* ToXml(XMLDocument& doc) const override;
-   virtual bool FromXml(const XMLElement* element) override;
+   virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;
+   virtual bool FromXml(const tinyxml2::XMLElement* element) override;
    virtual std::string GetXmlElementName() const override { return "Effects"; }
 
 

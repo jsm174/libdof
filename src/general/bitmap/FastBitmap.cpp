@@ -116,7 +116,6 @@ FastBitmap FastBitmap::GetScaled(int newWidth, int newHeight) const
 
    FastBitmap scaled(newWidth, newHeight);
 
-
    for (int y = 0; y < newHeight; y++)
    {
       for (int x = 0; x < newWidth; x++)
@@ -165,7 +164,6 @@ FastBitmap FastBitmap::GetCropped(int x, int y, int width, int height) const
 std::vector<FastBitmap> FastBitmap::LoadAnimatedBitmap(const std::string& filename)
 {
    std::vector<FastBitmap> frames;
-
 
    FastBitmap bitmap(filename);
    if (bitmap.IsValid())
@@ -241,7 +239,6 @@ bool FastBitmap::LoadBMP(const std::string& filename)
 
    std::vector<uint8_t> rowData(rowSize);
 
-
    for (int y = m_height - 1; y >= 0; y--)
    {
       file.read(reinterpret_cast<char*>(rowData.data()), rowSize);
@@ -265,12 +262,9 @@ bool FastBitmap::LoadBMP(const std::string& filename)
 
 bool FastBitmap::LoadSimpleBitmap(const std::string& filename)
 {
-
-
    m_width = 16;
    m_height = 16;
    m_pixels.resize(m_width * m_height);
-
 
    for (int y = 0; y < m_height; y++)
    {
@@ -313,7 +307,6 @@ bool FastBitmap::SaveBMP(const std::string& filename) const
    file.write(reinterpret_cast<const char*>(&header), sizeof(header));
 
    std::vector<uint8_t> rowData(rowSize, 0);
-
 
    for (int y = m_height - 1; y >= 0; y--)
    {

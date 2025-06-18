@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DOF/DOF.h"
+#include <unordered_set>
 
 namespace DOF
 {
@@ -19,12 +20,15 @@ public:
    static void Warning(const std::string& message);
    static void Exception(const std::string& message);
    static void Debug(const std::string& message);
+   static void Once(const std::string& key, const std::string& message);
+   static void Instrumentation(const std::string& key, const std::string& message);
 
 private:
    Log();
    ~Log() { };
 
    static std::string m_filename;
+   static std::unordered_set<std::string> m_onceKeys;
 };
 
 }

@@ -16,7 +16,6 @@ RGBAColor RGBAMatrixColorScaleBitmapEffect::GetColorScaledPixelValue(const Pixel
 
    RGBAColor scaledColor = ApplyColorScaling(pixel);
 
-
    int v = MathExtensions::Limit(triggerValue, 0, 255);
 
    RGBAColor result;

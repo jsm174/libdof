@@ -29,7 +29,6 @@ void RGBAMatrixShapeEffect::Init(Table* table)
    if (!table || !table->GetShapeDefinitions())
       return;
 
-
    Shape* shapeDef = nullptr;
    ShapeList& shapes = table->GetShapeDefinitions()->GetShapes();
    for (Shape* shape : shapes)
@@ -46,7 +45,6 @@ void RGBAMatrixShapeEffect::Init(Table* table)
 
       m_shapeDefinition = shapeDef;
       m_shapeDefinitions = table->GetShapeDefinitions();
-
 
       FilePattern* pattern = table->GetShapeDefinitions()->GetBitmapFilePattern();
       if (pattern)

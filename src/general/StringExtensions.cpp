@@ -22,7 +22,6 @@ bool StringExtensions::IsInteger(const std::string& s)
    if (s.empty())
       return false;
 
-
    size_t start = 0;
    if (s[0] == '-')
       start = 1;
@@ -150,18 +149,13 @@ void StringExtensions::WriteToFile(const std::string& data, const std::string& f
 std::string FormatArgument(const std::string& arg, const std::string& formatSpec)
 {
    if (formatSpec.empty())
-   {
       return arg;
-   }
-
 
    if (formatSpec.length() > 0 && formatSpec[0] == '0')
    {
       int width = formatSpec.length();
       if (arg.length() < width)
-      {
          return std::string(width - arg.length(), '0') + arg;
-      }
    }
 
    return arg;
@@ -180,7 +174,6 @@ std::string ReplaceArgument(const std::string& format, int argIndex, const std::
       {
          std::string placeholder = result.substr(pos, endPos - pos + 1);
          std::string formattedArg = arg;
-
 
          size_t colonPos = placeholder.find(":");
          if (colonPos != std::string::npos)
@@ -218,6 +211,16 @@ std::string StringExtensions::Build(const std::string& format, const std::string
    result = ReplaceArgument(result, 1, arg1);
    result = ReplaceArgument(result, 2, arg2);
    result = ReplaceArgument(result, 3, arg3);
+   return result;
+}
+
+std::string StringExtensions::Build(const std::string& format, const std::vector<std::string>& args)
+{
+   std::string result = format;
+   for (size_t i = 0; i < args.size(); ++i)
+   {
+      result = ReplaceArgument(result, static_cast<int>(i), args[i]);
+   }
    return result;
 }
 

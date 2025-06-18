@@ -40,8 +40,6 @@ void Motor::Finish()
 {
    if (m_alarmHandler != nullptr)
    {
-
-
       m_alarmHandler = nullptr;
    }
 
@@ -54,23 +52,18 @@ void Motor::UpdateOutputs()
    if (output == nullptr)
       return;
 
-
    int P = GetCurrentValue().GetValue();
    P = MathExtensions::Limit(P, 0, 255);
 
-
    if (P != 0)
    {
-
       int powerRange = (m_maxPower >= m_minPower) ? (m_maxPower - m_minPower) : (m_minPower - m_maxPower);
       P = static_cast<int>((static_cast<double>(powerRange) / 255.0 * P) + m_minPower);
       P = MathExtensions::Limit(P, m_minPower, m_maxPower);
    }
 
    if (P == 0)
-   {
       m_turnedOffAfterMaxRunTime = false;
-   }
 
    if (!m_turnedOffAfterMaxRunTime)
    {
@@ -192,6 +185,5 @@ void Motor::SetKickstartDurationMs(int value) { m_kickstartDurationMs = MathExte
 void Motor::SetMinPower(int value) { m_minPower = MathExtensions::Limit(value, 0, 255); }
 
 void Motor::SetMaxPower(int value) { m_maxPower = MathExtensions::Limit(value, 0, 255); }
-
 
 }

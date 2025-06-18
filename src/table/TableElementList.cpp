@@ -26,9 +26,7 @@ void TableElementList::UpdateState(TableElementData* pData)
    if (!pData)
       return;
 
-
    TableElement* targetElement = nullptr;
-
 
    if (!pData->m_name.empty())
    {
@@ -41,7 +39,6 @@ void TableElementList::UpdateState(TableElementData* pData)
          }
       }
    }
-
 
    if (!targetElement)
    {
@@ -57,9 +54,7 @@ void TableElementList::UpdateState(TableElementData* pData)
    }
 
    if (targetElement)
-   {
       targetElement->SetValue(pData->m_value);
-   }
    else
    {
       TableElement* newElement = new TableElement(pData->m_tableElementType, pData->m_number, pData->m_value);

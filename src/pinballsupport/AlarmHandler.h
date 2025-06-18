@@ -24,9 +24,9 @@ public:
    void Init(Pinball* pPinball);
    void Finish();
    void RegisterAlarm(int durationMs, AlarmCallback alarmHandler, bool dontUnregister = false);
-   void RegisterAlarmForEffect(int durationMs, AlarmCallback alarmHandler, void* effectPtr);
+   void RegisterIntervalAlarm(int intervalMs, AlarmCallback intervalAlarmHandler);
    void UnregisterAlarm(AlarmCallback alarmHandler);
-   void UnregisterAlarmsForEffect(void* effectPtr);
+   void UnregisterIntervalAlarm(AlarmCallback intervalAlarmHandler);
    TimePoint GetNextAlarmTime();
    bool ExecuteAlarms(TimePoint alarmTime);
 
@@ -35,21 +35,39 @@ private:
    {
       TimePoint alarmTime;
       AlarmCallback alarmHandler;
-      void* effectPtr;
+      bool dontUnregister;
 
-      AlarmSetting(TimePoint time, AlarmCallback handler, void* effect = nullptr)
+      AlarmSetting(TimePoint time, AlarmCallback handler, bool dontUnreg = false)
          : alarmTime(time)
          , alarmHandler(handler)
-         , effectPtr(effect)
+         , dontUnregister(dontUnreg)
+      {
+      }
+   };
+
+   struct IntervalAlarmSetting
+   {
+      int intervalMs;
+      TimePoint nextAlarm;
+      AlarmCallback intervalAlarmHandler;
+
+      IntervalAlarmSetting(int interval, AlarmCallback handler)
+         : intervalMs(interval)
+         , intervalAlarmHandler(handler)
+         , nextAlarm(std::chrono::steady_clock::now() + std::chrono::milliseconds(interval))
       {
       }
    };
 
    std::recursive_mutex m_alarmMutex;
+   std::recursive_mutex m_intervalAlarmMutex;
    std::vector<AlarmSetting> m_alarmList;
+   std::vector<IntervalAlarmSetting> m_intervalAlarmList;
 
    TimePoint GetNextAlarm();
+   TimePoint GetNextIntervalAlarm();
    bool ProcessAlarms(TimePoint alarmTime);
+   bool ProcessIntervalAlarms(TimePoint alarmTime);
 };
 
 }

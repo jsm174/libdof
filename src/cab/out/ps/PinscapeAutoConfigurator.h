@@ -14,7 +14,7 @@ public:
    PinscapeAutoConfigurator() { }
    ~PinscapeAutoConfigurator() { }
 
-   void AutoConfig(Cabinet* pCabinet) override;
+   void AutoConfig(Cabinet* cabinet) override;
 };
 
 }

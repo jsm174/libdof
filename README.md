@@ -13,7 +13,10 @@ This library is currently used by [Visual Pinball Standalone](https://github.com
 > [!WARNING]
 > Given the scope of Direct Output Framework - over 250 C# files - this C++ port leveraged a large amount of AI assistance (ChatGPT and Claude). I know for sure it is **NOT** fully accurate and **DOES** contain bugs. Now that most of the files are in place, I will continue refining it until we achieve a true faithful 1:1 port.
 
-As of now, `libdof` can drive LEDs using @mjrgh's excellent [Pinscape](http://mjrnet.org/pinscape) boards, and is in use by [Visual Pinball Standalone](https://github.com/vpinball/vpinball/tree/standalone). It is based on commit [`294a3449c66da43b0cf762d07331704cdae25ba5`](https://github.com/mjrgh/DirectOutput/commit/294a3449c66da43b0cf762d07331704cdae25ba5), dated April 11, 2024.
+As of now, `libdof` can drive LEDs using @mjrgh's excellent [Pinscape](http://mjrnet.org/pinscape) and [Pinscape Pico](https://github.com/mjrgh/PinscapePico) boards, and is in use by [Visual Pinball Standalone](https://github.com/vpinball/vpinball/tree/standalone). 
+
+> [!NOTE]
+> On macOS, accessing HID devices with **usage page 0x06** and **usage 0x00** (like Pinscape Pico) requires elevated permissions. You must run as sudo to communicate with the device. See [here](https://gist.github.com/jsm174/d8711b7ea4af4501090f96f1db808202) for more details.
 
 ## Usage:
 

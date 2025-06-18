@@ -13,7 +13,6 @@
 namespace DOF
 {
 
-
 LedWizEquivalentOutput::LedWizEquivalentOutput()
    : m_ledWizEquivalentOutputNumber(0)
    , m_output(nullptr)
@@ -28,7 +27,6 @@ LedWizEquivalentOutput::LedWizEquivalentOutput(int outputNumber, const std::stri
 }
 
 LedWizEquivalentOutput::~LedWizEquivalentOutput() { }
-
 
 LedWizEquivalentOutputList::LedWizEquivalentOutputList() { }
 
@@ -71,7 +69,6 @@ void LedWizEquivalentOutputList::AddOutput(LedWizEquivalentOutput* output)
    if (output == nullptr)
       return;
 
-
    if (FindByNumber(output->GetLedWizEquivalentOutputNumber()) != nullptr)
    {
       Log::Warning(StringExtensions::Build("LedWizEquivalentOutput with number {0} already exists", std::to_string(output->GetLedWizEquivalentOutputNumber())));
@@ -91,7 +88,6 @@ LedWizEquivalentOutput* LedWizEquivalentOutputList::GetOrCreateOutput(int number
    }
    return output;
 }
-
 
 LedWizEquivalent::LedWizEquivalent()
    : m_ledWizNumber(-1)
@@ -134,7 +130,6 @@ void LedWizEquivalent::Finish()
    Log::Write(StringExtensions::Build("Finishing LedWizEquivalent: {0} (LedWiz {1})", GetName(), std::to_string(m_ledWizNumber)));
    Reset();
 }
-
 
 IOutput* LedWizEquivalent::GetOutput(int outputNumber)
 {

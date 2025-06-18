@@ -149,9 +149,9 @@ void OutputControllerCompleteBase::RenameOutputs()
 
 void OutputControllerCompleteBase::OnNameChanged() { RenameOutputs(); }
 
-XMLElement* OutputControllerCompleteBase::ToXml(XMLDocument& doc) const
+tinyxml2::XMLElement* OutputControllerCompleteBase::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
 
    if (!GetName().empty())
       element->SetAttribute("Name", GetName().c_str());
@@ -159,7 +159,7 @@ XMLElement* OutputControllerCompleteBase::ToXml(XMLDocument& doc) const
    return element;
 }
 
-bool OutputControllerCompleteBase::FromXml(const XMLElement* element)
+bool OutputControllerCompleteBase::FromXml(const tinyxml2::XMLElement* element)
 {
    if (!element)
       return false;

@@ -15,7 +15,6 @@
 #include <filesystem>
 #include <fstream>
 
-using namespace tinyxml2;
 
 namespace DOF
 {
@@ -97,59 +96,50 @@ void Table::Init(Pinball* pPinball)
 
 std::string Table::ToXml() const
 {
-   XMLDocument doc;
+   tinyxml2::XMLDocument doc;
    doc.InsertEndChild(doc.NewDeclaration());
 
-   XMLElement* root = doc.NewElement("Table");
+   tinyxml2::XMLElement* root = doc.NewElement("Table");
    doc.InsertEndChild(root);
-
 
    if (!m_tableName.empty())
    {
-      XMLElement* element = doc.NewElement("TableName");
+      tinyxml2::XMLElement* element = doc.NewElement("TableName");
       element->SetText(m_tableName.c_str());
       root->InsertEndChild(element);
    }
 
-
-   XMLElement* element = doc.NewElement("AddLedControlConfig");
+   tinyxml2::XMLElement* element = doc.NewElement("AddLedControlConfig");
    element->SetText(m_addLedControlConfig);
    root->InsertEndChild(element);
 
-
    if (m_pEffects)
    {
-      XMLElement* effectsElement = m_pEffects->ToXml(doc);
+      tinyxml2::XMLElement* effectsElement = m_pEffects->ToXml(doc);
       if (effectsElement)
-      {
          root->InsertEndChild(effectsElement);
-      }
    }
-
 
    if (m_pTableElements && !m_pTableElements->empty())
    {
-      XMLElement* tableElementsElement = doc.NewElement("TableElements");
+      tinyxml2::XMLElement* tableElementsElement = doc.NewElement("TableElements");
       for (const auto& pTableElement : *m_pTableElements)
       {
          if (pTableElement)
          {
-            XMLElement* elementNode = doc.NewElement("TableElement");
+            tinyxml2::XMLElement* elementNode = doc.NewElement("TableElement");
 
-
-            XMLElement* typeElement = doc.NewElement("TableElementType");
+            tinyxml2::XMLElement* typeElement = doc.NewElement("TableElementType");
             typeElement->SetText((int)pTableElement->GetTableElementType());
             elementNode->InsertEndChild(typeElement);
 
-
-            XMLElement* numberElement = doc.NewElement("Number");
+            tinyxml2::XMLElement* numberElement = doc.NewElement("Number");
             numberElement->SetText(pTableElement->GetNumber());
             elementNode->InsertEndChild(numberElement);
 
-
             if (!pTableElement->GetName().empty())
             {
-               XMLElement* nameElement = doc.NewElement("Name");
+               tinyxml2::XMLElement* nameElement = doc.NewElement("Name");
                nameElement->SetText(pTableElement->GetName().c_str());
                elementNode->InsertEndChild(nameElement);
             }
@@ -160,16 +150,14 @@ std::string Table::ToXml() const
       root->InsertEndChild(tableElementsElement);
    }
 
-
    if (m_pAssignedStaticEffects)
    {
-      XMLElement* staticEffectsElement = doc.NewElement("AssignedStaticEffects");
-
+      tinyxml2::XMLElement* staticEffectsElement = doc.NewElement("AssignedStaticEffects");
 
       root->InsertEndChild(staticEffectsElement);
    }
 
-   XMLPrinter printer;
+   tinyxml2::XMLPrinter printer;
    doc.Print(&printer);
    return std::string(printer.CStr());
 }
@@ -227,14 +215,14 @@ Table* Table::GetTableFromConfigXmlFile(const std::string& filename)
 
 Table* Table::FromXml(const std::string& configXml)
 {
-   XMLDocument doc;
-   if (doc.Parse(configXml.c_str()) != XML_SUCCESS)
+   tinyxml2::XMLDocument doc;
+   if (doc.Parse(configXml.c_str()) != tinyxml2::XML_SUCCESS)
    {
       Log::Warning(StringExtensions::Build("Table XML parse error: {0}", doc.ErrorStr()));
       return nullptr;
    }
 
-   XMLElement* root = doc.FirstChildElement("Table");
+   tinyxml2::XMLElement* root = doc.FirstChildElement("Table");
    if (!root)
    {
       Log::Warning("Table root element not found");
@@ -243,20 +231,17 @@ Table* Table::FromXml(const std::string& configXml)
 
    Table* pTable = new Table();
 
-
-   XMLElement* element = root->FirstChildElement("TableName");
+   tinyxml2::XMLElement* element = root->FirstChildElement("TableName");
    if (element && element->GetText())
       pTable->SetTableName(element->GetText());
-
 
    element = root->FirstChildElement("AddLedControlConfig");
    if (element)
    {
       bool value;
-      if (element->QueryBoolText(&value) == XML_SUCCESS)
+      if (element->QueryBoolText(&value) == tinyxml2::XML_SUCCESS)
          pTable->SetAddLedControlConfig(value);
    }
-
 
    element = root->FirstChildElement("Effects");
    if (element)
@@ -264,57 +249,44 @@ Table* Table::FromXml(const std::string& configXml)
       pTable->GetEffects()->FromXml(element);
    }
 
-
    element = root->FirstChildElement("TableElements");
    if (element)
    {
-      XMLElement* tableElementNode = element->FirstChildElement("TableElement");
+      tinyxml2::XMLElement* tableElementNode = element->FirstChildElement("TableElement");
       while (tableElementNode)
       {
 
-         XMLElement* typeElement = tableElementNode->FirstChildElement("TableElementType");
+         tinyxml2::XMLElement* typeElement = tableElementNode->FirstChildElement("TableElementType");
          TableElementTypeEnum type = TableElementTypeEnum::Unknown;
          if (typeElement)
          {
             int value;
-            if (typeElement->QueryIntText(&value) == XML_SUCCESS)
+            if (typeElement->QueryIntText(&value) == tinyxml2::XML_SUCCESS)
                type = (TableElementTypeEnum)value;
          }
 
-
-         XMLElement* numberElement = tableElementNode->FirstChildElement("Number");
+         tinyxml2::XMLElement* numberElement = tableElementNode->FirstChildElement("Number");
          int number = 0;
          if (numberElement)
-         {
             numberElement->QueryIntText(&number);
-         }
 
-
-         XMLElement* nameElement = tableElementNode->FirstChildElement("Name");
+         tinyxml2::XMLElement* nameElement = tableElementNode->FirstChildElement("Name");
          std::string name = "";
          if (nameElement && nameElement->GetText())
             name = nameElement->GetText();
 
-
          TableElement* pTableElement = nullptr;
          if (!name.empty())
-         {
             pTableElement = new TableElement(name, 0);
-         }
          else
-         {
             pTableElement = new TableElement(type, number, 0);
-         }
 
          if (pTableElement)
-         {
             pTable->GetTableElements()->push_back(pTableElement);
-         }
 
          tableElementNode = tableElementNode->NextSiblingElement("TableElement");
       }
    }
-
 
    element = root->FirstChildElement("AssignedStaticEffects");
    if (element)

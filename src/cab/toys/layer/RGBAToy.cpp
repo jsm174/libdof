@@ -28,7 +28,6 @@ void RGBAToy::Init(Cabinet* cabinet)
 
    Log::Write(StringExtensions::Build("Initializing RGBAToy: {0}", GetName()));
 
-
    Reset();
 }
 

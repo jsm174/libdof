@@ -12,8 +12,6 @@ RGBAColorNamed ColorConfig::GetCabinetColor() const { return RGBAColorNamed(m_na
 
 void ColorConfig::ParseLedcontrolData(const std::string& colorConfigDataLine, bool throwExceptions)
 {
-
-
    std::vector<std::string> nameValues = StringExtensions::Split(colorConfigDataLine, { '=' });
    if (nameValues.size() == 2)
    {

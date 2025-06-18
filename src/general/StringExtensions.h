@@ -33,6 +33,7 @@ public:
    static std::string Build(const std::string& format, const std::string& arg0, const std::string& arg1);
    static std::string Build(const std::string& format, const std::string& arg0, const std::string& arg1, const std::string& arg2);
    static std::string Build(const std::string& format, const std::string& arg0, const std::string& arg1, const std::string& arg2, const std::string& arg3);
+   static std::string Build(const std::string& format, const std::vector<std::string>& args);
    static std::string GetFileNameWithoutExtension(const std::string& fullPath);
    static bool TryParseInt(const std::string& str, int& value);
    static bool IsHexString(const std::string& s);
