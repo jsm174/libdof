@@ -321,7 +321,7 @@ void Pinball::Init()
 
       m_pTable->Init(this);
       m_pAlarms->Init(this);
-
+      m_pTable->TriggerStaticEffects();
       m_pCabinet->Update();
 
       InitMainThread();

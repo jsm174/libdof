@@ -1,6 +1,6 @@
 #pragma once
 
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 namespace DOF
@@ -25,7 +25,7 @@ public:
    void SetDimensions(int width, int height);
 
 private:
-   std::unordered_map<int, LayerElementType*> m_layers;
+   std::map<int, LayerElementType*> m_layers;
    int m_width;
    int m_height;
 

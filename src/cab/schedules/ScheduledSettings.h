@@ -9,6 +9,7 @@ namespace DOF
 {
 
 class IOutput;
+class ScheduledSettingDevice;
 
 class ScheduledSettings : public std::vector<ScheduledSetting*>, public IXmlSerializable
 {
@@ -19,9 +20,12 @@ public:
 
    ScheduledSetting* GetActiveSchedule(const std::string& configPostfixID, int outputNumber) const;
    ScheduledSetting* GetActiveSchedule(const std::string& configPostfixID, int outputNumber, const std::chrono::system_clock::time_point& now) const;
+   ScheduledSettingDevice* GetActiveSchedule(IOutput* currentOutput, bool recalculateOutputValue, int startingDeviceIndex, int currentDeviceIndex);
 
    uint8_t GetNewRecalculatedOutput(const std::string& configPostfixID, int outputNumber, uint8_t originalOutput) const;
    uint8_t GetNewRecalculatedOutput(const std::string& configPostfixID, int outputNumber, uint8_t originalOutput, const std::chrono::system_clock::time_point& now) const;
+
+   IOutput* GetNewRecalculatedOutput(IOutput* currentOutput, int startingDeviceIndex, int currentDeviceIndex);
 
 
    virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;

@@ -1,5 +1,6 @@
 #include "LedWizEquivalent.h"
 #include "../../Cabinet.h"
+#include "../ToyList.h"
 #include "../../out/OutputControllerList.h"
 #include "../../out/IOutputController.h"
 #include "../../out/OutputControllerBase.h"
@@ -7,6 +8,7 @@
 #include "../../out/Output.h"
 #include "../../../Log.h"
 #include "../../../general/StringExtensions.h"
+#include <tinyxml2/tinyxml2.h>
 
 #include <algorithm>
 
@@ -205,12 +207,162 @@ void LedWizEquivalent::ResolveOutputs(Cabinet* cabinet)
       }
       else
       {
-         Log::Warning(StringExtensions::Build("LedWizEquivalent {0}: Could not resolve output '{1}'", std::to_string(m_ledWizNumber), outputName));
+         if (cabinet->GetToys() != nullptr)
+         {
+            bool foundToy = false;
+            for (IToy* toy : *cabinet->GetToys())
+            {
+               if (toy != nullptr && toy->GetName() == outputName)
+               {
+                  foundToy = true;
+                  break;
+               }
+            }
+            if (!foundToy)
+            {
+               Log::Warning(StringExtensions::Build("LedWizEquivalent {0}: Could not resolve output '{1}'", std::to_string(m_ledWizNumber), outputName));
+            }
+         }
+         else
+         {
+            Log::Warning(StringExtensions::Build("LedWizEquivalent {0}: Could not resolve output '{1}'", std::to_string(m_ledWizNumber), outputName));
+         }
       }
    }
 
    Log::Write(StringExtensions::Build(
       "LedWizEquivalent {0}: Resolved {1} of {2} outputs", std::to_string(m_ledWizNumber), std::to_string(resolvedCount), std::to_string(static_cast<int>(m_outputs.size()))));
+}
+
+tinyxml2::XMLElement* LedWizEquivalentOutput::ToXml(tinyxml2::XMLDocument& doc) const
+{
+   tinyxml2::XMLElement* element = doc.NewElement("LedWizEquivalentOutput");
+
+   tinyxml2::XMLElement* outputNameElement = doc.NewElement("OutputName");
+   outputNameElement->SetText(m_outputName.c_str());
+   element->InsertEndChild(outputNameElement);
+
+   tinyxml2::XMLElement* numberElement = doc.NewElement("LedWizEquivalentOutputNumber");
+   numberElement->SetText(m_ledWizEquivalentOutputNumber);
+   element->InsertEndChild(numberElement);
+
+   return element;
+}
+
+bool LedWizEquivalentOutput::FromXml(const tinyxml2::XMLElement* element)
+{
+   if (!element)
+      return false;
+
+   const tinyxml2::XMLElement* outputNameElement = element->FirstChildElement("OutputName");
+   if (outputNameElement && outputNameElement->GetText())
+      m_outputName = outputNameElement->GetText();
+
+   const tinyxml2::XMLElement* numberElement = element->FirstChildElement("LedWizEquivalentOutputNumber");
+   if (numberElement && numberElement->GetText())
+   {
+      try
+      {
+         m_ledWizEquivalentOutputNumber = std::stoi(numberElement->GetText());
+      }
+      catch (...)
+      {
+         return false;
+      }
+   }
+
+   return true;
+}
+
+tinyxml2::XMLElement* LedWizEquivalentOutputList::ToXml(tinyxml2::XMLDocument& doc) const
+{
+   tinyxml2::XMLElement* outputsElement = doc.NewElement("Outputs");
+
+   for (const LedWizEquivalentOutput* output : *this)
+   {
+      if (output)
+      {
+         tinyxml2::XMLElement* outputElement = output->ToXml(doc);
+         if (outputElement)
+            outputsElement->InsertEndChild(outputElement);
+      }
+   }
+
+   return outputsElement;
+}
+
+bool LedWizEquivalentOutputList::FromXml(const tinyxml2::XMLElement* element)
+{
+   if (!element)
+      return false;
+
+   for (const tinyxml2::XMLElement* outputElement = element->FirstChildElement("LedWizEquivalentOutput"); outputElement;
+      outputElement = outputElement->NextSiblingElement("LedWizEquivalentOutput"))
+   {
+      LedWizEquivalentOutput* output = new LedWizEquivalentOutput();
+      if (output->FromXml(outputElement))
+      {
+         push_back(output);
+      }
+      else
+      {
+         delete output;
+         return false;
+      }
+   }
+
+   return true;
+}
+
+tinyxml2::XMLElement* LedWizEquivalent::ToXml(tinyxml2::XMLDocument& doc) const
+{
+   tinyxml2::XMLElement* element = doc.NewElement("LedWizEquivalent");
+
+   tinyxml2::XMLElement* nameElement = doc.NewElement("Name");
+   nameElement->SetText(GetName().c_str());
+   element->InsertEndChild(nameElement);
+
+   tinyxml2::XMLElement* outputsElement = m_outputs.ToXml(doc);
+   if (outputsElement)
+      element->InsertEndChild(outputsElement);
+
+   tinyxml2::XMLElement* numberElement = doc.NewElement("LedWizNumber");
+   numberElement->SetText(m_ledWizNumber);
+   element->InsertEndChild(numberElement);
+
+   return element;
+}
+
+bool LedWizEquivalent::FromXml(const tinyxml2::XMLElement* element)
+{
+   if (!element)
+      return false;
+
+   const tinyxml2::XMLElement* nameElement = element->FirstChildElement("Name");
+   if (nameElement && nameElement->GetText())
+      SetName(nameElement->GetText());
+
+   const tinyxml2::XMLElement* outputsElement = element->FirstChildElement("Outputs");
+   if (outputsElement)
+   {
+      if (!m_outputs.FromXml(outputsElement))
+         return false;
+   }
+
+   const tinyxml2::XMLElement* numberElement = element->FirstChildElement("LedWizNumber");
+   if (numberElement && numberElement->GetText())
+   {
+      try
+      {
+         m_ledWizNumber = std::stoi(numberElement->GetText());
+      }
+      catch (...)
+      {
+         return false;
+      }
+   }
+
+   return true;
 }
 
 }

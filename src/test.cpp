@@ -56,6 +56,32 @@ void Log(const char* format, ...)
    va_end(args);
 }
 
+void RunDOFTests(DOF::DOF* pDof)
+{
+   Log("=== DOF Protocol Test Scenarios ===");
+
+   Log("1. L88 lamp test - 5 seconds on (watch PinscapePico LEDs)");
+   pDof->DataReceive('L', 88, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+   Log("   L88 off - 2 seconds off");
+   pDof->DataReceive('L', 88, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+   Log("2. S10 solenoid test - trigger for 3 seconds");
+   pDof->DataReceive('S', 10, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('S', 10, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("3. W88 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 88, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 88, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("=== DOF Protocol Tests Complete ===");
+}
+
 void RunL88Tests(DOF::DOF* pDof)
 {
    Log("=== L88 Test Scenarios ===");
@@ -97,13 +123,10 @@ void RunL88Tests(DOF::DOF* pDof)
    pDof->DataReceive('L', 88, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   // Test 4: Blink timing test
-   Log("4. Blink timing test (3 seconds - should see multiple blinks)");
-   Log("   L88 1...");
+   Log("4. Blink timing test (3 seconds)");
    pDof->DataReceive('L', 88, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 
-   Log("   L88 0...");
    pDof->DataReceive('L', 88, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
@@ -134,7 +157,10 @@ int main(int argc, const char* argv[])
             DOF::DOF* pDof = new DOF::DOF();
             pDof->Init("", testRom.name.c_str());
 
-            RunL88Tests(pDof);
+            if (testRom.name == "ij_l7")
+               RunDOFTests(pDof);
+            else
+               RunL88Tests(pDof);
 
             Log("Shutting down %s...", testRom.name.c_str());
             pDof->Finish();
@@ -170,7 +196,10 @@ int main(int argc, const char* argv[])
          DOF::DOF* pDof = new DOF::DOF();
          pDof->Init("", testRom.name.c_str());
 
-         RunL88Tests(pDof);
+         if (testRom.name == "ij_l7")
+            RunDOFTests(pDof);
+         else
+            RunL88Tests(pDof);
 
          Log("Shutting down %s...", testRom.name.c_str());
          pDof->Finish();

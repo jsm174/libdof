@@ -13,6 +13,8 @@ public:
    RGBAMatrixColorEffect();
    virtual ~RGBAMatrixColorEffect() = default;
 
+   virtual std::string GetXmlElementName() const override { return "RGBAMatrixColorEffect"; }
+
    const RGBAColor& GetActiveColor() const { return m_activeColor; }
    void SetActiveColor(const RGBAColor& value) { m_activeColor = value; }
    const RGBAColor& GetInactiveColor() const { return m_inactiveColor; }

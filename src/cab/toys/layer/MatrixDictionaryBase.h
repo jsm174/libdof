@@ -1,13 +1,13 @@
 #pragma once
 
-#include <unordered_map>
+#include <map>
 #include <algorithm>
 #include "../../../general/MathExtensions.h"
 
 namespace DOF
 {
 
-template <typename MatrixElementType> class MatrixDictionaryBase : public std::unordered_map<int, MatrixElementType*>
+template <typename MatrixElementType> class MatrixDictionaryBase : public std::map<int, MatrixElementType*>
 {
 public:
    MatrixDictionaryBase();
@@ -135,7 +135,7 @@ template <typename MatrixElementType> void MatrixDictionaryBase<MatrixElementTyp
 {
    for (auto& pair : *this)
       delete[] pair.second;
-   std::unordered_map<int, MatrixElementType*>::clear();
+   std::map<int, MatrixElementType*>::clear();
 }
 
 template <typename MatrixElementType> MatrixElementType* MatrixDictionaryBase<MatrixElementType>::CreateLayer()

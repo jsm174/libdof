@@ -5,8 +5,11 @@
 #include "../../cab/toys/ToyList.h"
 #include "../../cab/toys/IToy.h"
 #include "../../cab/toys/IRGBAToy.h"
+#include "../../cab/toys/IRGBOutputToy.h"
 #include "../../cab/toys/IAnalogAlphaToy.h"
 #include "../../cab/toys/ISingleOutputToy.h"
+#include "../../cab/toys/IMatrixToy.h"
+#include "../../general/analog/AnalogAlpha.h"
 #include "../../cab/toys/layer/RGBAToy.h"
 #include "../../cab/toys/layer/AnalogAlphaToy.h"
 #include "../../cab/toys/lwequivalent/LedWizEquivalent.h"
@@ -57,7 +60,9 @@ Configurator::~Configurator() { }
 
 void Configurator::Setup(LedControlConfigList* ledControlConfigList, Table* table, Cabinet* cabinet, const std::string& romName)
 {
+   Log::Write(StringExtensions::Build("Configurator::Setup called for ROM '{0}'", romName));
    std::unordered_map<int, TableConfig*> tableConfigDict = ledControlConfigList->GetTableConfigDictonary(romName);
+   Log::Write(StringExtensions::Build("Found {0} table configs for ROM '{1}'", std::to_string(tableConfigDict.size()), romName));
 
    std::string iniFilePath = "";
    if (ledControlConfigList->size() > 0)
@@ -117,6 +122,26 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
 
             if (tcc->IsArea())
             {
+               auto* lweOutput = lwe->GetOutputs().FindByNumber(tcc->GetFirstOutputNumber());
+               if (lweOutput != nullptr)
+               {
+                  std::string outputName = lweOutput->GetOutputName();
+
+                  for (IToy* toy : *cabinet->GetToys())
+                  {
+                     if (toy->GetName() == outputName)
+                     {
+                        targetToy = toy;
+                        break;
+                     }
+                  }
+
+                  if (targetToy == nullptr)
+                  {
+                     Log::Warning(StringExtensions::Build("Unknown toyname {0} defined for column {1} of LedwizEquivalent {2} (must be a matrix toy).", outputName,
+                        std::to_string(tcc->GetFirstOutputNumber()), lwe->GetName()));
+                  }
+               }
             }
             else
             {
@@ -124,18 +149,63 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
                {
                case 3:
                {
-
-                  std::string toyName = StringExtensions::Build("LedWiz {0} Column {1}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()));
-                  if (cabinet->GetToys()->Contains(toyName))
+                  auto* lweOutput = lwe->GetOutputs().FindByNumber(tcc->GetFirstOutputNumber());
+                  if (lweOutput != nullptr)
                   {
-                     int cnt = 1;
-                     while (cabinet->GetToys()->Contains(StringExtensions::Build("{0} {1}", toyName, std::to_string(cnt))))
-                        cnt++;
-                     toyName = StringExtensions::Build("{0} {1}", toyName, std::to_string(cnt));
+                     std::string outputName = lweOutput->GetOutputName();
+
+                     for (IToy* toy : *cabinet->GetToys())
+                     {
+                        IRGBAToy* rgbaToy = dynamic_cast<IRGBAToy*>(toy);
+                        if (rgbaToy != nullptr && toy->GetName() == outputName)
+                        {
+                           targetToy = toy;
+                           break;
+                        }
+                     }
                   }
-                  targetToy = new RGBAToy();
-                  targetToy->SetName(toyName);
-                  cabinet->GetToys()->AddToy(targetToy);
+
+                  if (targetToy == nullptr)
+                  {
+                     auto* lweOutput1 = lwe->GetOutputs().FindByNumber(tcc->GetFirstOutputNumber());
+                     auto* lweOutput2 = lwe->GetOutputs().FindByNumber(tcc->GetFirstOutputNumber() + 1);
+                     auto* lweOutput3 = lwe->GetOutputs().FindByNumber(tcc->GetFirstOutputNumber() + 2);
+
+                     if (lweOutput1 != nullptr && lweOutput2 != nullptr && lweOutput3 != nullptr)
+                     {
+                        for (IToy* toy : *cabinet->GetToys())
+                        {
+                           IRGBOutputToy* rgbOutputToy = dynamic_cast<IRGBOutputToy*>(toy);
+                           if (rgbOutputToy != nullptr && rgbOutputToy->GetOutputNameRed() == lweOutput1->GetOutputName() && rgbOutputToy->GetOutputNameGreen() == lweOutput2->GetOutputName()
+                              && rgbOutputToy->GetOutputNameBlue() == lweOutput3->GetOutputName())
+                           {
+                              targetToy = toy;
+                              break;
+                           }
+                        }
+
+                        if (targetToy == nullptr)
+                        {
+                           std::string toyName = StringExtensions::Build("LedWiz {0:00} Column {1:00}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()));
+                           if (cabinet->GetToys()->Contains(toyName))
+                           {
+                              int cnt = 1;
+                              while (cabinet->GetToys()->Contains(StringExtensions::Build("{0} {1}", toyName, std::to_string(cnt))))
+                                 cnt++;
+                              toyName = StringExtensions::Build("{0} {1}", toyName, std::to_string(cnt));
+                           }
+
+                           RGBAToy* rgbaToy = new RGBAToy();
+                           rgbaToy->SetName(toyName);
+                           rgbaToy->SetOutputNameRed(lweOutput1->GetOutputName());
+                           rgbaToy->SetOutputNameGreen(lweOutput2->GetOutputName());
+                           rgbaToy->SetOutputNameBlue(lweOutput3->GetOutputName());
+
+                           targetToy = rgbaToy;
+                           cabinet->GetToys()->AddToy(targetToy);
+                        }
+                     }
+                  }
                   break;
                }
                case 1:
@@ -170,7 +240,7 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
 
                      if (targetToy == nullptr)
                      {
-                        std::string toyName = StringExtensions::Build("LedWiz {0} Column {1}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()));
+                        std::string toyName = StringExtensions::Build("LedWiz {0:00} Column {1:00}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()));
                         if (cabinet->GetToys()->Contains(toyName))
                         {
                            int cnt = 1;
@@ -213,15 +283,21 @@ void Configurator::SetupTable(
    for (const auto& kv : tableConfigDict)
    {
       int ledWizNr = kv.first;
+      Log::Write(StringExtensions::Build("Processing ledWizNr {0}", std::to_string(ledWizNr)));
       if (toyAssignments.find(ledWizNr) != toyAssignments.end())
       {
          TableConfig* tc = kv.second;
+         Log::Write(StringExtensions::Build("Found TableConfig with {0} columns", std::to_string(tc->GetColumns()->size())));
 
          for (TableConfigColumn* tcc : *tc->GetColumns())
          {
+            Log::Write(StringExtensions::Build("Processing column {0}", std::to_string(tcc->GetNumber())));
+            Log::Write(StringExtensions::Build("Column {0} has {1} settings", std::to_string(tcc->GetNumber()), std::to_string(tcc->size())));
+
             if (toyAssignments.at(ledWizNr).find(tcc->GetNumber()) != toyAssignments.at(ledWizNr).end())
             {
                IToy* toy = toyAssignments.at(ledWizNr).at(tcc->GetNumber());
+               Log::Write(StringExtensions::Build("Found toy for column {0}: {1}", std::to_string(tcc->GetNumber()), toy->GetName()));
 
                int settingNumber = 0;
                for (TableConfigSetting* tcs : *tcc)
@@ -231,29 +307,130 @@ void Configurator::SetupTable(
                   IEffect* effect = nullptr;
                   std::string effectName;
 
+                  IMatrixToy<RGBAColor>* rgbaMatrixToy = dynamic_cast<IMatrixToy<RGBAColor>*>(toy);
+                  IMatrixToy<AnalogAlpha>* analogMatrixToy = dynamic_cast<IMatrixToy<AnalogAlpha>*>(toy);
                   IRGBAToy* rgbaToy = dynamic_cast<IRGBAToy*>(toy);
                   IAnalogAlphaToy* analogToy = dynamic_cast<IAnalogAlphaToy*>(toy);
 
-                  if (rgbaToy != nullptr)
+                  if (rgbaMatrixToy != nullptr)
                   {
-                     RGBAColorEffect* rgbaEffect = new RGBAColorEffect();
-                     effectName = StringExtensions::Build(
-                        "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                     rgbaEffect->SetName(effectName);
-                     rgbaEffect->SetToyName(toy->GetName());
-
-                     if (tcs->GetColorConfig() != nullptr)
+                     if (tcs->HasLayer())
                      {
-                        ColorConfig* colorConfig = tcs->GetColorConfig();
-                        rgbaEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
+                        RGBAMatrixColorEffect* matrixEffect = new RGBAMatrixColorEffect();
+                        effectName = StringExtensions::Build(
+                           "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                        matrixEffect->SetName(effectName);
+                        matrixEffect->SetToyName(toy->GetName());
+                        matrixEffect->SetLayerNr(tcs->GetLayer());
+
+                        if (tcs->GetColorConfig() != nullptr)
+                        {
+                           ColorConfig* colorConfig = tcs->GetColorConfig();
+                           matrixEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
+                           Log::Write(StringExtensions::Build("Matrix effect color from config: R={0} G={1} B={2} A={3}", std::to_string(colorConfig->GetRed()),
+                              std::to_string(colorConfig->GetGreen()), std::to_string(colorConfig->GetBlue()), std::to_string(colorConfig->GetAlpha())));
+                        }
+                        else
+                        {
+                           matrixEffect->SetActiveColor(RGBAColor(255, 0, 0, 255)); // Set to Red for testing
+                           Log::Write("Matrix effect color: Using default Red (255,0,0,255)");
+                        }
+
+                        matrixEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
+                        matrixEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
+
+                        effect = static_cast<EffectBase*>(matrixEffect);
                      }
                      else
-                        rgbaEffect->SetActiveColor(RGBAColor(255, 255, 255, 255));
+                     {
+                        RGBAColorEffect* rgbaEffect = new RGBAColorEffect();
+                        effectName = StringExtensions::Build(
+                           "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                        rgbaEffect->SetName(effectName);
+                        rgbaEffect->SetToyName(toy->GetName());
 
-                     rgbaEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
-                     rgbaEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
+                        if (tcs->GetColorConfig() != nullptr)
+                        {
+                           ColorConfig* colorConfig = tcs->GetColorConfig();
+                           rgbaEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
+                        }
+                        else
+                           rgbaEffect->SetActiveColor(RGBAColor(255, 255, 255, 255));
 
-                     effect = rgbaEffect;
+                        rgbaEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
+                        rgbaEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
+
+                        effect = rgbaEffect;
+                     }
+                  }
+                  else if (analogMatrixToy != nullptr)
+                  {
+                     if (tcs->HasLayer())
+                     {
+                        AnalogAlphaMatrixValueEffect* matrixEffect = new AnalogAlphaMatrixValueEffect();
+                        effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixValueEffect", std::to_string(ledWizNr),
+                           std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                        matrixEffect->SetName(effectName);
+                        matrixEffect->SetToyName(toy->GetName());
+                        matrixEffect->SetLayerNr(tcs->GetLayer());
+
+                        effect = static_cast<EffectBase*>(matrixEffect);
+                     }
+                     else
+                     {
+                        AnalogToyValueEffect* analogEffect = new AnalogToyValueEffect();
+                        effectName = StringExtensions::Build(
+                           "Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogToyValueEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                        analogEffect->SetName(effectName);
+                        analogEffect->SetToyName(toy->GetName());
+
+                        effect = analogEffect;
+                     }
+                  }
+                  else if (rgbaToy != nullptr)
+                  {
+                     if (tcs->HasLayer())
+                     {
+                        RGBAColorEffect* rgbaEffect = new RGBAColorEffect();
+                        effectName = StringExtensions::Build(
+                           "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                        rgbaEffect->SetName(effectName);
+                        rgbaEffect->SetToyName(toy->GetName());
+
+                        if (tcs->GetColorConfig() != nullptr)
+                        {
+                           ColorConfig* colorConfig = tcs->GetColorConfig();
+                           rgbaEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
+                        }
+                        else
+                           rgbaEffect->SetActiveColor(RGBAColor(255, 255, 255, 255));
+
+                        rgbaEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
+                        rgbaEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
+
+                        effect = rgbaEffect;
+                     }
+                     else
+                     {
+                        RGBAColorEffect* rgbaEffect = new RGBAColorEffect();
+                        effectName = StringExtensions::Build(
+                           "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                        rgbaEffect->SetName(effectName);
+                        rgbaEffect->SetToyName(toy->GetName());
+
+                        if (tcs->GetColorConfig() != nullptr)
+                        {
+                           ColorConfig* colorConfig = tcs->GetColorConfig();
+                           rgbaEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
+                        }
+                        else
+                           rgbaEffect->SetActiveColor(RGBAColor(255, 255, 255, 255));
+
+                        rgbaEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
+                        rgbaEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
+
+                        effect = rgbaEffect;
+                     }
                   }
                   else if (analogToy != nullptr)
                   {
@@ -399,7 +576,6 @@ void Configurator::SetupTable(
                         // Use the actual table element from the setting (e.g., "L88")
                         if (!StringExtensions::IsNullOrWhiteSpace(tcs->GetTableElement()))
                         {
-                           Log::Write(StringExtensions::Build("Configurator: TableElement='{0}' for effect '{1}'", tcs->GetTableElement(), finalEffect->GetName()));
                            std::vector<std::string> tableElements = StringExtensions::Split(tcs->GetTableElement(), { '|' });
                            std::vector<std::string> cleanedElements;
                            for (const std::string& element : tableElements)
@@ -407,7 +583,6 @@ void Configurator::SetupTable(
                               std::string trimmed = StringExtensions::Trim(element);
                               if (!trimmed.empty())
                               {
-                                 Log::Write(StringExtensions::Build("Configurator: Adding table element '{0}' to effect '{1}'", trimmed, finalEffect->GetName()));
                                  cleanedElements.push_back(trimmed);
                               }
                            }
@@ -479,6 +654,8 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
    TableElementList* tableElements = table->GetTableElements();
    if (tableElements == nullptr)
       return;
+
+   Log::Write(StringExtensions::Build("AssignEffectToTableElements: Processing {0} descriptors for effect '{1}'", std::to_string(tableElementDescriptors.size()), effect->GetName()));
 
    for (const std::string& descriptor : tableElementDescriptors)
    {

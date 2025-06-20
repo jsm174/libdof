@@ -1,5 +1,7 @@
 #include "ScheduledSettings.h"
 #include "../../general/MathExtensions.h"
+#include "../out/IOutput.h"
+#include "../out/Output.h"
 
 namespace DOF
 {
@@ -93,6 +95,36 @@ bool ScheduledSettings::FromXml(const tinyxml2::XMLElement* element)
    }
 
    return true;
+}
+
+ScheduledSettingDevice* ScheduledSettings::GetActiveSchedule(IOutput* currentOutput, bool recalculateOutputValue, int startingDeviceIndex, int currentDeviceIndex)
+{
+   // Stub implementation matching C# interface - actual scheduling logic would go here
+   return nullptr;
+}
+
+IOutput* ScheduledSettings::GetNewRecalculatedOutput(IOutput* currentOutput, int startingDeviceIndex, int currentDeviceIndex)
+{
+   if (currentOutput->GetOutput() != 0)
+   {
+      Output* newOutput = new Output();
+      newOutput->SetOutput(currentOutput->GetOutput());
+      newOutput->SetNumber(currentOutput->GetNumber());
+
+      ScheduledSettingDevice* activeScheduleDevice = GetActiveSchedule(newOutput, true, startingDeviceIndex, currentDeviceIndex);
+
+      if (activeScheduleDevice)
+         return newOutput;
+      else
+      {
+         delete newOutput;
+         return currentOutput;
+      }
+   }
+   else
+   {
+      return currentOutput;
+   }
 }
 
 }
