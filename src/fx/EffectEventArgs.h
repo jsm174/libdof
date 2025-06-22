@@ -21,16 +21,16 @@ public:
    void SetEffect(IEffect* value);
 };
 
-class BeforeEffectNameChangeEventArgs : public EffectEventArgs
+class BeforeEffectNameChangeAventArgs : public EffectEventArgs
 {
 private:
    std::string m_newName;
    bool m_cancelNameChange;
 
 public:
-   BeforeEffectNameChangeEventArgs();
-   BeforeEffectNameChangeEventArgs(IEffect* effect, const std::string& newName);
-   virtual ~BeforeEffectNameChangeEventArgs() = default;
+   BeforeEffectNameChangeAventArgs();
+   BeforeEffectNameChangeAventArgs(IEffect* effect, const std::string& newName);
+   virtual ~BeforeEffectNameChangeAventArgs() = default;
 
    const std::string& GetNewName() const;
    void SetNewName(const std::string& value);

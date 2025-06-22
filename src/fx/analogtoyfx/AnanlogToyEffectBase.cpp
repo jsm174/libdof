@@ -1,4 +1,4 @@
-#include "AnalogToyEffectBase.h"
+#include "AnanlogToyEffectBase.h"
 #include "../../table/Table.h"
 #include "../../Pinball.h"
 #include "../../cab/Cabinet.h"

@@ -434,7 +434,7 @@ void TeensyStripController::ConnectToController()
       sp_set_dtr(m_comPort, SP_DTR_OFF);
 
    std::this_thread::sleep_for(std::chrono::milliseconds(m_comPortOpenWaitMs));
-   sp_flush(m_comPort, SP_BUF_BOTH);
+   sp_flush(m_comPort, SP_BUF_INPUT);
 
    bool commandModeOK = false;
    for (int attemptNr = 0; attemptNr < 20; attemptNr++)

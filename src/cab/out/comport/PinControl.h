@@ -1,0 +1,49 @@
+#pragma once
+
+#include "../OutputControllerCompleteBase.h"
+#include <string>
+#include <mutex>
+
+#ifdef __LIBSERIALPORT__
+#include <libserialport.h>
+#endif
+
+namespace DOF
+{
+
+class Cabinet;
+
+class PinControl : public OutputControllerCompleteBase
+{
+public:
+   PinControl();
+   virtual ~PinControl();
+
+   const std::string& GetComPort() const { return m_comPort; }
+   void SetComPort(const std::string& value) { m_comPort = value; }
+
+   virtual void Init(Cabinet* cabinet) override;
+   virtual void Finish() override;
+
+   virtual std::string GetXmlElementName() const override { return "PinControl"; }
+
+protected:
+   virtual int GetNumberOfConfiguredOutputs() override;
+   virtual bool VerifySettings() override;
+   virtual void UpdateOutputs(const std::vector<uint8_t>& outputValues) override;
+   virtual void ConnectToController() override;
+   virtual void DisconnectFromController() override;
+
+private:
+   std::string m_comPort;
+   uint8_t* m_oldValues;
+   std::mutex m_portLocker;
+
+#ifdef __LIBSERIALPORT__
+   struct sp_port* m_port;
+#else
+   void* m_port;
+#endif
+};
+
+}

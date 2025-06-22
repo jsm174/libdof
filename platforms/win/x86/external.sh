@@ -2,16 +2,41 @@
 
 set -e
 
+if [ -z "${MSYS2_PATH}" ]; then
+   MSYS2_PATH="/c/msys64"
+fi
+
+echo "MSYS2_PATH: ${MSYS2_PATH}"
+echo ""
+
 source ./platforms/config.sh
 
 echo "Building libraries..."
+echo "  LIBUSB_SHA: ${LIBUSB_SHA}"
 echo "  LIBSERIALPORT_SHA: ${LIBSERIALPORT_SHA}"
 echo "  HIDAPI_SHA: ${HIDAPI_SHA}"
+echo "  LIBFTDI_SHA: ${LIBFTDI_SHA}"
 echo ""
 
 rm -rf external
 mkdir external
 cd external
+
+#
+# build libusb and copy to third-party
+#
+
+curl -sL https://github.com/libusb/libusb/archive/${LIBUSB_SHA}.tar.gz -o libusb-${LIBUSB_SHA}.tar.gz
+tar xzf libusb-${LIBUSB_SHA}.tar.gz
+mv libusb-${LIBUSB_SHA} libusb
+cd libusb
+msbuild.exe msvc/libusb_dll.vcxproj \
+   -p:Platform=x86 \
+   -p:Configuration=Release
+cp libusb/libusb.h ../../third-party/include/
+cp build/v143/Win32/Release/libusb_dll/../dll/libusb-1.0.lib ../../third-party/build-libs/win/x86
+cp build/v143/Win32/Release/libusb_dll/../dll/libusb-1.0.dll ../../third-party/runtime-libs/win/x86
+cd ..
 
 #
 # build libserialport and copy to third-party
@@ -24,7 +49,6 @@ cd libserialport
 cp libserialport.h ../../third-party/include
 msbuild.exe libserialport.sln \
    -p:Platform=x86 \
-   -p:PlatformToolset=v143 \
    -p:Configuration=Release
 cp Release/libserialport.lib ../../third-party/build-libs/win/x86
 cp Release/libserialport.dll ../../third-party/runtime-libs/win/x86
@@ -46,4 +70,33 @@ cmake --build build --config ${BUILD_TYPE}
 cp -r hidapi ../../third-party/include/
 cp build/src/windows/${BUILD_TYPE}/hidapi.lib ../../third-party/build-libs/win/x86/
 cp build/src/windows/${BUILD_TYPE}/hidapi.dll ../../third-party/runtime-libs/win/x86/
+cd ..
+
+#
+# build libftdi and copy to third-party
+#
+
+echo "JASON"
+
+curl -sL "http://developer.intra2net.com/git/?p=libftdi;a=snapshot;h=${LIBFTDI_SHA};sf=tgz" -o libftdi-${LIBFTDI_SHA}.tar.gz
+tar xzf libftdi-${LIBFTDI_SHA}.tar.gz
+mv libftdi-${LIBFTDI_SHA:0:7} libftdi
+cd libftdi
+CURRENT_DIR="$(pwd)"
+MSYSTEM=MINGW32 "${MSYS2_PATH}/usr/bin/bash.exe" -l -c "
+   cd \"${CURRENT_DIR}\" &&
+   cmake \
+      -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+      -DFTDI_EEPROM=OFF \
+      -DEXAMPLES=OFF \
+      -DSTATICLIBS=OFF \
+      -DLIBUSB_INCLUDE_DIR=../libusb/libusb \
+      -DLIBUSB_LIBRARIES=$(pwd)/../libusb/build/v143/Win32/Release/libusb_dll/../dll/libusb-1.0.lib \
+      -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+      -B build &&
+   cmake --build build -- -j$(nproc)
+"
+cp src/ftdi.h ../../third-party/include/
+cp build/src/libftdi1.dll.a ../../third-party/build-libs/win/x86/libftdi1.lib
+cp build/src/libftdi1.dll ../../third-party/runtime-libs/win/x86/
 cd ..

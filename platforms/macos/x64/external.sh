@@ -5,8 +5,10 @@ set -e
 source ./platforms/config.sh
 
 echo "Building libraries..."
+echo "  LIBUSB_SHA: ${LIBUSB_SHA}"
 echo "  LIBSERIALPORT_SHA: ${LIBSERIALPORT_SHA}"
 echo "  HIDAPI_SHA: ${HIDAPI_SHA}"
+echo "  LIBFTDI_SHA: ${LIBFTDI_SHA}"
 echo ""
 
 NUM_PROCS=$(sysctl -n hw.ncpu)
@@ -14,6 +16,24 @@ NUM_PROCS=$(sysctl -n hw.ncpu)
 rm -rf external
 mkdir external
 cd external
+
+#
+# build libusb and copy to third-party
+#
+
+curl -sL https://github.com/libusb/libusb/archive/${LIBUSB_SHA}.tar.gz -o libusb-${LIBUSB_SHA}.tar.gz
+tar xzf libusb-${LIBUSB_SHA}.tar.gz
+mv libusb-${LIBUSB_SHA} libusb
+cd libusb
+./autogen.sh
+./configure \
+   --host=x86_64-apple-darwin \
+   CFLAGS="-arch x86_64" \
+   LDFLAGS="-Wl,-install_name,@rpath/libusb-1.0.dylib"
+make -j${NUM_PROCS}
+cp libusb/libusb.h ../../third-party/include/
+cp -a libusb/.libs/libusb*.dylib ../../third-party/runtime-libs/macos/x64/
+cd ..
 
 #
 # build libserialport and copy to third-party
@@ -47,4 +67,28 @@ cmake \
 cmake --build build -- -j${NUM_PROCS}
 cp -r hidapi ../../third-party/include/
 cp -a build/src/mac/libhidapi.{dylib,*.dylib} ../../third-party/runtime-libs/macos/x64/
+cd ..
+
+#
+# build libftdi and copy to third-party
+#
+
+curl -sL "http://developer.intra2net.com/git/?p=libftdi;a=snapshot;h=${LIBFTDI_SHA};sf=tgz" -o libftdi-${LIBFTDI_SHA}.tar.gz
+tar xzf libftdi-${LIBFTDI_SHA}.tar.gz
+mv libftdi-${LIBFTDI_SHA:0:7} libftdi
+cd libftdi
+cmake \
+   -DFTDI_EEPROM=OFF \
+   -DEXAMPLES=OFF \
+   -DSTATICLIBS=OFF \
+   -DLIBUSB_INCLUDE_DIR=../libusb/libusb \
+   -DLIBUSB_LIBRARIES=$(pwd)/../libusb/libusb/.libs/libusb-1.0.dylib \
+   -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
+   -DCMAKE_OSX_ARCHITECTURES=x86_64 \
+   -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+   -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+   -B build
+cmake --build build -- -j${NUM_PROCS}
+cp src/ftdi.h ../../third-party/include/
+cp -a build/src/libftdi*.dylib ../../third-party/runtime-libs/macos/x64/
 cd ..

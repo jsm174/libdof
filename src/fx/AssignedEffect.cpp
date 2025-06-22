@@ -34,14 +34,14 @@ void AssignedEffect::SetEffectName(const std::string& effectName)
 
 void AssignedEffect::TableElementEffect_EffectNameChanged() { m_pEffect = nullptr; }
 
-void AssignedEffect::ResolveEffectName(Table* pTable)
+void AssignedEffect::ResolveEffectName(Table* table)
 {
    m_pEffect = nullptr;
 
-   if (pTable == nullptr || m_effectName.empty())
+   if (table == nullptr || m_effectName.empty())
       return;
 
-   EffectList* effects = pTable->GetEffects();
+   EffectList* effects = table->GetEffects();
    if (effects == nullptr)
    {
       Log::Write("AssignedEffect: No effect list available");
@@ -68,27 +68,27 @@ void AssignedEffect::ResolveEffectName(Table* pTable)
    }
 }
 
-void AssignedEffect::Trigger(TableElementData* pTableElementData)
+void AssignedEffect::Trigger(TableElementData* tableElementData)
 {
-   if (m_pEffect != nullptr && pTableElementData != nullptr)
+   if (m_pEffect != nullptr && tableElementData != nullptr)
    {
       Log::Debug(StringExtensions::Build("AssignedEffect::Trigger: Triggering effect '{0}' for element {1}{2} with value {3}", m_pEffect->GetName(),
-         std::string(1, (char)pTableElementData->m_tableElementType), std::to_string(pTableElementData->m_number), std::to_string(pTableElementData->m_value)));
+         std::string(1, (char)tableElementData->m_tableElementType), std::to_string(tableElementData->m_number), std::to_string(tableElementData->m_value)));
       try
       {
-         m_pEffect->Trigger(pTableElementData);
+         m_pEffect->Trigger(tableElementData);
          Log::Debug(StringExtensions::Build("AssignedEffect::Trigger: Effect '{0}' completed", m_pEffect->GetName()));
       }
       catch (const std::exception& ex)
       {
          Log::Exception(StringExtensions::Build("A exception occured when triggering effect {0} for table element {1} {2}. Effect assignement will be deactivated.", m_pEffect->GetName(),
-            std::string(1, (char)pTableElementData->m_tableElementType), std::to_string(pTableElementData->m_number) + " with value " + std::to_string(pTableElementData->m_value)));
+            std::string(1, (char)tableElementData->m_tableElementType), std::to_string(tableElementData->m_number) + " with value " + std::to_string(tableElementData->m_value)));
          m_pEffect = nullptr;
       }
    }
 }
 
-void AssignedEffect::Init(Table* pTable) { ResolveEffectName(pTable); }
+void AssignedEffect::Init(Table* table) { ResolveEffectName(table); }
 
 void AssignedEffect::Finish() { m_pEffect = nullptr; }
 

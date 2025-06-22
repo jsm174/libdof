@@ -49,15 +49,23 @@ jobs:
       - if: (matrix.os == 'windows-latest')
         name: Add msbuild to path (win runner)
         uses: microsoft/setup-msbuild@v2
+      - if: (matrix.platform == 'win')
+        run: |
+          /c/msys64/usr/bin/bash.exe -l -c "pacman -S --noconfirm make diffutils"
+          if [[ "${{ matrix.arch }}" == "x64" ]]; then
+            /c/msys64/usr/bin/bash.exe -l -c "pacman -S --noconfirm mingw-w64-x86_64-gcc mingw-w64-x86_64-libwinpthread mingw-w64-x86_64-cmake"
+          else
+            /c/msys64/usr/bin/bash.exe -l -c "pacman -S --noconfirm mingw-w64-i686-gcc mingw-w64-i686-libwinpthread mingw-w64-i686-cmake"
+          fi
       - if: (matrix.os == 'macos-latest')
         name: Add autoconf and automake (mac runner)
         run: |
            brew install autoconf automake libtool 
       - if: (matrix.platform == 'linux')
-        name: Add libudev (linux runner)
+        name: Add libudev and autotools (linux runner)
         run: |
            sudo apt-get update
-           sudo apt install libudev-dev
+           sudo apt install libudev-dev autoconf automake libtool pkg-config
       - name: Build libdof-${{ matrix.platform }}-${{ matrix.arch }}
         run: |
           ./platforms/${{ matrix.platform }}/${{ matrix.arch }}/external.sh
@@ -83,13 +91,8 @@ jobs:
           mkdir tmp
           if [[ "${{ matrix.platform }}" == "win" ]]; then
              ARTIFACT_PATH="tmp"
-             if [[ "${{ matrix.arch }}" == "x64" ]]; then
-                cp build/Release/*64.lib tmp
-                cp build/Release/*64.dll tmp
-             else
-                cp build/Release/*.lib tmp
-                cp build/Release/*.dll tmp
-             fi
+             cp build/Release/*.lib tmp
+             cp build/Release/*.dll tmp
              cp build/Release/dof_static.lib tmp
              cp build/Release/dof_test_s.exe tmp
              cp build/Release/dof_test.exe tmp

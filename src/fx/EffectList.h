@@ -18,7 +18,7 @@ public:
    ~EffectList() { Finish(); }
 
    void Finish();
-   void Init(Table* pTable);
+   void Init(Table* table);
 
 
    virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;

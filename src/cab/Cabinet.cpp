@@ -23,6 +23,10 @@
 #include "out/lw/LedWizAutoConfigurator.h"
 #endif
 
+#ifdef __LIBFTDI__
+#include "out/ftdichip/FT245RBitbangControllerAutoConfigurator.h"
+#endif
+
 namespace DOF
 {
 
@@ -58,6 +62,10 @@ void Cabinet::AutoConfig()
    items.push_back(new PinscapeAutoConfigurator());
    items.push_back(new PinscapePicoAutoConfigurator());
    items.push_back(new LedWizAutoConfigurator());
+#endif
+
+#ifdef __LIBFTDI__
+   items.push_back(new FT245RBitbangControllerAutoConfigurator());
 #endif
 
    for (auto& item : items)

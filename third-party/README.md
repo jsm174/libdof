@@ -20,3 +20,8 @@
 
 - Upstream: https://github.com/ArashPartow/exprtk
 - License: MIT License
+
+## libftdi
+
+- Upstream: http://developer.intra2net.com/git/?p=libftdi
+- License: GNU Library General Public License version 2

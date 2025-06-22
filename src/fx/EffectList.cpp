@@ -7,13 +7,13 @@
 namespace DOF
 {
 
-void EffectList::Init(Table* pTable)
+void EffectList::Init(Table* table)
 {
    for (auto& pair : *this)
    {
       if (pair.second != nullptr)
       {
-         pair.second->Init(pTable);
+         pair.second->Init(table);
       }
    }
 }
