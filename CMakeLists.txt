@@ -117,7 +117,7 @@ set(LIBDOF_SOURCES
    src/fx/EffectEventArgs.cpp
    src/fx/EffectFactory.cpp
    src/fx/EffectRegistrations.cpp
-   src/fx/analogtoyfx/AnalogToyEffectBase.cpp
+   src/fx/analogtoyfx/AnanlogToyEffectBase.cpp
    src/fx/analogtoyfx/AnalogToyValueEffect.cpp
    src/fx/conditionfx/TableElementConditionEffect.cpp
    src/fx/listfx/ListEffect.cpp
@@ -170,6 +170,7 @@ set(LIBDOF_SOURCES
    src/cab/out/IOutput.cpp
    src/cab/out/Output.cpp
    src/cab/out/OutputList.cpp
+   src/cab/out/Out.cpp
    src/cab/out/IOutputController.cpp
    src/cab/out/OutputControllerBase.cpp
    src/cab/out/OutputControllerCompleteBase.cpp
@@ -221,6 +222,12 @@ set(LIBDOF_SOURCES
    src/ledcontrol/loader/ColorConfigList.cpp
    src/ledcontrol/setup/Configurator.cpp
 
+   src/cab/out/dmx/DMX.cpp
+   src/cab/out/dmx/DMXOutput.cpp
+   src/cab/out/dmx/ArtNet.cpp
+   src/cab/out/dmx/artnetengine/ArtnetEngine.cpp
+   src/cab/out/dmx/artnetengine/Engine.cpp
+
    third-party/include/tinyxml2/tinyxml2.cpp
 )
 
@@ -235,12 +242,21 @@ if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "li
       src/cab/out/lw/LedWiz.cpp
       src/cab/out/lw/LedWizAutoConfigurator.cpp
 
+      src/cab/out/dudescab/DudesCab.cpp
+      src/cab/out/dudescab/DudesCabAutoConfigurator.cpp
+
       src/cab/out/adressableledstrip/TeensyStripController.cpp
       src/cab/out/adressableledstrip/LedStripOutput.cpp
       src/cab/out/adressableledstrip/DirectStripController.cpp
       src/cab/out/adressableledstrip/DirectStripControllerApi.cpp
       src/cab/out/adressableledstrip/WS2811StripController.cpp
       src/cab/out/adressableledstrip/WemosD1StripController.cpp
+
+      src/cab/out/ftdichip/FTDI.cpp
+      src/cab/out/ftdichip/FT245RBitbangController.cpp
+      src/cab/out/ftdichip/FT245RBitbangControllerAutoConfigurator.cpp
+
+      src/cab/out/comport/PinControl.cpp
    )
 endif()
 
@@ -260,20 +276,20 @@ if(BUILD_SHARED)
          third-party/runtime-libs/${PLATFORM}/${ARCH}
       )
       if(ARCH STREQUAL "x64")
-         target_link_libraries(dof_shared PUBLIC libserialport64 hidapi64 ws2_32)
+         target_link_libraries(dof_shared PUBLIC libserialport64 hidapi64 libftdi164 libusb64-1.0 ws2_32)
       else()
-         target_link_libraries(dof_shared PUBLIC libserialport hidapi ws2_32)
+         target_link_libraries(dof_shared PUBLIC libserialport hidapi libftdi1 libusb-1.0 ws2_32)
       endif()
    elseif(PLATFORM STREQUAL "macos")
       target_link_directories(dof_shared PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
       )
-      target_link_libraries(dof_shared PUBLIC serialport hidapi)
+      target_link_libraries(dof_shared PUBLIC serialport hidapi ftdi1 usb-1.0)
    elseif(PLATFORM STREQUAL "linux")
       target_link_directories(dof_shared PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
       )
-      target_link_libraries(dof_shared PUBLIC serialport hidapi-hidraw)
+      target_link_libraries(dof_shared PUBLIC serialport hidapi-hidraw ftdi1 usb-1.0)
    elseif(PLATFORM STREQUAL "ios" OR PLATFORM STREQUAL "ios-simulator" OR PLATFORM STREQUAL "tvos")
       target_link_directories(dof_shared PUBLIC
          third-party/build-libs/${PLATFORM}/${ARCH}
@@ -310,17 +326,25 @@ if(BUILD_SHARED)
          if(PLATFORM STREQUAL "win")
             if(ARCH STREQUAL "x64")
                add_custom_command(TARGET dof_test POST_BUILD
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libusb64-1.0.lib" "$<TARGET_FILE_DIR:dof_test>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libusb64-1.0.dll" "$<TARGET_FILE_DIR:dof_test>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libserialport64.lib" "$<TARGET_FILE_DIR:dof_test>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport64.dll" "$<TARGET_FILE_DIR:dof_test>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/hidapi64.lib" "$<TARGET_FILE_DIR:dof_test>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/hidapi64.dll" "$<TARGET_FILE_DIR:dof_test>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libftdi164.lib" "$<TARGET_FILE_DIR:dof_test>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libftdi164.dll" "$<TARGET_FILE_DIR:dof_test>"
                )
             else()
                add_custom_command(TARGET dof_test POST_BUILD
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libusb-1.0.lib" "$<TARGET_FILE_DIR:dof_test>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libusb-1.0.dll" "$<TARGET_FILE_DIR:dof_test>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libserialport.lib" "$<TARGET_FILE_DIR:dof_test>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport.dll" "$<TARGET_FILE_DIR:dof_test>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/hidapi.lib" "$<TARGET_FILE_DIR:dof_test>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/hidapi.dll" "$<TARGET_FILE_DIR:dof_test>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libftdi1.lib" "$<TARGET_FILE_DIR:dof_test>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libftdi1.dll" "$<TARGET_FILE_DIR:dof_test>"
                )
             endif()
          elseif(PLATFORM STREQUAL "macos")
@@ -369,37 +393,45 @@ if(BUILD_STATIC)
             third-party/runtime-libs/${PLATFORM}/${ARCH}
          )
          if(ARCH STREQUAL "x64")
-            target_link_libraries(dof_test_s PUBLIC dof_static libserialport64 hidapi64 ws2_32)
+            target_link_libraries(dof_test_s PUBLIC dof_static libserialport64 hidapi64 libftdi164 libusb64-1.0 ws2_32)
          else()
-            target_link_libraries(dof_test_s PUBLIC dof_static libserialport hidapi ws2_32)
+            target_link_libraries(dof_test_s PUBLIC dof_static libserialport hidapi libftdi1 libusb-1.0 ws2_32)
          endif()
       elseif(PLATFORM STREQUAL "macos")
          target_link_directories(dof_test_s PUBLIC
             third-party/runtime-libs/${PLATFORM}/${ARCH}
          )
-         target_link_libraries(dof_test_s PUBLIC dof_static serialport hidapi)
+         target_link_libraries(dof_test_s PUBLIC dof_static serialport hidapi ftdi1 usb-1.0)
       elseif(PLATFORM STREQUAL "linux")
          target_link_directories(dof_test_s PUBLIC
             third-party/runtime-libs/${PLATFORM}/${ARCH}
          )
-         target_link_libraries(dof_test_s PUBLIC dof_static serialport hidapi-hidraw)
+         target_link_libraries(dof_test_s PUBLIC dof_static serialport hidapi-hidraw ftdi1 usb-1.0)
       endif()
 
       if(POST_BUILD_COPY_EXT_LIBS)
          if(PLATFORM STREQUAL "win")
             if(ARCH STREQUAL "x64")
                add_custom_command(TARGET dof_test_s POST_BUILD
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libusb64-1.0.lib" "$<TARGET_FILE_DIR:dof_test_s>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libusb64-1.0.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libserialport64.lib" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport64.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/hidapi64.lib" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/hidapi64.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libftdi164.lib" "$<TARGET_FILE_DIR:dof_test_s>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libftdi164.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                )
             else()
                add_custom_command(TARGET dof_test_s POST_BUILD
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libusb-1.0.lib" "$<TARGET_FILE_DIR:dof_test_s>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libusb-1.0.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libserialport.lib" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/hidapi.lib" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/hidapi.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libftdi1.lib" "$<TARGET_FILE_DIR:dof_test_s>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libftdi1.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                )
             endif()
          elseif(PLATFORM STREQUAL "macos")

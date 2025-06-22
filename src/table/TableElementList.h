@@ -12,7 +12,7 @@ class TableElementData;
 class TableElementList : public std::vector<TableElement*>
 {
 public:
-   void InitAssignedEffects(Table* pTable);
+   void Init(Table* table);
    void FinishAssignedEffects();
    void UpdateState(TableElementData* pData);
 

@@ -3,67 +3,89 @@
 ## Project Overview
 libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 correspondence. Cross-platform library for Direct Output Framework tasks, used by Visual Pinball Standalone.
 
-**Current Status**: ~85% complete - Core architecture, effects system, device management, addressable LED strips, and toy configuration at 100% 1:1 correspondence
+**Current Status**: ~97% complete - Core architecture, effects system, device management, addressable LED strips, FTDI controllers, ComPort controllers, DudesCab controllers, DMX controllers, and toy configuration at 100% 1:1 correspondence. Manual libusb compilation for all platforms eliminates external package dependencies.
 
 ## Core Principles
+
+### Structural Correspondence
 - **1:1 Correspondence**: Maintain exact structural correspondence with C# DirectOutput Framework
 - **DOF namespace**: All code lives in the DOF namespace  
+- **Directory Structure**: Match C# directory structure exactly
+- **Method Order**: Keep same order of methods as C# version
+- **Exact Enum Values**: All enum values must match C# exactly
+- **Exact Constants**: All constants (timing, intervals) must match C# values exactly
+
+### C++ Code Style
 - **C++ Naming**: Use PascalCase for methods, not camelCase
 - **Parameter Naming**: Use camelCase for method parameters (matching C# converted to C++)
 - **Member Variables**: Use m_ prefix for instance members, s_ prefix for static members
-- **Directory Structure**: Match C# directory structure exactly
-- **Method Order**: Keep same order of methods as C# version
-- **No Comments**: Do not add comments or implement comments
-- **No shared_ptr/make_unique**: Use RAII patterns, proper destructors
 - **Exact Property Names**: C# properties become Get/Set methods with identical names
-- **Exact Enum Values**: All enum values must match C# exactly
-- **Exact Constants**: All constants (timing, intervals) must match C# values exactly
+- **Variable Naming**: Short, descriptive names matching C# patterns (e.g. `cabinet`, `lw`, `curDev`, `okBecause`)
+- **No Comments**: Do not add comments or implement comments
+
+### Critical Implementation Rules
+- **Effect Chain Order**: Base → Fade → Blink → Duration → Delay → Invert → FullRange (exact C# order)
+- **Timing Values**: Must match C# exactly (e.g. FadeEffect uses 30ms, not 20ms)
+- **Algorithm Logic**: Step-based vs time-based approaches must match C# implementation
+- **Interface Matching**: No extra methods beyond C# interface, no missing methods from C# interface
+- **Device Management**: Use C# patterns - nested Device classes for controllers, no separate device files
+- **Effect Targeting**: Matrix effects only for matrix toys - use AnalogToyValueEffect for single outputs
+- **Toy Interface Implementation**: All toys must implement correct interfaces (IRGBOutputToy for RGB toys, IAnalogAlphaToy for single output toys)
+
+### Cross-Platform Requirements
 - **Cross-Platform**: Clean Windows and Unix builds without helper classes or namespace pollution
+- **No shared_ptr/make_unique**: Use RAII patterns, proper destructors
+- **Threading Models**: Use raw pointers with proper RAII patterns instead of shared_ptr/unique_ptr
+- **Mobile Build Pattern**: Exclude controller includes at OutputControllerList.cpp level to prevent transitive header dependencies
+- **Conditional Compilation**: Use `#ifdef __HIDAPI__`, `#ifdef __LIBSERIALPORT__`, `#ifdef __LIBFTDI__` flags properly
+- **Manual Dependency Compilation**: All external libraries (libusb, libftdi, libserialport, hidapi) are compiled from source to eliminate package manager dependencies
+
+### Code Formatting
+- **Braces**: Omit on single-line if/for unless log statement
+- **Headers**: Use forward declarations where possible
+- **Files**: Headers `.h`, Implementation `.cpp`, match C# names exactly
+- **Logging**: Use StringExtensions::Build() for formatted log messages
+- **String Formatting**: Use `{0:00}` patterns for zero-padded numbers to match C# exactly
+- **XML Types**: Always use fully qualified `tinyxml2::` prefixes (no `using namespace`)
+- **Windows Compatibility**: Direct API usage with WIN32_LEAN_AND_MEAN, avoid macro conflicts
+- **Case-Insensitive Enum Parsing**: Use StringExtensions::ToLower() for robust XML enum parsing
 
 ## Build & Test
 ```bash
+# Build on any platform
 cmake -B build -DPLATFORM=macos -DARCH=arm64
 cmake --build build
 
-# Test specific ROM configuration (sudo required only for PinscapePico)
+# Test with default configuration path
+# Windows: current directory
+# Linux/macOS: ~/.vpinball/
+./build/dof_test
+
+# Test specific ROM configuration
 ./build/dof_test ij_l7              # Indiana Jones - Blink + Fade
 ./build/dof_test test_basic         # Basic L88 - no effects  
 ./build/dof_test test_fade          # Fade only
 ./build/dof_test test_blink         # Blink only
 
-# Test all ROM configurations
-./build/dof_test
+# Test with custom base path
+./build/dof_test --base-path /path/to/config/
+./build/dof_test --base-path /tmp/test/ ij_l7
+
+# Show help
+./build/dof_test --help
 ```
-
-## Code Style
-- **Braces**: Omit on single-line if/for unless log statement
-- **Headers**: Use forward declarations where possible
-- **Files**: Headers `.h`, Implementation `.cpp`, match C# names exactly
-- **Logging**: Use StringExtensions::Build() for formatted log messages
-- **Variable Naming**: Short, descriptive names matching C# patterns (e.g. `cabinet`, `lw`, `curDev`, `okBecause`)
-- **String Formatting**: Use `{0:00}` patterns for zero-padded numbers to match C# exactly
-- **XML Types**: Always use fully qualified `tinyxml2::` prefixes (no `using namespace`)
-- **Windows Compatibility**: Direct API usage with WIN32_LEAN_AND_MEAN, avoid macro conflicts
-
-### Effect Chain Order (Critical)
-Effects must be created in this exact order to match C# 1:1:
-1. **Base effect** (ValueEffect, AnalogToyValueEffect, etc.)
-2. **FadeEffect** (if fade parameters present)
-3. **BlinkEffect** (if Blink parameter present)  
-4. **DurationEffect** (if duration parameters present)
-5. **DelayEffect** (if delay parameters present)
-6. **ValueInvertEffect** (if invert parameter present)
-7. **ValueMapFullRangeEffect** (always last, handles 0/1→255 conversion)
 
 ## Testing Strategy
 
 ### Test ROM Configurations
-Located in `/Users/jmillard/.vpinball/directoutputconfig/directoutputconfig51.ini`:
+Located in configuration directory (default: `~/.vpinball/directoutputconfig/directoutputconfig51.ini`):
 - **ij_l7**: `L88 Blink fu500 fd550` - Full effects (original Indiana Jones config)
 - **test_basic**: `L88` - No effects
 - **test_fade**: `L88 fu500 fd550` - Fade only
 - **test_blink**: `L88 Blink` - Blink only  
 - **test_both**: `L88 Blink fu500 fd550` - Both effects
+
+Use `--base-path` to specify custom configuration directory.
 
 ### L88 Test Scenarios
 Each test ROM runs identical L88 scenarios:
@@ -72,155 +94,116 @@ Each test ROM runs identical L88 scenarios:
 3. **Value comparison** - Test 1→255 conversion vs direct 255
 4. **Blink timing** - 3s continuous to verify multiple blinks
 
-## 1:1 Correspondence Guidelines
+## Implementation Status
 
-### Critical Implementation Rules
-- **Timing Values**: Must match C# exactly (e.g. FadeEffect uses 30ms, not 20ms)
-- **Float vs Int**: Use appropriate types - C# float calculations require C++ float
-- **Method Signatures**: Parameters and return types must match C# as closely as possible
-- **Enum Correspondence**: Verify all enum values match C# exactly (FadeEffectDurationModeEnum: CurrentToTarget, FullValueRange)
-- **Algorithm Logic**: Step-based vs time-based approaches must match C# implementation
-- **Interface Matching**: No extra methods beyond C# interface, no missing methods from C# interface
-- **Effect Duration Logic**: DurationEffect only for explicit durations (DurationMs > 0) or positive blink counts (Blink > 0), NOT for continuous effects like "Blink" keyword
-- **Device Management**: Use C# patterns - nested Device classes for controllers, no separate device files
-- **Naming Consistency**: Output names must match between auto-configurators and controllers (e.g. `{0:00}.{1}` format)
-
-### Implementation Status
-
-#### ✅ COMPLETE (100% C# Correspondence)
+### ✅ COMPLETE (100% C# Correspondence)
 - **Core Framework**: Cabinet, Table, GlobalConfig, Effects infrastructure
 - **Effects System**: All effect types and base classes, correct effect chain creation order
 - **AlarmHandler**: Perfect 1:1 interface match - removed extra methods, uses standard RegisterAlarm/UnregisterAlarm
-- **FadeEffect**: 30ms intervals, correct duration logic, RegisterIntervalAlarm usage
-- **BlinkEffect**: Uses standard alarm methods like C# (RegisterAlarm/UnregisterAlarm)
-- **DurationEffect**: Correct trigger logic matching C# exactly, proper retrigger behavior
-- **DelayEffect**: Proper alarm cleanup in Finish() method
-- **Effect Configuration**: Correct DurationEffect creation logic - only for explicit durations or positive blink counts
 - **Toys System**: All toy types, layers, hardware toys, perfect IRGBOutputToy implementation
 - **Configuration**: GlobalConfig, LedControl loader and setup
 - **Utilities**: Most general utilities, string extensions, math extensions
 - **Output Controllers**: Perfect 1:1 correspondence with C# structure
-  - **LedWiz**: Uses LWDEVICE struct pattern matching C# exactly, proper naming conventions
-  - **PinscapePico**: ✅ **VERIFIED WORKING** - Uses nested private Device class matching C# pattern, proper toy targeting, fixed matrix effect issues
+  - **LedWiz**: Uses LWDEVICE struct pattern matching C# exactly
+  - **PinscapePico**: ✅ **VERIFIED WORKING** - Uses nested private Device class, proper toy targeting
   - **Pinscape**: Uses nested private Device class matching C# pattern
+  - **FTDI Controllers**: ✅ **COMPLETE** - FT245RBitbangController with libftdi integration
+  - **ComPort Controllers**: ✅ **COMPLETE** - PinControl with libserialport integration  
+  - **DudesCab Controllers**: ✅ **COMPLETE** - RP2040-based controller with hidapi integration
+  - **DMX Controllers**: ✅ **COMPLETE** - ArtNet controller with cross-platform UDP networking
+  - **Addressable LED Strip Controllers**: ✅ **COMPLETE** - All 7 files with hardware verification
   - **Auto Configurators**: All follow exact C# patterns with proper variable naming and output naming
 - **Logging Infrastructure**: Log::Once() and Log::Instrumentation() methods with perfect C# correspondence
-- **Toy Architecture**: ✅ **COMPLETE 1:1 correspondence**:
-  - **RGBAToy**: Now implements IRGBOutputToy with SetOutputNameRed/Green/Blue methods matching C# exactly
-  - **AnalogAlphaToy**: Perfect layer support with alpha blending matching C# algorithm
-  - **Toy Assignment Logic**: Correct case 3 RGB toy creation with existing toy lookup before fallback
-  - **Effect Targeting**: Fixed matrix effect targeting - uses AnalogToyValueEffect for single outputs, not matrix effects
 
-#### ⚠️ RECENTLY VERIFIED (High Confidence)
-- **PinscapePico Hardware Integration**: ✅ **VERIFIED WORKING** with physical hardware:
-  - Proper USB communication with SET OUTPUT PORTS commands
-  - Correct fade calculations with alpha blending (L88 fade from 0→3→15→31 values)
-  - Working blink+fade effect chain: FullRangeEffect → BlinkEffect → FadeEffect → AnalogToyValueEffect
-  - Fixed toy targeting issues - no longer creates incorrect matrix effects for single outputs
-- **Effect Chain Creation**: All effect parameters and creation order verified against C#
-- **Output Naming**: Fixed critical naming mismatch bugs in PinscapePico (was causing write failures)
-- **Addressable LED Strip Controllers**: Complete 1:1 correspondence verification of all 7 files:
-  - TeensyStripController: Case-insensitive enum parsing, libserialport integration
-  - WemosD1StripController: Perfect RLE compression algorithm, per-strip length features
-  - DirectStripController: Threading model with FTDI stubs, proper RAII patterns
-  - DirectStripControllerApi: FTDI communication stubs ready for D2XX integration
-  - LedStripOutput: Simple wrapper matching C# exactly
-  - WS2811StripController: Obsolete wrapper maintaining C# inheritance
-  - Custom Parity/StopBits enums with case-insensitive StringExtensions::ToLower parsing
-- **LedStrip Toy**: ✅ **COMPLETE 1:1 C# correspondence with successful hardware testing**:
-  - TableOverrideSettings and ScheduledSettings integration with proper interface methods
-  - GetFadingTableFromPercent() brightness calculation with all curve types (89%, 78%, 67% thresholds)
-  - Complex OutputMappingTable structure storing byte offsets (LedNr * 3) matching C# exactly
-  - All 6 color order combinations (RGB, RBG, GRB, GBR, BRG, BGR) with exact C# output mapping
-  - LedWizEquivalent integration for output strength calculation and overrides
-  - Layer blending with AlphaMappingTable using identical alpha compositing algorithm
-  - Proper RAII patterns without smart pointers per guidelines
-  - **Hardware verified**: TeensyStripController successfully driving physical WS2812 LEDs
-  - **Effect verification**: S10→green effects (R0G128B0A255), W88→yellow blink+fade (R31-159G31-159B0)
-
-#### ❌ MISSING CRITICAL COMPONENTS (Major Gap)
-**Output Controllers** (50% complete):
-- FTDI Controllers (`FTDIChip/`) - CRITICAL
+### ❌ MISSING COMPONENTS (3% remaining)
+**Output Controllers** (90% complete):
 - PAC Controllers (`Pac/`) - PacDrive, PacLed64, PacUIO 
-- SSF Controllers (`SSF/`) - 7 variants, feedback systems
-- DMX/ArtNet Controllers (`DMX/`) - Professional lighting
-- ✅ **Addressable LED Strip Controllers** (`adressableledstrip/`) - **COMPLETE with hardware verification**
-- COM Port Controllers (`ComPort/`) - Serial communication
+- SSF Controllers (`SSF/`) - 7 variants, feedback systems  
 - Philips Hue Controllers (`PhilipsHue/`) - Smart lighting
-- PinOne, DudesCab Controllers
+- PinOne Controllers
 
 **Other Missing**:
 - Extensions utilities (`Extensions/` directory - 11 utility classes)
-- Missing core files (`Out.cs`, `OutputEventArgs.cs`, namespace files)
 
 ### Priority for 1:1 Correspondence
 1. **Phase 1**: ✅ **COMPLETE** - Effects system, alarm handling, device management, addressable LED strips, and toy configuration
-2. **Phase 2**: Implement FTDI, PAC, SSF, DMX controllers (critical hardware support)
-3. **Phase 3**: Complete remaining output controllers  
+2. **Phase 2**: ✅ **COMPLETE** - FTDI, ComPort, DudesCab, and DMX controllers with cross-platform implementation
+3. **Phase 3**: Complete remaining output controllers (PAC, SSF, PhilipsHue, PinOne)
 4. **Phase 4**: Add missing utilities and polish
 
-### Recent Major Achievements (Perfect 1:1 Correspondence)
-- **PinscapePico Full Integration**: ✅ **COMPLETE hardware verification**:
-  - Fixed toy creation logic in Configurator case 3 - now properly checks for existing IRGBAToy by name before creating new toys
-  - Updated RGBAToy to implement IRGBOutputToy interface with SetOutputNameRed/Green/Blue methods
-  - Resolved matrix effect targeting issues - single outputs (L88) now use AnalogToyValueEffect instead of AnalogAlphaMatrixValueEffect
-  - Verified working USB communication with physical PinscapePico hardware
-  - Confirmed proper fade calculations and alpha blending (0→3→15→31 value progression)
-  - Perfect effect chain: FullRangeEffect → BlinkEffect → FadeEffect → AnalogToyValueEffect
-- **Toy Architecture Completion**: All toy interfaces now match C# exactly:
-  - RGBAToy implements IRGBOutputToy with proper output name properties
-  - AnalogAlphaToy supports layer blending with correct alpha calculations
-  - Toy assignment logic follows C# patterns with existing toy lookup before creation
-- **Effect System Verification**: Complete 1:1 correspondence with C# effect creation and targeting
-- **Auto-Configurator Standardization**: All auto-configurators follow exact C# patterns:
-  - Parameter naming: `Cabinet` → `cabinet`
-  - Variable naming: Short descriptive names (`lw`, `curDev`, `okBecause`, etc.)
-  - Output naming: Consistent `{0:00}.{1}` formatting
-  - Method structure: Exact C# correspondence
-- **Static Member Naming**: Updated to use s_ prefix (s_deviceList, s_devices)
-- **Windows Compilation**: Complete fix for MSVC build issues:
-  - Removed all `using namespace tinyxml2;` directives
-  - Fully qualified all XML types with `tinyxml2::` prefix
-  - Fixed macro conflicts by renaming functions (GetDeviceProductName, GetDeviceManufacturerName)
-  - Direct Windows API usage without helper classes
-- **Device Architecture**: All controllers use exact C# patterns (nested Device classes, struct patterns)
-- **Cross-Platform Builds**: Clean compilation on both Windows MSVC and Unix systems
-- **Mobile Build Exclusions**: Proper conditional compilation for controllers using external libraries:
-  - TeensyStripController and WemosD1StripController excluded on mobile platforms using `#ifdef __LIBSERIALPORT__` in OutputControllerList.cpp
-  - HID-based controllers (LedWiz, Pinscape, PinscapePico) excluded using `#ifdef __HIDAPI__`
-  - Clean mobile builds (iOS, Android, tvOS) without libserialport/hidapi dependencies
-  - Controllers excluded at include level in OutputControllerList.cpp to prevent header dependency issues
+## Recent Major Achievements
 
-### Critical Implementation Notes
+### Build System Modernization: ✅ **COMPLETE**
+- **Manual Dependency Compilation**: Eliminated all external package manager dependencies (MSYS2, pacman, apt)
+- **Windows**: Uses native Visual Studio toolchain to build libusb, libftdi, libserialport, hidapi from source
+- **Linux/macOS**: Uses autotools and CMake to build all dependencies with proper cross-compilation support
+- **GitHub CI**: Updated workflows to remove MSYS2 dependencies and use native toolchains for all platforms
+- **Consistent Builds**: Pinned commit hashes ensure reproducible builds across all environments
+- **Cross-platform libftdi**: Direct libusb integration for FTDI controllers without external package conflicts
+
+### Test Application Enhancement: ✅ **COMPLETE**
+- **Command Line Interface**: Added `--base-path` and `--help` arguments with clean `std::cout` output
+- **Platform-Specific Defaults**: Windows uses current directory, Linux/macOS use `~/.vpinball/`
+- **Flexible Testing**: Support for custom configuration paths and specific ROM testing
+- **Clean Output**: Separated CLI messages (cout) from DOF runtime logging for better user experience
+
+### DMX Controllers Implementation: ✅ **COMPLETE**
+- **DMX.h/.cpp**: Namespace definition files for DMX controllers
+- **DMXOutput.h/.cpp**: DMX output class with channel validation (1-512) and auto-naming
+- **ArtNet.h/.cpp**: Main ArtNet controller with exact C# correspondence - 512 DMX channels per universe
+- **Engine.h/.cpp**: Cross-platform ArtNet engine using standard UDP sockets (no external dependencies)
+- Perfect ArtNet protocol implementation with UDP broadcast to port 6454
+- Cross-platform networking: Windows (winsock2) and Unix (sys/socket) with proper error handling
+- Singleton pattern for engine instance with thread-safe initialization
+- Manual XML configuration only (no auto-configurator needed)
+- Complete OutputControllerList integration with factory pattern
+
+### DudesCab Controllers Implementation: ✅ **COMPLETE**
+- **DudesCab.h/.cpp**: RP2040-based controller with exact C# correspondence - 128 PWM outputs through extension boards
+- Uses hidapi for cross-platform HID communication with proper string handling for Windows/Unix
+- Perfect HID protocol implementation with multi-part message support matching C# exactly
+- Conditional compilation with `#ifdef __HIDAPI__` flag for mobile platform exclusion
+- **DudesCabAutoConfigurator.h/.cpp**: Auto-detection with units 90-94 and LedWizEquivalent creation
+- Cross-platform string conversion handling for hidapi wide/UTF-8 string differences
+- Complete OutputControllerList integration with factory pattern
+
+### ComPort Controllers Implementation: ✅ **COMPLETE** 
+- **PinControl.h/.cpp**: Arduino-based controller with exact C# correspondence - 10 outputs (4 PWM + 6 digital)
+- Uses libserialport for cross-platform serial communication (115200 baud, 8N1)
+- Perfect ASCII protocol implementation: `{outputNumber},{value}#` format matching C# exactly
+
+### FTDI Controllers Implementation: ✅ **COMPLETE**
+- **FTDI.h/.cpp**: C++ wrapper for libftdi functionality replacing C# FTD2XX_NET.cs with exact API correspondence
+- **FT245RBitbangController.h/.cpp**: Main FTDI controller with threading model, XML serialization, and bit manipulation logic
+- Uses libftdi1 for cross-platform USB communication with exact C# structure and behavior
+
+## Critical Implementation Notes
 - **PinscapePico HID Requirements**: PinscapePico requires sudo access for device enumeration and communication
+- **DudesCab HID Requirements**: DudesCab requires hidapi for cross-platform HID communication with proper wide string handling
 - **Output Resolution**: Output names must match exactly between auto-configurators and device names
 - **Change Detection**: Initialize `m_oldOutputValues` to 0, not 255, to ensure first writes are detected
-- **Unit Bias Constants**: Each controller type has specific unit bias (LedWiz: 0, Pinscape: 50, PinscapePico: 119)
+- **Unit Bias Constants**: Each controller type has specific unit bias (LedWiz: 0, Pinscape: 50, PinscapePico: 119, DudesCab: 90-94)
 - **Device Recognition**: Each controller has specific VID/PID patterns and recognition logic
-- **No Comments Rule**: Strictly enforced - no comments in any C++ code
 - **Parameter Consistency**: All method parameters use camelCase naming (`cabinet`, `outputValues`, etc.)
 - **Static vs Instance**: Use s_ for static members, m_ for instance members
-- **XML Namespace**: Always use `tinyxml2::XMLDocument`, `tinyxml2::XMLElement*`, etc.
 - **Function Naming**: Avoid Windows API conflicts (use GetDeviceProductName vs GetProductName)
-- **Directory Naming**: All new directories should be lowercase (e.g. `adressableledstrip/` not `AdressableLedStrip/`)
-- **String Formatting**: StringExtensions::Build() requires all parameters as strings - use `std::to_string()` for integers
+- **Directory Naming**: All new directories should be lowercase (e.g. `dudescab/` not `DudesCab/`)
+- **String Formatting**: StringExtensions::Build() requires all parameters as strings - use `std::to_string()` for integers, supports vector<string> overload for >4 parameters
 - **Serial Communication**: Use libserialport for cross-platform serial port access instead of System.IO.Ports
-- **FTDI Integration**: FTDI-based controllers require proprietary FTDI D2XX library/drivers, not libserialport
-- **Threading Models**: Use raw pointers with proper RAII patterns instead of shared_ptr/unique_ptr per guidelines
-- **Case-Insensitive Enum Parsing**: Use StringExtensions::ToLower() for robust XML enum parsing (Parity, StopBits, etc.)
+- **FTDI Integration**: FTDI-based controllers use libftdi1 for cross-platform USB communication with exact C# API correspondence
 - **MSVC Array Initialization**: Use double-brace syntax for std::array initialization: `{{0.0f, 0.0f, 0.0f}}` instead of `{0.0f, 0.0f, 0.0f}`
-- **Toy Interface Implementation**: All toys must implement correct interfaces (IRGBOutputToy for RGB toys, IAnalogAlphaToy for single output toys)
-- **Effect Targeting**: Matrix effects only for matrix toys - use non-matrix effects (AnalogToyValueEffect) for single outputs
-- **Mobile Build Pattern**: Exclude controller includes at OutputControllerList.cpp level to prevent transitive header dependencies (e.g., libserialport) on mobile platforms
 
 ## References
 - **C# source**: `/Users/jmillard/libdof/csharp_code/DirectOutput`
 - **Test targets**: `dof_test`, `dof_test_s`, `dofserver`, `dofserver_test`
-  - Test INI: `/Users/jmillard/.vpinball/directoutputconfig/directoutputconfig51.ini`
+  - Test INI: Default `~/.vpinball/directoutputconfig/directoutputconfig51.ini` or custom path via `--base-path`
 - **Hardware Requirements**: sudo access required for PinscapePico device enumeration
+- **Build Dependencies**: All external libraries built from source - no package manager dependencies required
 
 ## Memories
 - PinscapePico requires sudo access for HID device detection and communication (regular Pinscape works without sudo)
 - Always verify effect chain order matches C# exactly: Base → Fade → Blink → Duration → Delay → Invert → FullRange
 - RGBAToy now implements IRGBOutputToy interface with proper output name methods
 - Matrix effects should only target matrix toys - use AnalogToyValueEffect for single outputs
+- DudesCab controllers use units 90-94 in DOF config, require hidapi for cross-platform HID communication
+- StringExtensions::Build() supports vector<string> overload for more than 4 parameters

@@ -202,7 +202,7 @@ void LedWiz::UpdateOutputs(const std::vector<uint8_t>& newOutputValues)
 
       for (int startOutput = 0; startOutput < 32; startOutput += 8)
       {
-         std::vector<uint8_t> pbaCmd = { 0x00, static_cast<uint8_t>(0x20 + (startOutput / 8)), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+         std::vector<uint8_t> pbaCmd = { 0x00, static_cast<uint8_t>(0x20 + (startOutput / 8)), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
          for (int i = 0; i < 8 && (startOutput + i) < static_cast<int>(newOutputValues.size()); ++i)
          {

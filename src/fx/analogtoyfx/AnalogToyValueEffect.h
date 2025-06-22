@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AnalogToyEffectBase.h"
+#include "AnanlogToyEffectBase.h"
 #include "../FadeModeEnum.h"
 #include "../../general/analog/AnalogAlpha.h"
 

@@ -89,7 +89,7 @@ void Table::Init(Pinball* pPinball)
    if (m_pEffects)
       m_pEffects->Init(this);
    if (m_pTableElements)
-      m_pTableElements->InitAssignedEffects(this);
+      m_pTableElements->Init(this);
    if (m_pAssignedStaticEffects)
       m_pAssignedStaticEffects->Init(this);
 }

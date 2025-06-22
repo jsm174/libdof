@@ -13,7 +13,30 @@ This library is currently used by [Visual Pinball Standalone](https://github.com
 > [!WARNING]
 > Given the scope of Direct Output Framework - over 250 C# files - this C++ port leveraged a large amount of AI assistance (ChatGPT and Claude). I know for sure it is **NOT** fully accurate and **DOES** contain bugs. Now that most of the files are in place, I will continue refining it until we achieve a true faithful 1:1 port.
 
-As of now, `libdof` can drive LEDs using @mjrgh's excellent [Pinscape](http://mjrnet.org/pinscape) and [Pinscape Pico](https://github.com/mjrgh/PinscapePico) boards, and is in use by [Visual Pinball Standalone](https://github.com/vpinball/vpinball/tree/standalone). 
+## Supported Output Controllers
+
+`libdof` supports a wide range of output controllers for driving LEDs, solenoids, and other feedback devices:
+
+### **Tested & Working**
+- **[Pinscape](http://mjrnet.org/pinscape)** - @mjrgh's popular pinball controller with 32+ outputs
+- **[Pinscape Pico](https://github.com/mjrgh/PinscapePico)** - RP2040-based version with enhanced features  
+- **[Teensy Strip Controller](https://github.com/DirectOutput/TeensyStripController)** - Teensy-based WS2812 LED strip controller
+
+### **Implemented & Ready To Test**
+- **LedWiz** - Classic 32-output controller
+- **DudesCab** - RP2040-based controller with 128 PWM outputs
+- **ArtNet/DMX** - Professional lighting control via Ethernet (all platforms)
+- **PinControl** - Arduino-based controller with 10 outputs
+- **FTDI Controllers** - FT245R bitbang controllers  
+- **WS2811/WS2812 LED Strips** - Addressable LED strip support
+
+### **Not Implemented**
+- **PAC Controllers** (PacDrive, PacLed64, PacUIO) - *Windows DLL dependencies*
+- **SSF Controllers** - *Audio-based feedback systems*  
+- **Philips Hue** - *Smart lighting integration*
+- **PinOne**
+
+`libdof` is actively used by [Visual Pinball Standalone](https://github.com/vpinball/vpinball/tree/standalone) and continues expanding controller support. 
 
 > [!NOTE]
 > On macOS, accessing HID devices with **usage page 0x06** and **usage 0x00** (like Pinscape Pico) requires elevated permissions. You must run as sudo to communicate with the device. See [here](https://gist.github.com/jsm174/d8711b7ea4af4501090f96f1db808202) for more details.

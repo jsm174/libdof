@@ -12,6 +12,19 @@
 //
 
 #include "DOF/DOF.h"
+#include <cstdlib>
+#include <iostream>
+#include <iomanip>
+#include <cstring>
+
+#ifdef _WIN32
+#include <direct.h>
+#define getcwd _getcwd
+#else
+#include <unistd.h>
+#include <pwd.h>
+#include <sys/types.h>
+#endif
 
 struct TestRom
 {
@@ -133,21 +146,93 @@ void RunL88Tests(DOF::DOF* pDof)
    Log("=== L88 Tests Complete ===");
 }
 
+std::string GetDefaultBasePath()
+{
+#ifdef _WIN32
+   char cwd[1024];
+   if (getcwd(cwd, sizeof(cwd)) != nullptr)
+   {
+      return std::string(cwd) + "\\";
+   }
+   return ".\\";
+#else
+   const char* homeDir = getenv("HOME");
+   if (homeDir == nullptr)
+   {
+      struct passwd* pwd = getpwuid(getuid());
+      if (pwd)
+         homeDir = pwd->pw_dir;
+   }
+
+   if (homeDir != nullptr)
+   {
+      return std::string(homeDir) + "/.vpinball/";
+   }
+   return "./";
+#endif
+}
+
+void PrintUsage(const char* programName)
+{
+   std::cout << "Usage: " << programName << " [ROM_NAME] [--base-path PATH]" << std::endl;
+   std::cout << std::endl;
+   std::cout << "Options:" << std::endl;
+   std::cout << "  ROM_NAME     Specific ROM to test (optional)" << std::endl;
+   std::cout << "  --base-path  Custom base path for DOF configuration" << std::endl;
+   std::cout << "               Default: Windows = current directory" << std::endl;
+   std::cout << "                       Linux/Mac = ~/.vpinball/" << std::endl;
+   std::cout << std::endl;
+   std::cout << "Available ROMs:" << std::endl;
+   for (const auto& testRom : testRoms)
+   {
+      std::cout << "  " << std::left << std::setw(12) << testRom.name << " " << testRom.description << std::endl;
+   }
+}
+
 int main(int argc, const char* argv[])
 {
+   std::string basePath = GetDefaultBasePath();
+   std::string romName = "";
+
+   for (int i = 1; i < argc; i++)
+   {
+      if (strcmp(argv[i], "--base-path") == 0 && i + 1 < argc)
+      {
+         basePath = argv[i + 1];
+         if (basePath.back() != '/' && basePath.back() != '\\')
+         {
+#ifdef _WIN32
+            basePath += "\\";
+#else
+            basePath += "/";
+#endif
+         }
+         i++;
+      }
+      else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
+      {
+         PrintUsage(argv[0]);
+         return 0;
+      }
+      else if (argv[i][0] != '-')
+      {
+         romName = argv[i];
+      }
+   }
+
    DOF::Config* pConfig = DOF::Config::GetInstance();
    pConfig->SetLogCallback(LogCallback);
    pConfig->SetLogLevel(DOF_LogLevel_DEBUG);
-   pConfig->SetBasePath("/Users/jmillard/.vpinball/");
+   pConfig->SetBasePath(basePath.c_str());
 
-   if (argc > 1)
+   Log("Using base path: %s", basePath.c_str());
+
+   if (!romName.empty())
    {
-      std::string requestedRom = argv[1];
-
       bool found = false;
       for (const auto& testRom : testRoms)
       {
-         if (testRom.name == requestedRom)
+         if (testRom.name == romName)
          {
             found = true;
             Log("========================================");
@@ -171,17 +256,15 @@ int main(int argc, const char* argv[])
 
       if (!found)
       {
-         std::string msg = "";
+         std::cout << "Unknown ROM: " << romName << std::endl;
+         std::cout << "Available ROMs: ";
          for (size_t i = 0; i < testRoms.size(); i++)
          {
-            msg += testRoms[i].name;
+            std::cout << testRoms[i].name;
             if (i < testRoms.size() - 1)
-               msg += ", ";
+               std::cout << ", ";
          }
-
-         Log("Unknown ROM: %s", requestedRom.c_str());
-         Log("Available ROMs: %s", msg.c_str());
-
+         std::cout << std::endl;
          return 1;
       }
    }

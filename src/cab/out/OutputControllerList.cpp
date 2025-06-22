@@ -8,12 +8,20 @@
 #include "ps/Pinscape.h"
 #include "pspico/PinscapePico.h"
 #include "lw/LedWiz.h"
+#include "dudescab/DudesCab.h"
 #endif
 
 #ifdef __LIBSERIALPORT__
 #include "adressableledstrip/TeensyStripController.h"
 #include "adressableledstrip/WemosD1StripController.h"
+#include "comport/PinControl.h"
 #endif
+
+#ifdef __LIBFTDI__
+#include "ftdichip/FT245RBitbangController.h"
+#endif
+
+#include "dmx/ArtNet.h"
 
 namespace DOF
 {
@@ -92,13 +100,23 @@ IOutputController* OutputControllerList::CreateController(const std::string& typ
       return new PinscapePico();
    else if (typeName == "LedWiz")
       return new LedWiz();
+   else if (typeName == "DudesCab")
+      return new DudesCab();
 #endif
 #ifdef __LIBSERIALPORT__
    else if (typeName == "TeensyStripController")
       return new TeensyStripController();
    else if (typeName == "WemosD1MPStripController")
       return new WemosD1MPStripController();
+   else if (typeName == "PinControl")
+      return new PinControl();
 #endif
+#ifdef __LIBFTDI__
+   else if (typeName == "FT245RBitbangController")
+      return new FT245RBitbangController();
+#endif
+   else if (typeName == "ArtNet")
+      return new ArtNet();
    else
    {
       Log::Warning(StringExtensions::Build("Unknown output controller type: {0}", typeName));

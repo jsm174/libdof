@@ -9,10 +9,10 @@
 namespace DOF
 {
 
-void TableElementList::InitAssignedEffects(Table* pTable)
+void TableElementList::Init(Table* table)
 {
    for (TableElement* pTableElement : *this)
-      pTableElement->GetAssignedEffects()->Init(pTable);
+      pTableElement->GetAssignedEffects()->Init(table);
 }
 
 void TableElementList::FinishAssignedEffects()
