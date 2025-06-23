@@ -73,190 +73,182 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(LIBDOF_SOURCES
    src/Config.cpp
    src/DOF.cpp
-   src/Pinball.cpp
+   src/DirectOutputHandler.cpp
    src/Log.cpp
    src/Logger.cpp
-   src/DirectOutputHandler.cpp
-   
+   src/Pinball.cpp
+
+   src/general/Curve.cpp
    src/general/DirectoryInfo.cpp
    src/general/FileInfo.cpp
-   src/general/FileReader.cpp
    src/general/FilePattern.cpp
    src/general/FilePatternList.cpp
-   src/general/StringExtensions.cpp
+   src/general/FileReader.cpp
    src/general/MathExtensions.cpp
-   src/general/Curve.cpp
-   src/general/generic/NameChangeEventArgs.cpp
-   src/general/generic/NamedItemBase.cpp
-   src/general/color/RGBAColor.cpp
-   src/general/color/RGBColor.cpp
-   src/general/color/RGBAColorNamed.cpp
-   src/general/color/RGBColorNamed.cpp
+   src/general/StringExtensions.cpp
+   src/general/analog/AnalogAlpha.cpp
+   src/general/bitmap/FastBitmap.cpp
    src/general/color/ColorList.cpp
    src/general/color/ColorScale.cpp
-   src/general/analog/AnalogAlpha.cpp
-   
-   src/general/bitmap/FastBitmap.cpp
-   
-   src/fx/matrixfx/bitmapshapes/Shape.cpp
-   src/fx/matrixfx/bitmapshapes/ShapeList.cpp
-   src/fx/matrixfx/bitmapshapes/ShapeAnimated.cpp
-   src/fx/matrixfx/bitmapshapes/ShapeDefinitions.cpp
-   
+   src/general/color/RGBAColor.cpp
+   src/general/color/RGBAColorNamed.cpp
+   src/general/color/RGBColor.cpp
+   src/general/color/RGBColorNamed.cpp
+   src/general/generic/NameChangeEventArgs.cpp
+   src/general/generic/NamedItemBase.cpp
+
    src/globalconfiguration/GlobalConfig.cpp
 
    src/pinballsupport/AlarmHandler.cpp
    src/pinballsupport/InputQueue.cpp
 
-   src/fx/AssignedEffect.cpp
-   src/fx/AssignedEffectList.cpp
-   src/fx/EffectList.cpp
-   src/fx/IEffect.cpp
-   src/fx/EffectBase.cpp
-   src/fx/EffectEffectBase.cpp
-   src/fx/EffectEventArgs.cpp
-   src/fx/EffectFactory.cpp
-   src/fx/EffectRegistrations.cpp
-   src/fx/analogtoyfx/AnanlogToyEffectBase.cpp
-   src/fx/analogtoyfx/AnalogToyValueEffect.cpp
-   src/fx/conditionfx/TableElementConditionEffect.cpp
-   src/fx/listfx/ListEffect.cpp
-   src/fx/matrixfx/RGBAMatrixColorEffect.cpp
-   src/fx/matrixfx/AnalogAlphaMatrixValueEffect.cpp
-   src/fx/matrixfx/RGBAMatrixFlickerEffect.cpp
-   src/fx/matrixfx/RGBAMatrixShiftEffect.cpp
-   src/fx/matrixfx/RGBAMatrixPlasmaEffect.cpp
-   src/fx/matrixfx/AnalogAlphaMatrixFlickerEffect.cpp
-   src/fx/matrixfx/AnalogAlphaMatrixShiftEffect.cpp
-   src/fx/matrixfx/RGBAMatrixBitmapEffect.cpp
-   src/fx/matrixfx/RGBAMatrixBitmapAnimationEffect.cpp
-   src/fx/matrixfx/AnalogAlphaMatrixBitmapEffect.cpp
-   src/fx/matrixfx/AnalogAlphaMatrixBitmapAnimationEffect.cpp
-   src/fx/matrixfx/RGBAMatrixColorScaleBitmapEffect.cpp
-   src/fx/matrixfx/RGBAMatrixColorScaleBitmapAnimationEffect.cpp
-   src/fx/matrixfx/MatrixEffectBase.cpp
-   src/fx/matrixfx/MatrixValueEffectBase.cpp
-   src/fx/matrixfx/MatrixBitmapEffectBase.cpp
-   src/fx/matrixfx/MatrixBitmapAnimationEffectBase.cpp
-   src/fx/matrixfx/MatrixColorScaleEffectBase.cpp
-   src/fx/matrixfx/MatrixFlickerEffectBase.cpp
-   src/fx/matrixfx/MatrixPlasmaEffectBase.cpp
-   src/fx/matrixfx/MatrixShiftEffectBase.cpp
-   src/fx/matrixfx/RGBAMatrixShapeEffect.cpp
-   src/fx/matrixfx/RGBAMatrixColorScaleShapeEffect.cpp
-   src/fx/nullfx/NullEffect.cpp
-   src/fx/rgbafx/RGBAEffectBase.cpp
-   src/fx/rgbafx/RGBAColorEffect.cpp
-   src/fx/valuefx/ValueInvertEffect.cpp
-   src/fx/valuefx/ValueMapFullRangeEffect.cpp
-   src/fx/timmedfx/DelayEffect.cpp
-   src/fx/timmedfx/DurationEffect.cpp
-   src/fx/timmedfx/BlinkEffect.cpp
-   src/fx/timmedfx/MinDurationEffect.cpp
-   src/fx/timmedfx/MaxDurationEffect.cpp
-   src/fx/timmedfx/ExtendDurationEffect.cpp
-   src/fx/timmedfx/FadeEffect.cpp
-   
    src/table/Table.cpp
    src/table/TableElement.cpp
    src/table/TableElementData.cpp
    src/table/TableElementList.cpp
 
-   src/cab/ICabinetOwner.cpp
-   src/cab/CabinetOwner.cpp
+   src/fx/AssignedEffect.cpp
+   src/fx/AssignedEffectList.cpp
+   src/fx/EffectBase.cpp
+   src/fx/EffectEffectBase.cpp
+   src/fx/EffectEventArgs.cpp
+   src/fx/EffectFactory.cpp
+   src/fx/EffectList.cpp
+   src/fx/EffectRegistrations.cpp
+   src/fx/IEffect.cpp
+   src/fx/analogtoyfx/AnanlogToyEffectBase.cpp
+   src/fx/analogtoyfx/AnalogToyValueEffect.cpp
+   src/fx/conditionfx/TableElementConditionEffect.cpp
+   src/fx/listfx/ListEffect.cpp
+   src/fx/matrixfx/AnalogAlphaMatrixBitmapAnimationEffect.cpp
+   src/fx/matrixfx/AnalogAlphaMatrixBitmapEffect.cpp
+   src/fx/matrixfx/AnalogAlphaMatrixFlickerEffect.cpp
+   src/fx/matrixfx/AnalogAlphaMatrixShiftEffect.cpp
+   src/fx/matrixfx/AnalogAlphaMatrixValueEffect.cpp
+   src/fx/matrixfx/MatrixBitmapAnimationEffectBase.cpp
+   src/fx/matrixfx/MatrixBitmapEffectBase.cpp
+   src/fx/matrixfx/MatrixColorScaleEffectBase.cpp
+   src/fx/matrixfx/MatrixEffectBase.cpp
+   src/fx/matrixfx/MatrixFlickerEffectBase.cpp
+   src/fx/matrixfx/MatrixPlasmaEffectBase.cpp
+   src/fx/matrixfx/MatrixShiftEffectBase.cpp
+   src/fx/matrixfx/MatrixValueEffectBase.cpp
+   src/fx/matrixfx/RGBAMatrixBitmapAnimationEffect.cpp
+   src/fx/matrixfx/RGBAMatrixBitmapEffect.cpp
+   src/fx/matrixfx/RGBAMatrixColorEffect.cpp
+   src/fx/matrixfx/RGBAMatrixColorScaleBitmapAnimationEffect.cpp
+   src/fx/matrixfx/RGBAMatrixColorScaleBitmapEffect.cpp
+   src/fx/matrixfx/RGBAMatrixColorScaleShapeEffect.cpp
+   src/fx/matrixfx/RGBAMatrixFlickerEffect.cpp
+   src/fx/matrixfx/RGBAMatrixPlasmaEffect.cpp
+   src/fx/matrixfx/RGBAMatrixShapeEffect.cpp
+   src/fx/matrixfx/RGBAMatrixShiftEffect.cpp
+   src/fx/matrixfx/bitmapshapes/Shape.cpp
+   src/fx/matrixfx/bitmapshapes/ShapeAnimated.cpp
+   src/fx/matrixfx/bitmapshapes/ShapeDefinitions.cpp
+   src/fx/matrixfx/bitmapshapes/ShapeList.cpp
+   src/fx/nullfx/NullEffect.cpp
+   src/fx/rgbafx/RGBAColorEffect.cpp
+   src/fx/rgbafx/RGBAEffectBase.cpp
+   src/fx/timmedfx/BlinkEffect.cpp
+   src/fx/timmedfx/DelayEffect.cpp
+   src/fx/timmedfx/DurationEffect.cpp
+   src/fx/timmedfx/ExtendDurationEffect.cpp
+   src/fx/timmedfx/FadeEffect.cpp
+   src/fx/timmedfx/MaxDurationEffect.cpp
+   src/fx/timmedfx/MinDurationEffect.cpp
+   src/fx/valuefx/ValueInvertEffect.cpp
+   src/fx/valuefx/ValueMapFullRangeEffect.cpp
+
    src/cab/Cabinet.cpp
    src/cab/CabinetOutputList.cpp
-
+   src/cab/CabinetOwner.cpp
+   src/cab/ICabinetOwner.cpp
+   src/cab/out/IAutoConfigOutputController.cpp
    src/cab/out/IOutput.cpp
-   src/cab/out/Output.cpp
-   src/cab/out/OutputList.cpp
-   src/cab/out/Out.cpp
    src/cab/out/IOutputController.cpp
+   src/cab/out/ISupportsSetValues.cpp
+   src/cab/out/NullOutputController.cpp
+   src/cab/out/Out.cpp
+   src/cab/out/Output.cpp
    src/cab/out/OutputControllerBase.cpp
    src/cab/out/OutputControllerCompleteBase.cpp
    src/cab/out/OutputControllerFlexCompleteBase.cpp
    src/cab/out/OutputControllerList.cpp
-   src/cab/out/IAutoConfigOutputController.cpp
-   src/cab/out/ISupportsSetValues.cpp
-   src/cab/out/NullOutputController.cpp
-
+   src/cab/out/OutputList.cpp
+   src/cab/out/dmx/ArtNet.cpp
+   src/cab/out/dmx/DMX.cpp
+   src/cab/out/dmx/DMXOutput.cpp
+   src/cab/out/dmx/artnetengine/ArtnetEngine.cpp
+   src/cab/out/dmx/artnetengine/Engine.cpp
+   src/cab/overrides/TableOverrideSetting.cpp
+   src/cab/overrides/TableOverrideSettingDevice.cpp
+   src/cab/overrides/TableOverrideSettings.cpp
+   src/cab/schedules/ScheduledSetting.cpp
+   src/cab/schedules/ScheduledSettingDevice.cpp
+   src/cab/schedules/ScheduledSettings.cpp
+   src/cab/sequencer/SequentialOutputSetting.cpp
+   src/cab/sequencer/SequentialOutputSettings.cpp
    src/cab/toys/IToy.cpp
    src/cab/toys/IToyUpdatable.cpp
    src/cab/toys/ToyBase.cpp
    src/cab/toys/ToyBaseUpdatable.cpp
-   src/cab/toys/ToyList.cpp
    src/cab/toys/ToyEventArgs.cpp
-   src/cab/toys/layer/RGBAToy.cpp
-   src/cab/toys/layer/AnalogAlphaToy.cpp
-   src/cab/toys/layer/AlphaMappingTable.cpp
-   src/cab/toys/lwequivalent/LedWizEquivalent.cpp
-   src/cab/toys/hardware/Motor.cpp
+   src/cab/toys/ToyList.cpp
    src/cab/toys/hardware/GearMotor.cpp
-   src/cab/toys/hardware/Shaker.cpp
-   src/cab/toys/hardware/RGBLed.cpp
    src/cab/toys/hardware/Lamp.cpp
    src/cab/toys/hardware/LedStrip.cpp
+   src/cab/toys/hardware/Motor.cpp
+   src/cab/toys/hardware/RGBLed.cpp
+   src/cab/toys/hardware/Shaker.cpp
+   src/cab/toys/layer/AlphaMappingTable.cpp
+   src/cab/toys/layer/AnalogAlphaToy.cpp
+   src/cab/toys/layer/RGBAToy.cpp
+   src/cab/toys/lwequivalent/LedWizEquivalent.cpp
    src/cab/toys/virtual/AnalogAlphaToyGroup.cpp
    src/cab/toys/virtual/RGBAToyGroup.cpp
 
-   src/cab/overrides/TableOverrideSettings.cpp
-   src/cab/overrides/TableOverrideSetting.cpp
-
-   src/cab/schedules/ScheduledSetting.cpp
-   src/cab/schedules/ScheduledSettings.cpp
-   src/cab/sequencer/SequentialOutputSetting.cpp
-   src/cab/sequencer/SequentialOutputSettings.cpp
-   src/cab/overrides/TableOverrideSettingDevice.cpp
-
+   src/ledcontrol/loader/ColorConfig.cpp
+   src/ledcontrol/loader/ColorConfigList.cpp
    src/ledcontrol/loader/LedControl.cpp
    src/ledcontrol/loader/LedControlConfig.cpp
    src/ledcontrol/loader/LedControlConfigList.cpp
    src/ledcontrol/loader/TableConfig.cpp
-   src/ledcontrol/loader/TableConfigList.cpp
    src/ledcontrol/loader/TableConfigColumn.cpp
    src/ledcontrol/loader/TableConfigColumnList.cpp
+   src/ledcontrol/loader/TableConfigList.cpp
    src/ledcontrol/loader/TableConfigSetting.cpp
-   src/ledcontrol/loader/VariablesDictionary.cpp
    src/ledcontrol/loader/TableVariablesDictionary.cpp
-   src/ledcontrol/loader/ColorConfig.cpp
-   src/ledcontrol/loader/ColorConfigList.cpp
+   src/ledcontrol/loader/VariablesDictionary.cpp
    src/ledcontrol/setup/Configurator.cpp
-
-   src/cab/out/dmx/DMX.cpp
-   src/cab/out/dmx/DMXOutput.cpp
-   src/cab/out/dmx/ArtNet.cpp
-   src/cab/out/dmx/artnetengine/ArtnetEngine.cpp
-   src/cab/out/dmx/artnetengine/Engine.cpp
 
    third-party/include/tinyxml2/tinyxml2.cpp
 )
 
 if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
    list(APPEND LIBDOF_SOURCES
-      src/cab/out/ps/Pinscape.cpp
-      src/cab/out/ps/PinscapeAutoConfigurator.cpp
-
-      src/cab/out/pspico/PinscapePico.cpp
-      src/cab/out/pspico/PinscapePicoAutoConfigurator.cpp
-
-      src/cab/out/lw/LedWiz.cpp
-      src/cab/out/lw/LedWizAutoConfigurator.cpp
-
-      src/cab/out/dudescab/DudesCab.cpp
-      src/cab/out/dudescab/DudesCabAutoConfigurator.cpp
-
-      src/cab/out/adressableledstrip/TeensyStripController.cpp
-      src/cab/out/adressableledstrip/LedStripOutput.cpp
       src/cab/out/adressableledstrip/DirectStripController.cpp
       src/cab/out/adressableledstrip/DirectStripControllerApi.cpp
-      src/cab/out/adressableledstrip/WS2811StripController.cpp
+      src/cab/out/adressableledstrip/LedStripOutput.cpp
+      src/cab/out/adressableledstrip/TeensyStripController.cpp
       src/cab/out/adressableledstrip/WemosD1StripController.cpp
-
-      src/cab/out/ftdichip/FTDI.cpp
+      src/cab/out/adressableledstrip/WS2811StripController.cpp
+      src/cab/out/comport/PinControl.cpp
+      src/cab/out/dudescab/DudesCab.cpp
+      src/cab/out/dudescab/DudesCabAutoConfigurator.cpp
       src/cab/out/ftdichip/FT245RBitbangController.cpp
       src/cab/out/ftdichip/FT245RBitbangControllerAutoConfigurator.cpp
-
-      src/cab/out/comport/PinControl.cpp
+      src/cab/out/ftdichip/FTDI.cpp
+      src/cab/out/lw/LedWiz.cpp
+      src/cab/out/lw/LedWizAutoConfigurator.cpp
+      src/cab/out/pinone/NamedPipeServer.cpp
+      src/cab/out/pinone/PinOne.cpp
+      src/cab/out/pinone/PinOneAutoConfigurator.cpp
+      src/cab/out/pinone/PinOneCommunication.cpp
+      src/cab/out/ps/Pinscape.cpp
+      src/cab/out/ps/PinscapeAutoConfigurator.cpp
+      src/cab/out/pspico/PinscapePico.cpp
+      src/cab/out/pspico/PinscapePicoAutoConfigurator.cpp
    )
 endif()
 

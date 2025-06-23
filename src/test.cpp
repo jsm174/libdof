@@ -73,7 +73,7 @@ void RunDOFTests(DOF::DOF* pDof)
 {
    Log("=== DOF Protocol Test Scenarios ===");
 
-   Log("1. L88 lamp test - 5 seconds on (watch PinscapePico LEDs)");
+   Log("1. L88 lamp test - 5 seconds on");
    pDof->DataReceive('L', 88, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
    Log("   L88 off - 2 seconds off");
@@ -99,7 +99,6 @@ void RunL88Tests(DOF::DOF* pDof)
 {
    Log("=== L88 Test Scenarios ===");
 
-   // Test 1: Basic on/off
    Log("1. Basic L88 on/off test");
    Log("   L88 1 (should fade up + start blinking)...");
    pDof->DataReceive('L', 88, 1);
@@ -109,7 +108,6 @@ void RunL88Tests(DOF::DOF* pDof)
    pDof->DataReceive('L', 88, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
 
-   // Test 2: Rapid toggling
    Log("2. Rapid toggle test");
    for (int i = 0; i < 3; i++)
    {
@@ -122,7 +120,6 @@ void RunL88Tests(DOF::DOF* pDof)
       std::this_thread::sleep_for(std::chrono::milliseconds(300));
    }
 
-   // Test 3: Direct 255 vs 1 value
    Log("3. Value comparison test");
    Log("   L88 1 (should convert to 255)...");
    pDof->DataReceive('L', 88, 1);

@@ -314,53 +314,48 @@ void Configurator::SetupTable(
 
                   if (rgbaMatrixToy != nullptr)
                   {
-                     if (tcs->HasLayer())
+                     if (tcs->GetColorConfig() != nullptr)
                      {
-                        RGBAMatrixColorEffect* matrixEffect = new RGBAMatrixColorEffect();
-                        effectName = StringExtensions::Build(
-                           "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                        matrixEffect->SetName(effectName);
-                        matrixEffect->SetToyName(toy->GetName());
-                        matrixEffect->SetLayerNr(tcs->GetLayer());
-
-                        if (tcs->GetColorConfig() != nullptr)
+                        if (tcs->HasLayer())
                         {
+                           RGBAMatrixColorEffect* matrixEffect = new RGBAMatrixColorEffect();
+                           effectName = StringExtensions::Build(
+                              "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                           matrixEffect->SetName(effectName);
+                           matrixEffect->SetToyName(toy->GetName());
+                           matrixEffect->SetLayerNr(tcs->GetLayer());
+
                            ColorConfig* colorConfig = tcs->GetColorConfig();
                            matrixEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
-                           Log::Write(StringExtensions::Build("Matrix effect color from config: R={0} G={1} B={2} A={3}", std::to_string(colorConfig->GetRed()),
+                           Log::Debug(StringExtensions::Build("Matrix effect color from config: R={0} G={1} B={2} A={3}", std::to_string(colorConfig->GetRed()),
                               std::to_string(colorConfig->GetGreen()), std::to_string(colorConfig->GetBlue()), std::to_string(colorConfig->GetAlpha())));
+
+                           matrixEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
+                           matrixEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
+
+                           effect = static_cast<EffectBase*>(matrixEffect);
                         }
                         else
                         {
-                           matrixEffect->SetActiveColor(RGBAColor(255, 0, 0, 255)); // Set to Red for testing
-                           Log::Write("Matrix effect color: Using default Red (255,0,0,255)");
+                           RGBAColorEffect* rgbaEffect = new RGBAColorEffect();
+                           effectName = StringExtensions::Build(
+                              "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                           rgbaEffect->SetName(effectName);
+                           rgbaEffect->SetToyName(toy->GetName());
+
+                           ColorConfig* colorConfig = tcs->GetColorConfig();
+                           rgbaEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
+                           rgbaEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
+                           rgbaEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
+
+                           effect = rgbaEffect;
                         }
-
-                        matrixEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
-                        matrixEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
-
-                        effect = static_cast<EffectBase*>(matrixEffect);
                      }
                      else
                      {
-                        RGBAColorEffect* rgbaEffect = new RGBAColorEffect();
-                        effectName = StringExtensions::Build(
-                           "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                        rgbaEffect->SetName(effectName);
-                        rgbaEffect->SetToyName(toy->GetName());
-
-                        if (tcs->GetColorConfig() != nullptr)
-                        {
-                           ColorConfig* colorConfig = tcs->GetColorConfig();
-                           rgbaEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
-                        }
-                        else
-                           rgbaEffect->SetActiveColor(RGBAColor(255, 255, 255, 255));
-
-                        rgbaEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
-                        rgbaEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
-
-                        effect = rgbaEffect;
+                        Log::Warning(StringExtensions::Build("No color valid color definition found for area effect. Skipped setting {0} in column {1} for LedWizEqivalent number {2}",
+                           std::to_string(settingNumber), std::to_string(tcc->GetNumber()), std::to_string(ledWizNr)));
+                        continue;
                      }
                   }
                   else if (analogMatrixToy != nullptr)
@@ -389,7 +384,7 @@ void Configurator::SetupTable(
                   }
                   else if (rgbaToy != nullptr)
                   {
-                     if (tcs->HasLayer())
+                     if (tcs->GetColorConfig() != nullptr)
                      {
                         RGBAColorEffect* rgbaEffect = new RGBAColorEffect();
                         effectName = StringExtensions::Build(
@@ -397,14 +392,8 @@ void Configurator::SetupTable(
                         rgbaEffect->SetName(effectName);
                         rgbaEffect->SetToyName(toy->GetName());
 
-                        if (tcs->GetColorConfig() != nullptr)
-                        {
-                           ColorConfig* colorConfig = tcs->GetColorConfig();
-                           rgbaEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
-                        }
-                        else
-                           rgbaEffect->SetActiveColor(RGBAColor(255, 255, 255, 255));
-
+                        ColorConfig* colorConfig = tcs->GetColorConfig();
+                        rgbaEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
                         rgbaEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
                         rgbaEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
 
@@ -412,24 +401,9 @@ void Configurator::SetupTable(
                      }
                      else
                      {
-                        RGBAColorEffect* rgbaEffect = new RGBAColorEffect();
-                        effectName = StringExtensions::Build(
-                           "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                        rgbaEffect->SetName(effectName);
-                        rgbaEffect->SetToyName(toy->GetName());
-
-                        if (tcs->GetColorConfig() != nullptr)
-                        {
-                           ColorConfig* colorConfig = tcs->GetColorConfig();
-                           rgbaEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
-                        }
-                        else
-                           rgbaEffect->SetActiveColor(RGBAColor(255, 255, 255, 255));
-
-                        rgbaEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
-                        rgbaEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
-
-                        effect = rgbaEffect;
+                        Log::Warning(StringExtensions::Build("Skipped setting {0} in column {1} for LedWizEqivalent number {2} since it does not contain a color specification.",
+                           std::to_string(settingNumber), std::to_string(tcc->GetNumber()), std::to_string(ledWizNr)));
+                        continue;
                      }
                   }
                   else if (analogToy != nullptr)
@@ -445,7 +419,6 @@ void Configurator::SetupTable(
 
                   if (effect != nullptr)
                   {
-                     // 1. Add base effect immediately (matching C# pattern)
                      effect->SetName(StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} " + effect->GetXmlElementName(), std::to_string(ledWizNr),
                         std::to_string(tcc->GetNumber()), std::to_string(settingNumber)));
                      MakeEffectNameUnique(effect, table);
@@ -453,7 +426,6 @@ void Configurator::SetupTable(
 
                      IEffect* finalEffect = effect;
 
-                     // 2. FadeEffect (if fading durations are set)
                      if (tcs->GetFadingUpDurationMs() > 0 || tcs->GetFadingDownDurationMs() > 0)
                      {
                         FadeEffect* fadeEffect = new FadeEffect();
@@ -468,7 +440,6 @@ void Configurator::SetupTable(
                         finalEffect = fadeEffect;
                      }
 
-                     // 3. BlinkEffect (if blink is enabled)
                      if (tcs->GetBlink())
                      {
                         BlinkEffect* blinkEffect = new BlinkEffect();
@@ -488,7 +459,6 @@ void Configurator::SetupTable(
                         finalEffect = blinkEffect;
                      }
 
-                     // 4. DurationEffect (if duration or positive blink count is set)
                      if (tcs->GetDurationMs() > 0 || tcs->GetBlink() > 0)
                      {
                         DurationEffect* durationEffect = new DurationEffect();
@@ -497,7 +467,6 @@ void Configurator::SetupTable(
                         durationEffect->SetName(durationName);
                         durationEffect->SetTargetEffectName(finalEffect->GetName());
 
-                        // Calculate duration like C# version
                         int duration;
                         if (tcs->GetDurationMs() > 0)
                         {
@@ -519,7 +488,6 @@ void Configurator::SetupTable(
                         finalEffect = durationEffect;
                      }
 
-                     // 5. DelayEffect (if wait duration is set)
                      if (tcs->GetWaitDurationMs() > 0)
                      {
                         DelayEffect* delayEffect = new DelayEffect();
@@ -533,7 +501,6 @@ void Configurator::SetupTable(
                         finalEffect = delayEffect;
                      }
 
-                     // 6. ValueInvertEffect (if invert is enabled)
                      if (tcs->GetInvert())
                      {
                         ValueInvertEffect* invertEffect = new ValueInvertEffect();
@@ -546,7 +513,6 @@ void Configurator::SetupTable(
                         finalEffect = invertEffect;
                      }
 
-                     // 7. ValueMapFullRangeEffect (if NoBool is false)
                      if (!tcs->GetNoBool())
                      {
                         ValueMapFullRangeEffect* fullRangeEffect = new ValueMapFullRangeEffect();
@@ -559,21 +525,16 @@ void Configurator::SetupTable(
                         finalEffect = fullRangeEffect;
                      }
 
-                     // Assign effect to table elements based on output control
                      switch (tcs->GetOutputControl())
                      {
                      case OutputControlEnum::FixedOn:
-                        // For fixed on effects, this would go to assigned static effects in full implementation
-                        // For now, create a synthetic descriptor as fallback
-                        {
-                           std::vector<std::string> tableElementDescriptors;
-                           tableElementDescriptors.push_back(
-                              StringExtensions::Build("{0}.{1}.{2}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber)));
-                           AssignEffectToTableElements(table, tableElementDescriptors, finalEffect);
-                        }
-                        break;
+                     {
+                        std::vector<std::string> tableElementDescriptors;
+                        tableElementDescriptors.push_back(StringExtensions::Build("{0}.{1}.{2}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber)));
+                        AssignEffectToTableElements(table, tableElementDescriptors, finalEffect);
+                     }
+                     break;
                      case OutputControlEnum::Controlled:
-                        // Use the actual table element from the setting (e.g., "L88")
                         if (!StringExtensions::IsNullOrWhiteSpace(tcs->GetTableElement()))
                         {
                            std::vector<std::string> tableElements = StringExtensions::Split(tcs->GetTableElement(), { '|' });
@@ -590,7 +551,6 @@ void Configurator::SetupTable(
                         }
                         else
                         {
-                           // Fallback to synthetic descriptor if no table element specified
                            std::vector<std::string> tableElementDescriptors;
                            tableElementDescriptors.push_back(
                               StringExtensions::Build("{0}.{1}.{2}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber)));
@@ -598,19 +558,14 @@ void Configurator::SetupTable(
                         }
                         break;
                      case OutputControlEnum::Condition:
-                        // For condition effects, this would use condition parsing in full implementation
-                        // For now, create a synthetic descriptor as fallback
-                        {
-                           std::vector<std::string> tableElementDescriptors;
-                           tableElementDescriptors.push_back(
-                              StringExtensions::Build("{0}.{1}.{2}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber)));
-                           AssignEffectToTableElements(table, tableElementDescriptors, finalEffect);
-                        }
-                        break;
+                     {
+                        std::vector<std::string> tableElementDescriptors;
+                        tableElementDescriptors.push_back(StringExtensions::Build("{0}.{1}.{2}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber)));
+                        AssignEffectToTableElements(table, tableElementDescriptors, finalEffect);
+                     }
+                     break;
                      case OutputControlEnum::FixedOff:
-                     default:
-                        // Don't assign fixed off effects
-                        break;
+                     default: break;
                      }
                   }
                }

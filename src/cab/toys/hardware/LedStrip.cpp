@@ -336,6 +336,13 @@ void LedStrip::SetOutputData()
          }
          break;
       }
+
+      if (m_brightness < 1.0f)
+      {
+         float correctedBrightness = std::pow(m_brightness, m_brightnessGammaCorrection);
+         for (auto& outputValue : m_outputData)
+            outputValue = static_cast<uint8_t>(outputValue * correctedBrightness);
+      }
    }
 }
 

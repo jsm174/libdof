@@ -20,13 +20,15 @@ This library is currently used by [Visual Pinball Standalone](https://github.com
 ### **Tested & Working**
 - **[Pinscape](http://mjrnet.org/pinscape)** - @mjrgh's popular pinball controller with 32+ outputs
 - **[Pinscape Pico](https://github.com/mjrgh/PinscapePico)** - RP2040-based version with enhanced features  
-- **[Teensy Strip Controller](https://github.com/DirectOutput/TeensyStripController)** - Teensy-based WS2812 LED strip controller
+- **[TeensyStripController](https://github.com/DirectOutput/TeensyStripController)** - Teensy based WS2812 LED strip controller
+- **[WemosD1MPStripController](https://github.com/aetios50/PincabLedStrip)** - Wemos D1 Mini Pro based WS2812 LED strip controller
 
 ### **Implemented & Ready To Test**
 - **LedWiz** - Classic 32-output controller
 - **DudesCab** - RP2040-based controller with 128 PWM outputs
 - **ArtNet/DMX** - Professional lighting control via Ethernet (all platforms)
 - **PinControl** - Arduino-based controller with 10 outputs
+- **PinOne** - Cleveland Software Design controller with 63 outputs
 - **FTDI Controllers** - FT245R bitbang controllers  
 - **WS2811/WS2812 LED Strips** - Addressable LED strip support
 
@@ -34,7 +36,6 @@ This library is currently used by [Visual Pinball Standalone](https://github.com
 - **PAC Controllers** (PacDrive, PacLed64, PacUIO) - *Windows DLL dependencies*
 - **SSF Controllers** - *Audio-based feedback systems*  
 - **Philips Hue** - *Smart lighting integration*
-- **PinOne**
 
 `libdof` is actively used by [Visual Pinball Standalone](https://github.com/vpinball/vpinball/tree/standalone) and continues expanding controller support. 
 
@@ -151,4 +152,153 @@ cmake --build build
 platforms/android/arm64-v8a/external.sh
 cmake -DPLATFORM=android -DARCH=arm64-v8a -DCMAKE_BUILD_TYPE=Release -B build
 cmake --build build
+```
+
+## Configuration:
+
+For custom setups, create a `CabinetConfig.xml` file in your DOF config directory:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<Cabinet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Name>Test Cabinet with Multiple Controllers</Name>
+  <OutputControllers>
+    <!-- Teensy LED Strip Controller -->
+    <TeensyStripController>
+      <Name>Cabinet Teensy</Name>
+      <ComPortName>/dev/cu.usbmodem104409301</ComPortName>
+      <ComPortBaudRate>9600</ComPortBaudRate>
+      <ComPortParity>None</ComPortParity>
+      <ComPortDataBits>8</ComPortDataBits>
+      <ComPortStopBits>One</ComPortStopBits>
+      <ComPortTimeOutMs>200</ComPortTimeOutMs>
+      <ComPortOpenWaitMs>50</ComPortOpenWaitMs>
+      <ComPortHandshakeStartWaitMs>20</ComPortHandshakeStartWaitMs>
+      <ComPortHandshakeEndWaitMs>50</ComPortHandshakeEndWaitMs>
+      <ComPortDtrEnable>false</ComPortDtrEnable>
+      <NumberOfLedsStrip1>36</NumberOfLedsStrip1>
+      <NumberOfLedsStrip2>36</NumberOfLedsStrip2>
+      <NumberOfLedsStrip3>0</NumberOfLedsStrip3>
+      <NumberOfLedsStrip4>0</NumberOfLedsStrip4>
+      <NumberOfLedsStrip5>0</NumberOfLedsStrip5>
+      <NumberOfLedsStrip6>0</NumberOfLedsStrip6>
+      <NumberOfLedsStrip7>0</NumberOfLedsStrip7>
+      <NumberOfLedsStrip8>0</NumberOfLedsStrip8>
+      <NumberOfLedsStrip9>0</NumberOfLedsStrip9>
+      <NumberOfLedsStrip10>0</NumberOfLedsStrip10>
+    </TeensyStripController>
+
+    <!-- Wemos LED Strip Controller -->
+    <WemosD1MPStripController>
+      <Name>Main Wemos</Name>
+      <ComPortName>/dev/cu.usbserial-02G5PBVF</ComPortName>
+      <ComPortBaudRate>2000000</ComPortBaudRate>
+      <ComPortParity>None</ComPortParity>
+      <ComPortDataBits>8</ComPortDataBits>
+      <ComPortStopBits>One</ComPortStopBits>
+      <ComPortTimeOutMs>500</ComPortTimeOutMs>
+      <ComPortOpenWaitMs>50</ComPortOpenWaitMs>
+      <ComPortHandshakeStartWaitMs>20</ComPortHandshakeStartWaitMs>
+      <ComPortHandshakeEndWaitMs>50</ComPortHandshakeEndWaitMs>
+      <ComPortDtrEnable>true</ComPortDtrEnable>
+      <SendPerLedstripLength>true</SendPerLedstripLength>
+      <UseCompression>false</UseCompression>
+      <TestOnConnect>false</TestOnConnect>
+      <NumberOfLedsStrip1>20</NumberOfLedsStrip1>
+      <NumberOfLedsStrip2>0</NumberOfLedsStrip2>
+      <NumberOfLedsStrip3>0</NumberOfLedsStrip3>
+      <NumberOfLedsStrip4>0</NumberOfLedsStrip4>
+      <NumberOfLedsStrip5>0</NumberOfLedsStrip5>
+      <NumberOfLedsStrip6>0</NumberOfLedsStrip6>
+      <NumberOfLedsStrip7>0</NumberOfLedsStrip7>
+      <NumberOfLedsStrip8>0</NumberOfLedsStrip8>
+      <NumberOfLedsStrip9>0</NumberOfLedsStrip9>
+      <NumberOfLedsStrip10>0</NumberOfLedsStrip10>
+    </WemosD1MPStripController>
+    
+    <!-- Pinscape Controller -->
+    <Pinscape>
+      <Name>Main Pinscape</Name>
+      <Number>1</Number>
+    </Pinscape>
+    
+    <!-- Pinscape Pico Controller -->
+    <PinscapePico>
+      <Name>Backbox Pico</Name>
+      <Number>1</Number>
+    </PinscapePico>
+  </OutputControllers>
+  
+  <Toys>    
+    <!-- LED Strip Toys for Teensy Controller -->
+    <LedStrip>
+      <Name>PF Left</Name>
+      <Width>36</Width>
+      <Height>1</Height>
+      <Brightness>100</Brightness>
+      <LedStripArrangement>TopDownLeftRight</LedStripArrangement>
+      <ColorOrder>GRB</ColorOrder>
+      <FirstLedNumber>36</FirstLedNumber> 
+      <FadingCurveName>SwissLizardsLedCurve</FadingCurveName>
+      <OutputControllerName>Cabinet Teensy</OutputControllerName>
+    </LedStrip>
+
+    <!-- LED Strip Toys for Wemos Controller -->
+    <LedStrip>
+      <Name>PF Right</Name> 
+      <Width>20</Width> 
+      <Brightness>100</Brightness>
+      <Height>1</Height>
+      <LedStripArrangement>TopDownLeftRight</LedStripArrangement>
+      <ColorOrder>RGB</ColorOrder> 
+      <FirstLedNumber>0</FirstLedNumber> 
+      <FadingCurveName>SwissLizardsLedCurve</FadingCurveName>
+      <OutputControllerName>Main Wemos</OutputControllerName>
+    </LedStrip>
+    
+    <!-- LedWizEquivalent for LED Strips (LedWiz #30) -->
+    <LedWizEquivalent>
+      <Name>LED Strip Equivalent</Name> 
+      <LedWizNumber>30</LedWizNumber>
+      <Outputs>
+        <LedWizEquivalentOutput>
+          <OutputName>PF Left</OutputName>
+          <LedWizEquivalentOutputNumber>4</LedWizEquivalentOutputNumber> 
+        </LedWizEquivalentOutput>
+        <LedWizEquivalentOutput>
+          <OutputName>PF Right</OutputName> 
+          <LedWizEquivalentOutputNumber>1</LedWizEquivalentOutputNumber>
+        </LedWizEquivalentOutput> 
+      </Outputs>
+    </LedWizEquivalent> 
+    
+    <!-- LedWizEquivalent for Pinscape (Unit 1 = LedWiz #51) -->
+    <LedWizEquivalent>
+      <Name>Main Pinscape Equivalent</Name>
+      <LedWizNumber>51</LedWizNumber>
+      <Outputs>
+        <LedWizEquivalentOutput>
+          <OutputName>Main Pinscape.08</OutputName>
+          <LedWizEquivalentOutputNumber>8</LedWizEquivalentOutputNumber>
+        </LedWizEquivalentOutput>
+      </Outputs>
+    </LedWizEquivalent>
+    
+    <!-- LedWizEquivalent for PinscapePico (Unit 1 = LedWiz #120) -->
+    <LedWizEquivalent>
+      <Name>Backbox Pico Equivalent</Name>
+      <LedWizNumber>120</LedWizNumber>
+      <Outputs>
+        <LedWizEquivalentOutput>
+          <OutputName>Backbox Pico.01</OutputName>
+          <LedWizEquivalentOutputNumber>1</LedWizEquivalentOutputNumber>
+        </LedWizEquivalentOutput>
+      </Outputs>
+    </LedWizEquivalent>
+  </Toys>
+  
+  <!-- Disable auto-configuration to use manual config -->
+  <AutoConfigEnabled>false</AutoConfigEnabled> 
+</Cabinet>
 ```

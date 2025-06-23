@@ -26,12 +26,13 @@ void WemosD1MPStripController::SetupController()
 
    if (m_sendPerLedstripLength)
    {
-      for (int numled = 0; numled < 10; ++numled)
+      auto numberOfLedsPerStrip = GetNumberOfLedsPerStrip();
+      for (int numled = 0; numled < numberOfLedsPerStrip.size(); ++numled)
       {
-         int nbleds = GetNumberOfLedsPerStrip()[numled];
+         int nbleds = numberOfLedsPerStrip[numled];
          if (nbleds > 0)
          {
-            commandData = { (uint8_t)'Z', (uint8_t)numled, (uint8_t)(10 - 1), (uint8_t)(nbleds >> 8), (uint8_t)(nbleds & 255) };
+            commandData = { (uint8_t)'Z', (uint8_t)numled, (uint8_t)(numberOfLedsPerStrip.size() - 1), (uint8_t)(nbleds >> 8), (uint8_t)(nbleds & 255) };
 
             Log::Write(StringExtensions::Build("Resize ledstrip {0} to {1} leds.", std::to_string(numled), std::to_string(nbleds)));
 
@@ -143,6 +144,13 @@ void WemosD1MPStripController::SendLedstripData(const std::vector<uint8_t>& outp
       {
          int nbData = m_compressedData.size() / 4;
          int nbLeds = outputValues.size() / 3;
+
+         if (targetPosition + nbLeds > GetNumberOfLedsPerChannel() * 10)
+         {
+            throw std::runtime_error(StringExtensions::Build("LED range {0}-{1} exceeds configured strip capacity {2}", std::to_string(targetPosition),
+               std::to_string(targetPosition + nbLeds - 1), std::to_string(GetNumberOfLedsPerChannel() * 10)));
+         }
+
          std::vector<uint8_t> commandData = { (uint8_t)'Q', (uint8_t)(targetPosition >> 8), (uint8_t)(targetPosition & 255), (uint8_t)(nbData >> 8), (uint8_t)(nbData & 255),
             (uint8_t)(nbLeds >> 8), (uint8_t)(nbLeds & 255) };
 
@@ -153,6 +161,8 @@ void WemosD1MPStripController::SendLedstripData(const std::vector<uint8_t>& outp
          result = sp_blocking_write(GetComPort(), m_compressedData.data(), m_compressedData.size(), GetComPortTimeOutMs());
          if (result < 0)
             throw std::runtime_error(StringExtensions::Build("Failed to write compressed output values: {0}", sp_last_error_message()));
+
+         std::this_thread::sleep_for(std::chrono::milliseconds(100));
       }
       else
       {
@@ -163,6 +173,54 @@ void WemosD1MPStripController::SendLedstripData(const std::vector<uint8_t>& outp
    {
       TeensyStripController::SendLedstripData(outputValues, targetPosition);
    }
+}
+
+bool WemosD1MPStripController::FromXml(const tinyxml2::XMLElement* element)
+{
+   if (!TeensyStripController::FromXml(element))
+      return false;
+
+   auto loadElement = [&](const char* name, auto setter)
+   {
+      const tinyxml2::XMLElement* elem = element->FirstChildElement(name);
+      if (elem && elem->GetText())
+      {
+         try
+         {
+            setter(elem->GetText());
+         }
+         catch (...)
+         {
+            return false;
+         }
+      }
+      return true;
+   };
+
+   loadElement("SendPerLedstripLength", [this](const char* text) { SetSendPerLedstripLength(std::string(text) == "true"); });
+   loadElement("UseCompression", [this](const char* text) { SetUseCompression(std::string(text) == "true"); });
+   loadElement("TestOnConnect", [this](const char* text) { SetTestOnConnect(std::string(text) == "true"); });
+
+   return true;
+}
+
+tinyxml2::XMLElement* WemosD1MPStripController::ToXml(tinyxml2::XMLDocument& doc) const
+{
+   tinyxml2::XMLElement* element = TeensyStripController::ToXml(doc);
+
+   tinyxml2::XMLElement* sendPerLedstripLengthElement = doc.NewElement("SendPerLedstripLength");
+   sendPerLedstripLengthElement->SetText(m_sendPerLedstripLength ? "true" : "false");
+   element->InsertEndChild(sendPerLedstripLengthElement);
+
+   tinyxml2::XMLElement* useCompressionElement = doc.NewElement("UseCompression");
+   useCompressionElement->SetText(m_useCompression ? "true" : "false");
+   element->InsertEndChild(useCompressionElement);
+
+   tinyxml2::XMLElement* testOnConnectElement = doc.NewElement("TestOnConnect");
+   testOnConnectElement->SetText(m_testOnConnect ? "true" : "false");
+   element->InsertEndChild(testOnConnectElement);
+
+   return element;
 }
 
 }

@@ -95,10 +95,8 @@ void FT245RBitbangController::OnOutputValueChanged(IOutput* output)
 {
    IOutput* on = output;
 
-   // Check for table overrides
    on = TableOverrideSettings::GetInstance()->GetNewRecalculatedOutput(on, 40, m_id);
 
-   // Check for scheduled setting
    on = ScheduledSettings::GetInstance().GetNewRecalculatedOutput(on, 40, m_id);
 
    if (!MathExtensions::IsBetween(on->GetNumber(), 1, 8))
@@ -293,7 +291,7 @@ void FT245RBitbangController::Connect()
 
    try
    {
-      FTDI::FT_STATUS status = m_ftdi->SetBitMode(0xFF, 0x04); // FT_BIT_MODE_SYNC_BITBANG = 0x04
+      FTDI::FT_STATUS status = m_ftdi->SetBitMode(0xFF, 0x04);
       if (status != FTDI::FT_OK)
       {
          throw std::runtime_error("Failed to set bitbang mode");
@@ -370,22 +368,30 @@ tinyxml2::XMLElement* FT245RBitbangController::ToXml(tinyxml2::XMLDocument& doc)
 
    if (!GetName().empty())
    {
-      element->SetAttribute("Name", GetName().c_str());
+      tinyxml2::XMLElement* nameElement = doc.NewElement("Name");
+      nameElement->SetText(GetName().c_str());
+      element->InsertEndChild(nameElement);
    }
 
    if (!m_serialNumber.empty())
    {
-      element->SetAttribute("SerialNumber", m_serialNumber.c_str());
+      tinyxml2::XMLElement* serialElement = doc.NewElement("SerialNumber");
+      serialElement->SetText(m_serialNumber.c_str());
+      element->InsertEndChild(serialElement);
    }
 
    if (!m_description.empty())
    {
-      element->SetAttribute("Description", m_description.c_str());
+      tinyxml2::XMLElement* descElement = doc.NewElement("Description");
+      descElement->SetText(m_description.c_str());
+      element->InsertEndChild(descElement);
    }
 
    if (m_id != 0)
    {
-      element->SetAttribute("Id", m_id);
+      tinyxml2::XMLElement* idElement = doc.NewElement("Id");
+      idElement->SetText(m_id);
+      element->InsertEndChild(idElement);
    }
 
    return element;
@@ -402,22 +408,30 @@ bool FT245RBitbangController::FromXml(const tinyxml2::XMLElement* element)
       SetName(name);
    }
 
-   const char* serialNumber = element->Attribute("SerialNumber");
-   if (serialNumber)
+   const tinyxml2::XMLElement* serialElement = element->FirstChildElement("SerialNumber");
+   if (serialElement && serialElement->GetText())
    {
-      m_serialNumber = serialNumber;
+      m_serialNumber = serialElement->GetText();
    }
 
-   const char* description = element->Attribute("Description");
-   if (description)
+   const tinyxml2::XMLElement* descElement = element->FirstChildElement("Description");
+   if (descElement && descElement->GetText())
    {
-      m_description = description;
+      m_description = descElement->GetText();
    }
 
-   int id = 0;
-   if (element->QueryIntAttribute("Id", &id) == tinyxml2::XML_SUCCESS)
+   const tinyxml2::XMLElement* idElement = element->FirstChildElement("Id");
+   if (idElement && idElement->GetText())
    {
-      SetId(id);
+      try
+      {
+         int id = std::stoi(idElement->GetText());
+         SetId(id);
+      }
+      catch (...)
+      {
+         return false;
+      }
    }
 
    return true;

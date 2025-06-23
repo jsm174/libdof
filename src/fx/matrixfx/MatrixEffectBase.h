@@ -94,15 +94,15 @@ template <typename MatrixElementType> void MatrixEffectBase<MatrixElementType>::
 
 template <typename MatrixElementType> void MatrixEffectBase<MatrixElementType>::Init(Table* table)
 {
-   Log::Write(StringExtensions::Build("MatrixEffectBase::Init - Looking for toy '{0}'", m_toyName));
+   Log::Debug(StringExtensions::Build("MatrixEffectBase::Init - Looking for toy '{0}'", m_toyName));
    if (!StringExtensions::IsNullOrWhiteSpace(m_toyName) && table->GetPinball()->GetCabinet()->GetToys()->Contains(m_toyName))
    {
-      Log::Write(StringExtensions::Build("MatrixEffectBase::Init - Found toy '{0}'", m_toyName));
+      Log::Debug(StringExtensions::Build("MatrixEffectBase::Init - Found toy '{0}'", m_toyName));
       IToy* toy = table->GetPinball()->GetCabinet()->GetToys()->FindByName(m_toyName);
       IMatrixToy<MatrixElementType>* matrixToy = dynamic_cast<IMatrixToy<MatrixElementType>*>(toy);
       if (matrixToy != nullptr)
       {
-         Log::Write(StringExtensions::Build("MatrixEffectBase::Init - Successfully cast toy '{0}' to IMatrixToy, layer {1}", m_toyName, std::to_string(m_layerNr)));
+         Log::Debug(StringExtensions::Build("MatrixEffectBase::Init - Successfully cast toy '{0}' to IMatrixToy, layer {1}", m_toyName, std::to_string(m_layerNr)));
          m_matrix = matrixToy;
          m_matrixLayer = m_matrix->GetLayer(m_layerNr);
 
@@ -126,12 +126,12 @@ template <typename MatrixElementType> void MatrixEffectBase<MatrixElementType>::
       }
       else
       {
-         Log::Write(StringExtensions::Build("MatrixEffectBase::Init - Failed to cast toy '{0}' to IMatrixToy", m_toyName));
+         Log::Debug(StringExtensions::Build("MatrixEffectBase::Init - Failed to cast toy '{0}' to IMatrixToy", m_toyName));
       }
    }
    else
    {
-      Log::Write(StringExtensions::Build("MatrixEffectBase::Init - Toy '{0}' not found in cabinet", m_toyName));
+      Log::Debug(StringExtensions::Build("MatrixEffectBase::Init - Toy '{0}' not found in cabinet", m_toyName));
    }
 
    m_table = table;

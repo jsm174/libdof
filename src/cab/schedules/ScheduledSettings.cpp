@@ -1,7 +1,10 @@
 #include "ScheduledSettings.h"
+#include "ScheduledSettingDevice.h"
 #include "../../general/MathExtensions.h"
 #include "../out/IOutput.h"
 #include "../out/Output.h"
+#include "../../Log.h"
+#include <algorithm>
 
 namespace DOF
 {
@@ -26,17 +29,7 @@ ScheduledSetting* ScheduledSettings::GetActiveSchedule(const std::string& config
    return GetActiveSchedule(configPostfixID, outputNumber, std::chrono::system_clock::now());
 }
 
-ScheduledSetting* ScheduledSettings::GetActiveSchedule(const std::string& configPostfixID, int outputNumber, const std::chrono::system_clock::time_point& now) const
-{
-   for (ScheduledSetting* setting : *this)
-   {
-      if (setting->GetConfigPostfixID() == configPostfixID && setting->GetOutputNumber() == outputNumber && setting->IsTimeframeActive(now))
-      {
-         return setting;
-      }
-   }
-   return nullptr;
-}
+ScheduledSetting* ScheduledSettings::GetActiveSchedule(const std::string& configPostfixID, int outputNumber, const std::chrono::system_clock::time_point& now) const { return nullptr; }
 
 uint8_t ScheduledSettings::GetNewRecalculatedOutput(const std::string& configPostfixID, int outputNumber, uint8_t originalOutput) const
 {
@@ -45,16 +38,7 @@ uint8_t ScheduledSettings::GetNewRecalculatedOutput(const std::string& configPos
 
 uint8_t ScheduledSettings::GetNewRecalculatedOutput(const std::string& configPostfixID, int outputNumber, uint8_t originalOutput, const std::chrono::system_clock::time_point& now) const
 {
-   ScheduledSetting* activeSetting = GetActiveSchedule(configPostfixID, outputNumber, now);
-   if (!activeSetting)
-      return originalOutput;
-
-   int strength = activeSetting->GetOutputStrength();
-   if (strength == 100)
-      return originalOutput;
-
-   int newValue = (originalOutput * strength) / 100;
-   return static_cast<uint8_t>(MathExtensions::Limit(newValue, 0, 255));
+   return originalOutput;
 }
 
 tinyxml2::XMLElement* ScheduledSettings::ToXml(tinyxml2::XMLDocument& doc) const
@@ -99,7 +83,72 @@ bool ScheduledSettings::FromXml(const tinyxml2::XMLElement* element)
 
 ScheduledSettingDevice* ScheduledSettings::GetActiveSchedule(IOutput* currentOutput, bool recalculateOutputValue, int startingDeviceIndex, int currentDeviceIndex)
 {
-   // Stub implementation matching C# interface - actual scheduling logic would go here
+   if (!currentOutput)
+      return nullptr;
+
+   std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+   int deviceID = startingDeviceIndex + currentDeviceIndex;
+
+   static std::vector<int> cacheList;
+
+   static int callCount = 0;
+   if (++callCount > 1000)
+   {
+      cacheList.clear();
+      callCount = 0;
+   }
+
+   if (std::find(cacheList.begin(), cacheList.end(), deviceID) != cacheList.end())
+      return nullptr;
+
+   for (ScheduledSetting* scheduledSetting : *this)
+   {
+      if (!scheduledSetting || !scheduledSetting->IsEnabled())
+         continue;
+
+      if (!scheduledSetting->IsTimeInRange(now))
+         continue;
+
+      const ScheduledSettingDeviceList& deviceList = scheduledSetting->GetScheduledSettingDeviceList();
+      for (ScheduledSettingDevice* device : deviceList)
+      {
+         if (!device)
+            continue;
+
+         if (device->GetConfigPostfixID() != deviceID)
+            continue;
+
+         const std::vector<int>& outputList = device->GetOutputList();
+         int outputNumber = currentOutput->GetNumber();
+
+         if (!outputList.empty())
+         {
+            if (std::find(outputList.begin(), outputList.end(), outputNumber) == outputList.end())
+               continue;
+         }
+
+         if (recalculateOutputValue)
+         {
+            int outputPercent = device->GetOutputPercent();
+            if (outputPercent != 100)
+            {
+               int originalValue = currentOutput->GetOutput();
+               int newValue = (originalValue * outputPercent) / 100;
+               newValue = MathExtensions::Limit(newValue, 0, 255);
+
+               currentOutput->SetOutput(static_cast<uint8_t>(newValue));
+
+               Log::Debug("ScheduledSettings: Applied " + std::to_string(outputPercent) + "% strength to output " + std::to_string(outputNumber) + " on device " + std::to_string(deviceID)
+                  + " (value: " + std::to_string(originalValue) + " -> " + std::to_string(newValue) + ")");
+            }
+         }
+
+         cacheList.push_back(deviceID);
+
+         return device;
+      }
+   }
+
    return nullptr;
 }
 

@@ -3,10 +3,7 @@
 #include "../OutputControllerCompleteBase.h"
 #include <string>
 #include <mutex>
-
-#ifdef __LIBSERIALPORT__
 #include <libserialport.h>
-#endif
 
 namespace DOF
 {
@@ -26,6 +23,8 @@ public:
    virtual void Finish() override;
 
    virtual std::string GetXmlElementName() const override { return "PinControl"; }
+   virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;
+   virtual bool FromXml(const tinyxml2::XMLElement* element) override;
 
 protected:
    virtual int GetNumberOfConfiguredOutputs() override;
@@ -38,12 +37,7 @@ private:
    std::string m_comPort;
    uint8_t* m_oldValues;
    std::mutex m_portLocker;
-
-#ifdef __LIBSERIALPORT__
    struct sp_port* m_port;
-#else
-   void* m_port;
-#endif
 };
 
 }

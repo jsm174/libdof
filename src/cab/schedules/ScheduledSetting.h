@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ScheduledSettingDevice.h"
 #include "../../general/generic/IXmlSerializable.h"
 #include <string>
 #include <chrono>
@@ -13,31 +14,34 @@ public:
    ScheduledSetting();
    virtual ~ScheduledSetting() = default;
 
-   const std::string& GetConfigPostfixID() const { return m_configPostfixID; }
-   void SetConfigPostfixID(const std::string& value) { m_configPostfixID = value; }
+   const std::string& GetName() const { return m_name; }
+   void SetName(const std::string& value) { m_name = value; }
 
-   int GetOutputNumber() const { return m_outputNumber; }
-   void SetOutputNumber(int value) { m_outputNumber = value; }
+   bool IsEnabled() const { return m_enabled; }
+   void SetEnabled(bool value) { m_enabled = value; }
 
-   const std::string& GetTimeframe() const { return m_timeframe; }
-   void SetTimeframe(const std::string& value) { m_timeframe = value; }
+   const std::string& GetClockStart() const { return m_clockStart; }
+   void SetClockStart(const std::string& value) { m_clockStart = value; }
 
-   int GetOutputStrength() const { return m_outputStrength; }
-   void SetOutputStrength(int value);
+   const std::string& GetClockEnd() const { return m_clockEnd; }
+   void SetClockEnd(const std::string& value) { m_clockEnd = value; }
 
-   bool IsTimeframeActive() const;
-   bool IsTimeframeActive(const std::chrono::system_clock::time_point& now) const;
+   ScheduledSettingDeviceList& GetScheduledSettingDeviceList() { return m_scheduledSettingDeviceList; }
+   const ScheduledSettingDeviceList& GetScheduledSettingDeviceList() const { return m_scheduledSettingDeviceList; }
 
+   bool IsTimeInRange() const;
+   bool IsTimeInRange(const std::chrono::system_clock::time_point& now) const;
 
    virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;
    virtual bool FromXml(const tinyxml2::XMLElement* element) override;
    virtual std::string GetXmlElementName() const override { return "ScheduledSetting"; }
 
 private:
-   std::string m_configPostfixID;
-   int m_outputNumber;
-   std::string m_timeframe;
-   int m_outputStrength;
+   std::string m_name;
+   bool m_enabled;
+   std::string m_clockStart;
+   std::string m_clockEnd;
+   ScheduledSettingDeviceList m_scheduledSettingDeviceList;
 
    struct TimeRange
    {
@@ -48,7 +52,7 @@ private:
       bool crossesMidnight;
    };
 
-   TimeRange ParseTimeframe(const std::string& timeframe) const;
+   TimeRange ParseMilitaryTime(const std::string& clockStart, const std::string& clockEnd) const;
    bool IsTimeInRange(const TimeRange& range, int hour, int minute) const;
 };
 

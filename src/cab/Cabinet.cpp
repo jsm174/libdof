@@ -21,10 +21,15 @@
 #include "out/pspico/PinscapePico.h"
 #include "out/pspico/PinscapePicoAutoConfigurator.h"
 #include "out/lw/LedWizAutoConfigurator.h"
+#include "out/dudescab/DudesCabAutoConfigurator.h"
 #endif
 
 #ifdef __LIBFTDI__
 #include "out/ftdichip/FT245RBitbangControllerAutoConfigurator.h"
+#endif
+
+#ifdef __LIBSERIALPORT__
+#include "out/pinone/PinOneAutoConfigurator.h"
 #endif
 
 namespace DOF
@@ -62,16 +67,19 @@ void Cabinet::AutoConfig()
    items.push_back(new PinscapeAutoConfigurator());
    items.push_back(new PinscapePicoAutoConfigurator());
    items.push_back(new LedWizAutoConfigurator());
+   items.push_back(new DudesCabAutoConfigurator());
 #endif
 
 #ifdef __LIBFTDI__
    items.push_back(new FT245RBitbangControllerAutoConfigurator());
 #endif
 
+#ifdef __LIBSERIALPORT__
+   items.push_back(new PinOneAutoConfigurator());
+#endif
+
    for (auto& item : items)
-   {
       item->AutoConfig(this);
-   }
 
    Log::Write("Cabinet auto configuration finished");
 }
@@ -225,10 +233,9 @@ tinyxml2::XMLElement* Cabinet::ToXml(tinyxml2::XMLDocument& doc) const
    if (!m_name.empty())
       element->SetAttribute("Name", m_name.c_str());
 
-   if (!m_cabinetConfigurationFilename.empty())
-      element->SetAttribute("CabinetConfigurationFilename", m_cabinetConfigurationFilename.c_str());
-
-   element->SetAttribute("AutoConfigEnabled", m_autoConfigEnabled);
+   tinyxml2::XMLElement* autoConfigElement = doc.NewElement("AutoConfigEnabled");
+   autoConfigElement->SetText(m_autoConfigEnabled ? "true" : "false");
+   element->InsertEndChild(autoConfigElement);
 
    if (m_pOutputControllers)
    {
@@ -240,7 +247,6 @@ tinyxml2::XMLElement* Cabinet::ToXml(tinyxml2::XMLDocument& doc) const
    if (m_pToys)
    {
       tinyxml2::XMLElement* toysElement = doc.NewElement("Toys");
-
       element->InsertEndChild(toysElement);
    }
 
@@ -272,11 +278,12 @@ bool Cabinet::FromXml(const tinyxml2::XMLElement* element)
    if (name)
       m_name = name;
 
-   const char* configFilename = element->Attribute("CabinetConfigurationFilename");
-   if (configFilename)
-      m_cabinetConfigurationFilename = configFilename;
-
-   element->QueryBoolAttribute("AutoConfigEnabled", &m_autoConfigEnabled);
+   const tinyxml2::XMLElement* autoConfigElement = element->FirstChildElement("AutoConfigEnabled");
+   if (autoConfigElement && autoConfigElement->GetText())
+   {
+      std::string autoConfigText = StringExtensions::ToLower(autoConfigElement->GetText());
+      m_autoConfigEnabled = (autoConfigText == "true");
+   }
 
    const tinyxml2::XMLElement* scheduledElement = element->FirstChildElement("ScheduledSettings");
    if (scheduledElement)

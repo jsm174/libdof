@@ -37,7 +37,7 @@ Engine::Engine()
    , m_socketInitialized(false)
    , m_sendExceptionCount(0)
 {
-   m_artNetHeader = { 0x41, 0x72, 0x74, 0x2d, 0x4e, 0x65, 0x74, 0 }; // "Art-Net"
+   m_artNetHeader = { 0x41, 0x72, 0x74, 0x2d, 0x4e, 0x65, 0x74, 0 };
 
 #ifdef _WIN32
    WSADATA wsaData;
@@ -98,7 +98,7 @@ bool Engine::InitializeSocket()
 #else
       struct timeval timeout;
       timeout.tv_sec = 0;
-      timeout.tv_usec = 100000; // 100ms
+      timeout.tv_usec = 100000;
       if (setsockopt(m_socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0)
       {
          Log::Exception("Could not set send timeout for ArtNet socket");
@@ -143,30 +143,23 @@ void Engine::SendDMX(const std::string& broadcastAddress, short universe, const 
 
    std::vector<uint8_t> packet(0x12 + dataLength);
 
-   // Copy ArtNet header
    std::memcpy(packet.data(), m_artNetHeader.data(), m_artNetHeader.size());
 
-   // OpCode (0x5000 for DMX data)
    packet[8] = LoByte(0x5000);
    packet[9] = HiByte(0x5000);
 
-   // Protocol version
-   packet[10] = 0; // ProtVerHi
-   packet[11] = 14; // ProtVerLo
+   packet[10] = 0;
+   packet[11] = 14;
 
-   // Sequence and Physical
-   packet[12] = 0; // Sequence
-   packet[13] = 0; // Physical
+   packet[12] = 0;
+   packet[13] = 0;
 
-   // Universe
    packet[14] = LoByte(universe);
    packet[15] = HiByte(universe);
 
-   // Data length
    packet[16] = HiByte(dataLength);
    packet[17] = LoByte(dataLength);
 
-   // Copy DMX data
    try
    {
       std::memcpy(packet.data() + 0x12, data.data(), dataLength);

@@ -29,8 +29,6 @@ void DudesCabAutoConfigurator::AutoConfig(Cabinet* cabinet)
 
             Log::Write(StringExtensions::Build("Detected and added DudesCab Controller {0} with {1} outputs", controllerName, std::to_string(device->NumOutputs())));
 
-            // Create LedWizEquivalent for DOF config compatibility
-            // DudesCab controllers are registered as units 90-94 in DOF config
             int ledWizNumber = 90 + device->UnitNo() - 1;
 
             bool foundExistingToy = false;
@@ -52,7 +50,6 @@ void DudesCabAutoConfigurator::AutoConfig(Cabinet* cabinet)
                lwe->SetLedWizNumber(ledWizNumber);
                lwe->SetName(StringExtensions::Build("{0} Equivalent 1", controllerName));
 
-               // Create outputs for all available outputs on the DudesCab
                for (int outputIndex = 1; outputIndex <= device->NumOutputs(); outputIndex++)
                {
                   LedWizEquivalentOutput* lweo = new LedWizEquivalentOutput();

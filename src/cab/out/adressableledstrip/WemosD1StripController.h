@@ -24,18 +24,21 @@ public:
    void SetTestOnConnect(bool value) { m_testOnConnect = value; }
 
    virtual std::string GetXmlElementName() const override { return "WemosD1MPStripController"; }
+   virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;
+   virtual bool FromXml(const tinyxml2::XMLElement* element) override;
 
 protected:
    virtual void SetupController() override;
    virtual void SendLedstripData(const std::vector<uint8_t>& outputValues, int targetPosition) override;
 
+protected:
+   std::vector<uint8_t> m_compressedData;
+   std::vector<uint8_t> m_uncompressedData;
+
 private:
    bool m_sendPerLedstripLength;
    bool m_useCompression;
    bool m_testOnConnect;
-
-   std::vector<uint8_t> m_compressedData;
-   std::vector<uint8_t> m_uncompressedData;
 };
 
 }
