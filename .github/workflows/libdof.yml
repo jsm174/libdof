@@ -34,8 +34,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: windows-latest, platform: win, arch: x64 }
-          - { os: windows-latest, platform: win, arch: x86 }
+          - { os: windows-2025, platform: win, arch: x64 }
+          - { os: windows-2025, platform: win, arch: x86 }
           - { os: macos-latest, platform: macos, arch: arm64 }
           - { os: macos-latest, platform: macos, arch: x64 }
           - { os: ubuntu-latest, platform: linux, arch: x64 }
@@ -46,7 +46,7 @@ jobs:
           - { os: macos-latest, platform: tvos, arch: arm64 }
     steps:
       - uses: actions/checkout@v4
-      - if: (matrix.os == 'windows-latest')
+      - if: (matrix.platform == 'win')
         name: Add msbuild to path (win runner)
         uses: microsoft/setup-msbuild@v2
       - if: (matrix.platform == 'win')

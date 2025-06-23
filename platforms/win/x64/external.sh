@@ -31,6 +31,8 @@ tar xzf libusb-${LIBUSB_SHA}.tar.gz
 mv libusb-${LIBUSB_SHA} libusb
 cd libusb
 sed -i.bak 's/LIBRARY.*libusb-1.0/LIBRARY libusb64-1.0/' libusb/libusb-1.0.def
+# remove patch after this is fixed: https://github.com/libusb/libusb/issues/1649#issuecomment-2940138443
+cp ../../platforms/win/x64/libusb/libusb_dll.vcxproj msvc
 msbuild.exe msvc/libusb_dll.vcxproj \
    -p:TargetName=libusb64-1.0 \
    -p:Platform=x64 \
