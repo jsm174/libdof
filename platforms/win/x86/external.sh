@@ -30,6 +30,8 @@ curl -sL https://github.com/libusb/libusb/archive/${LIBUSB_SHA}.tar.gz -o libusb
 tar xzf libusb-${LIBUSB_SHA}.tar.gz
 mv libusb-${LIBUSB_SHA} libusb
 cd libusb
+# remove patch after this is fixed: https://github.com/libusb/libusb/issues/1649#issuecomment-2940138443
+cp ../../platforms/win/x86/libusb/libusb_dll.vcxproj msvc
 msbuild.exe msvc/libusb_dll.vcxproj \
    -p:Platform=x86 \
    -p:Configuration=Release
@@ -75,8 +77,6 @@ cd ..
 #
 # build libftdi and copy to third-party
 #
-
-echo "JASON"
 
 curl -sL "http://developer.intra2net.com/git/?p=libftdi;a=snapshot;h=${LIBFTDI_SHA};sf=tgz" -o libftdi-${LIBFTDI_SHA}.tar.gz
 tar xzf libftdi-${LIBFTDI_SHA}.tar.gz
