@@ -27,15 +27,7 @@ TeensyStripController::TeensyStripController()
 {
 }
 
-TeensyStripController::~TeensyStripController()
-{
-   if (m_comPort)
-   {
-      sp_close(m_comPort);
-      sp_free_port(m_comPort);
-      m_comPort = nullptr;
-   }
-}
+TeensyStripController::~TeensyStripController() { DisconnectFromController(); }
 
 void TeensyStripController::SetNumberOfLedsStrip1(int value)
 {
@@ -393,7 +385,7 @@ void TeensyStripController::ConnectToController()
                                       "Open {6}ms, Loop Start/End {7}/{8}ms, DTR enable {9}",
       std::vector<std::string> { m_comPortName, std::to_string(m_comPortBaudRate), std::to_string((int)m_comPortParity), std::to_string(m_comPortDataBits),
          std::to_string((int)m_comPortStopBits), std::to_string(m_comPortTimeOutMs), std::to_string(m_comPortOpenWaitMs), std::to_string(m_comPortHandshakeStartWaitMs),
-         std::to_string(m_comPortHandshakeEndWaitMs), std::to_string(m_comPortDtrEnable) }));
+         std::to_string(m_comPortHandshakeEndWaitMs), m_comPortDtrEnable ? "true" : "false" }));
 
    result = sp_get_port_by_name(m_comPortName.c_str(), &m_comPort);
    if (result != SP_OK)
@@ -434,7 +426,8 @@ void TeensyStripController::ConnectToController()
       sp_set_dtr(m_comPort, SP_DTR_OFF);
 
    std::this_thread::sleep_for(std::chrono::milliseconds(m_comPortOpenWaitMs));
-   sp_flush(m_comPort, SP_BUF_INPUT);
+   sp_flush(m_comPort, SP_BUF_BOTH);
+   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
    bool commandModeOK = false;
    for (int attemptNr = 0; attemptNr < 20; attemptNr++)
@@ -646,6 +639,106 @@ bool TeensyStripController::FromXml(const tinyxml2::XMLElement* element)
    loadElement("NumberOfLedsStrip10", [this](const char* text) { SetNumberOfLedsStrip10(std::stoi(text)); });
 
    return true;
+}
+
+tinyxml2::XMLElement* TeensyStripController::ToXml(tinyxml2::XMLDocument& doc) const
+{
+   tinyxml2::XMLElement* element = OutputControllerCompleteBase::ToXml(doc);
+
+   tinyxml2::XMLElement* numberOfLedsStrip1Element = doc.NewElement("NumberOfLedsStrip1");
+   numberOfLedsStrip1Element->SetText(GetNumberOfLedsStrip1());
+   element->InsertEndChild(numberOfLedsStrip1Element);
+
+   tinyxml2::XMLElement* numberOfLedsStrip2Element = doc.NewElement("NumberOfLedsStrip2");
+   numberOfLedsStrip2Element->SetText(GetNumberOfLedsStrip2());
+   element->InsertEndChild(numberOfLedsStrip2Element);
+
+   tinyxml2::XMLElement* numberOfLedsStrip3Element = doc.NewElement("NumberOfLedsStrip3");
+   numberOfLedsStrip3Element->SetText(GetNumberOfLedsStrip3());
+   element->InsertEndChild(numberOfLedsStrip3Element);
+
+   tinyxml2::XMLElement* numberOfLedsStrip4Element = doc.NewElement("NumberOfLedsStrip4");
+   numberOfLedsStrip4Element->SetText(GetNumberOfLedsStrip4());
+   element->InsertEndChild(numberOfLedsStrip4Element);
+
+   tinyxml2::XMLElement* numberOfLedsStrip5Element = doc.NewElement("NumberOfLedsStrip5");
+   numberOfLedsStrip5Element->SetText(GetNumberOfLedsStrip5());
+   element->InsertEndChild(numberOfLedsStrip5Element);
+
+   tinyxml2::XMLElement* numberOfLedsStrip6Element = doc.NewElement("NumberOfLedsStrip6");
+   numberOfLedsStrip6Element->SetText(GetNumberOfLedsStrip6());
+   element->InsertEndChild(numberOfLedsStrip6Element);
+
+   tinyxml2::XMLElement* numberOfLedsStrip7Element = doc.NewElement("NumberOfLedsStrip7");
+   numberOfLedsStrip7Element->SetText(GetNumberOfLedsStrip7());
+   element->InsertEndChild(numberOfLedsStrip7Element);
+
+   tinyxml2::XMLElement* numberOfLedsStrip8Element = doc.NewElement("NumberOfLedsStrip8");
+   numberOfLedsStrip8Element->SetText(GetNumberOfLedsStrip8());
+   element->InsertEndChild(numberOfLedsStrip8Element);
+
+   tinyxml2::XMLElement* numberOfLedsStrip9Element = doc.NewElement("NumberOfLedsStrip9");
+   numberOfLedsStrip9Element->SetText(GetNumberOfLedsStrip9());
+   element->InsertEndChild(numberOfLedsStrip9Element);
+
+   tinyxml2::XMLElement* numberOfLedsStrip10Element = doc.NewElement("NumberOfLedsStrip10");
+   numberOfLedsStrip10Element->SetText(GetNumberOfLedsStrip10());
+   element->InsertEndChild(numberOfLedsStrip10Element);
+
+   tinyxml2::XMLElement* comPortNameElement = doc.NewElement("ComPortName");
+   comPortNameElement->SetText(GetComPortName().c_str());
+   element->InsertEndChild(comPortNameElement);
+
+   tinyxml2::XMLElement* comPortBaudRateElement = doc.NewElement("ComPortBaudRate");
+   comPortBaudRateElement->SetText(GetComPortBaudRate());
+   element->InsertEndChild(comPortBaudRateElement);
+
+   tinyxml2::XMLElement* comPortParityElement = doc.NewElement("ComPortParity");
+   switch (GetComPortParity())
+   {
+   case Parity::None: comPortParityElement->SetText("None"); break;
+   case Parity::Odd: comPortParityElement->SetText("Odd"); break;
+   case Parity::Even: comPortParityElement->SetText("Even"); break;
+   case Parity::Mark: comPortParityElement->SetText("Mark"); break;
+   case Parity::Space: comPortParityElement->SetText("Space"); break;
+   }
+   element->InsertEndChild(comPortParityElement);
+
+   tinyxml2::XMLElement* comPortDataBitsElement = doc.NewElement("ComPortDataBits");
+   comPortDataBitsElement->SetText(GetComPortDataBits());
+   element->InsertEndChild(comPortDataBitsElement);
+
+   tinyxml2::XMLElement* comPortStopBitsElement = doc.NewElement("ComPortStopBits");
+   switch (GetComPortStopBits())
+   {
+   case StopBits::None: comPortStopBitsElement->SetText("None"); break;
+   case StopBits::One: comPortStopBitsElement->SetText("One"); break;
+   case StopBits::Two: comPortStopBitsElement->SetText("Two"); break;
+   case StopBits::OnePointFive: comPortStopBitsElement->SetText("OnePointFive"); break;
+   }
+   element->InsertEndChild(comPortStopBitsElement);
+
+   tinyxml2::XMLElement* comPortTimeOutMsElement = doc.NewElement("ComPortTimeOutMs");
+   comPortTimeOutMsElement->SetText(GetComPortTimeOutMs());
+   element->InsertEndChild(comPortTimeOutMsElement);
+
+   tinyxml2::XMLElement* comPortOpenWaitMsElement = doc.NewElement("ComPortOpenWaitMs");
+   comPortOpenWaitMsElement->SetText(GetComPortOpenWaitMs());
+   element->InsertEndChild(comPortOpenWaitMsElement);
+
+   tinyxml2::XMLElement* comPortHandshakeStartWaitMsElement = doc.NewElement("ComPortHandshakeStartWaitMs");
+   comPortHandshakeStartWaitMsElement->SetText(GetComPortHandshakeStartWaitMs());
+   element->InsertEndChild(comPortHandshakeStartWaitMsElement);
+
+   tinyxml2::XMLElement* comPortHandshakeEndWaitMsElement = doc.NewElement("ComPortHandshakeEndWaitMs");
+   comPortHandshakeEndWaitMsElement->SetText(GetComPortHandshakeEndWaitMs());
+   element->InsertEndChild(comPortHandshakeEndWaitMsElement);
+
+   tinyxml2::XMLElement* comPortDtrEnableElement = doc.NewElement("ComPortDtrEnable");
+   comPortDtrEnableElement->SetText(GetComPortDtrEnable() ? "true" : "false");
+   element->InsertEndChild(comPortDtrEnableElement);
+
+   return element;
 }
 
 }

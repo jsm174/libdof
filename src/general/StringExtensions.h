@@ -38,6 +38,9 @@ public:
    static bool TryParseInt(const std::string& str, int& value);
    static bool IsHexString(const std::string& s);
    static int HexToInt(const std::string& s);
+   static std::string FormatNumber(int value, int padding);
+   static std::string ToBase64(const std::vector<uint8_t>& data);
+   static std::vector<uint8_t> FromBase64(const std::string& base64);
 };
 
 }

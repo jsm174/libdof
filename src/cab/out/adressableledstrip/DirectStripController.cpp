@@ -246,4 +246,72 @@ void DirectStripController::UpdaterThreadDoIt()
    }
 }
 
+bool DirectStripController::FromXml(const tinyxml2::XMLElement* element)
+{
+   if (!element)
+      return false;
+
+   const char* name = element->Attribute("Name");
+   if (name)
+      SetName(name);
+
+   const tinyxml2::XMLElement* controllerNumberElement = element->FirstChildElement("ControllerNumber");
+   if (controllerNumberElement && controllerNumberElement->GetText())
+   {
+      try
+      {
+         int controllerNumber = std::stoi(controllerNumberElement->GetText());
+         SetControllerNumber(controllerNumber);
+      }
+      catch (...)
+      {
+         return false;
+      }
+   }
+
+   const tinyxml2::XMLElement* numberOfLedsElement = element->FirstChildElement("NumberOfLeds");
+   if (numberOfLedsElement && numberOfLedsElement->GetText())
+   {
+      try
+      {
+         int numberOfLeds = std::stoi(numberOfLedsElement->GetText());
+         SetNumberOfLeds(numberOfLeds);
+      }
+      catch (...)
+      {
+         return false;
+      }
+   }
+
+   const tinyxml2::XMLElement* packDataElement = element->FirstChildElement("PackData");
+   if (packDataElement && packDataElement->GetText())
+   {
+      SetPackData(std::string(packDataElement->GetText()) == "true");
+   }
+
+   return true;
+}
+
+tinyxml2::XMLElement* DirectStripController::ToXml(tinyxml2::XMLDocument& doc) const
+{
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+
+   if (!GetName().empty())
+      element->SetAttribute("Name", GetName().c_str());
+
+   tinyxml2::XMLElement* controllerNumberElement = doc.NewElement("ControllerNumber");
+   controllerNumberElement->SetText(m_controllerNumber);
+   element->InsertEndChild(controllerNumberElement);
+
+   tinyxml2::XMLElement* numberOfLedsElement = doc.NewElement("NumberOfLeds");
+   numberOfLedsElement->SetText(m_numberOfLeds);
+   element->InsertEndChild(numberOfLedsElement);
+
+   tinyxml2::XMLElement* packDataElement = doc.NewElement("PackData");
+   packDataElement->SetText(m_packData ? "true" : "false");
+   element->InsertEndChild(packDataElement);
+
+   return element;
+}
+
 }

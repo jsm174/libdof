@@ -72,7 +72,7 @@ void PinscapePicoAutoConfigurator::AutoConfig(Cabinet* cabinet)
 
             if (!toyExists)
             {
-               auto lwe = new LedWizEquivalent();
+               LedWizEquivalent* lwe = new LedWizEquivalent();
                lwe->SetLedWizNumber(dofUnitNumber);
                lwe->SetName(StringExtensions::Build("{0} Equivalent", p->GetName()));
 

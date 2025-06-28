@@ -50,10 +50,11 @@ tinyxml2::XMLElement* NullOutputController::ToXml(tinyxml2::XMLDocument& doc) co
    tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
 
    if (!GetName().empty())
-      element->SetAttribute("Name", GetName().c_str());
-
-   element->SetAttribute("NumberOfOutputs", m_numberOfOutputs);
-   element->SetAttribute("LogOutputChanges", m_logOutputChanges);
+   {
+      tinyxml2::XMLElement* nameElement = doc.NewElement("Name");
+      nameElement->SetText(GetName().c_str());
+      element->InsertEndChild(nameElement);
+   }
 
    return element;
 }
@@ -66,12 +67,6 @@ bool NullOutputController::FromXml(const tinyxml2::XMLElement* element)
    const char* name = element->Attribute("Name");
    if (name)
       SetName(name);
-
-   int numberOfOutputs = m_numberOfOutputs;
-   element->QueryIntAttribute("NumberOfOutputs", &numberOfOutputs);
-   SetNumberOfOutputs(numberOfOutputs);
-
-   element->QueryBoolAttribute("LogOutputChanges", &m_logOutputChanges);
 
    return true;
 }

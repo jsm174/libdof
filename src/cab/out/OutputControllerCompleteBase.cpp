@@ -154,7 +154,11 @@ tinyxml2::XMLElement* OutputControllerCompleteBase::ToXml(tinyxml2::XMLDocument&
    tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
 
    if (!GetName().empty())
-      element->SetAttribute("Name", GetName().c_str());
+   {
+      tinyxml2::XMLElement* nameElement = doc.NewElement("Name");
+      nameElement->SetText(GetName().c_str());
+      element->InsertEndChild(nameElement);
+   }
 
    return element;
 }
@@ -238,6 +242,7 @@ void OutputControllerCompleteBase::FinishUpdaterThread()
          if (future.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout)
          {
             Log::Warning("Updater thread did not quit within timeout. Thread termination may be forceful.");
+            m_updaterThread->detach();
          }
 
          m_updaterThread.reset();

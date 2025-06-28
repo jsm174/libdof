@@ -97,6 +97,7 @@ public:
 
    virtual std::string GetXmlElementName() const override { return "TeensyStripController"; }
 
+   virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;
    virtual bool FromXml(const tinyxml2::XMLElement* element) override;
 
 protected:
@@ -111,6 +112,7 @@ protected:
    int ReadPortWait(uint8_t* buffer, int bufferOffset, int numberOfBytes);
 
    const std::vector<int>& GetNumberOfLedsPerStrip() const { return m_numberOfLedsPerStrip; }
+   int GetNumberOfLedsPerChannel() const { return m_numberOfLedsPerChannel; }
    struct sp_port* GetComPort() const { return m_comPort; }
 
 private:

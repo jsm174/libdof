@@ -3,7 +3,7 @@
 ## Project Overview
 libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 correspondence. Cross-platform library for Direct Output Framework tasks, used by Visual Pinball Standalone.
 
-**Current Status**: ~97% complete - Core architecture, effects system, device management, addressable LED strips, FTDI controllers, ComPort controllers, DudesCab controllers, DMX controllers, and toy configuration at 100% 1:1 correspondence. Manual libusb compilation for all platforms eliminates external package dependencies.
+**Current Status**: ~98% complete - Core architecture, effects system, device management, addressable LED strips, FTDI controllers, ComPort controllers, DudesCab controllers, DMX controllers, PinOne controllers, and toy configuration at 100% 1:1 correspondence. Manual libusb compilation for all platforms eliminates external package dependencies.
 
 ## Core Principles
 
@@ -111,24 +111,25 @@ Each test ROM runs identical L88 scenarios:
   - **ComPort Controllers**: ✅ **COMPLETE** - PinControl with libserialport integration  
   - **DudesCab Controllers**: ✅ **COMPLETE** - RP2040-based controller with hidapi integration
   - **DMX Controllers**: ✅ **COMPLETE** - ArtNet controller with cross-platform UDP networking
+  - **PinOne Controllers**: ✅ **COMPLETE** - Cleveland Software Design controller with named pipe communication and smart device detection
   - **Addressable LED Strip Controllers**: ✅ **COMPLETE** - All 7 files with hardware verification
   - **Auto Configurators**: All follow exact C# patterns with proper variable naming and output naming
 - **Logging Infrastructure**: Log::Once() and Log::Instrumentation() methods with perfect C# correspondence
+- **ScheduledSettings System**: ✅ **COMPLETE** - Military time parsing, midnight crossover support, device matching, output validation, strength calculation with caching
 
-### ❌ MISSING COMPONENTS (3% remaining)
-**Output Controllers** (90% complete):
+### ❌ MISSING COMPONENTS (2% remaining)
+**Output Controllers** (92% complete):
 - PAC Controllers (`Pac/`) - PacDrive, PacLed64, PacUIO 
 - SSF Controllers (`SSF/`) - 7 variants, feedback systems  
 - Philips Hue Controllers (`PhilipsHue/`) - Smart lighting
-- PinOne Controllers
 
 **Other Missing**:
 - Extensions utilities (`Extensions/` directory - 11 utility classes)
 
 ### Priority for 1:1 Correspondence
 1. **Phase 1**: ✅ **COMPLETE** - Effects system, alarm handling, device management, addressable LED strips, and toy configuration
-2. **Phase 2**: ✅ **COMPLETE** - FTDI, ComPort, DudesCab, and DMX controllers with cross-platform implementation
-3. **Phase 3**: Complete remaining output controllers (PAC, SSF, PhilipsHue, PinOne)
+2. **Phase 2**: ✅ **COMPLETE** - FTDI, ComPort, DudesCab, DMX, and PinOne controllers with cross-platform implementation
+3. **Phase 3**: Complete remaining output controllers (PAC, SSF, PhilipsHue)
 4. **Phase 4**: Add missing utilities and polish
 
 ## Recent Major Achievements
@@ -177,12 +178,26 @@ Each test ROM runs identical L88 scenarios:
 - **FT245RBitbangController.h/.cpp**: Main FTDI controller with threading model, XML serialization, and bit manipulation logic
 - Uses libftdi1 for cross-platform USB communication with exact C# structure and behavior
 
+### PinOne Controllers Implementation: ✅ **COMPLETE**
+- **PinOne.h/.cpp**: Cleveland Software Design PinOne controller with exact C# correspondence - 63 outputs, units 1-16
+- **PinOneCommunication.h/.cpp**: Named pipe client wrapper with smart device detection to prevent serial port conflicts
+- **NamedPipeServer.h/.cpp**: Cross-platform named pipe server using Windows named pipes and Unix domain sockets
+- **PinOneAutoConfigurator.h/.cpp**: Smart auto-detection using USB command `{0, 251, 0, 0, 0, 0, 0, 0, 0}` and response `"DEBUG,CSD Board Connected"`
+- Perfect USB report protocol implementation: 9-byte messages with banks of 7 outputs (prefix 200+bank)
+- Base64 encoding over text protocol for binary data transmission
+- Serial communication at 2Mbps with proper DTR/RTS control using libserialport
+- Cross-platform named pipe abstraction with auto-reconnection and server creation logic
+- Smart device detection prevents conflicts with other serial devices (Teensy, Arduino, etc.)
+- Conditional compilation with `#ifdef __LIBSERIALPORT__` for graceful degradation
+- Complete Cabinet auto-configuration integration and OutputControllerList factory registration
+
 ## Critical Implementation Notes
 - **PinscapePico HID Requirements**: PinscapePico requires sudo access for device enumeration and communication
 - **DudesCab HID Requirements**: DudesCab requires hidapi for cross-platform HID communication with proper wide string handling
+- **PinOne Named Pipe Requirements**: PinOne uses cross-platform named pipes for serial communication abstraction
 - **Output Resolution**: Output names must match exactly between auto-configurators and device names
-- **Change Detection**: Initialize `m_oldOutputValues` to 0, not 255, to ensure first writes are detected
-- **Unit Bias Constants**: Each controller type has specific unit bias (LedWiz: 0, Pinscape: 50, PinscapePico: 119, DudesCab: 90-94)
+- **Change Detection**: Initialize `m_oldOutputValues` to 255 to match C# exactly - change detection works via comparison with new values
+- **Unit Bias Constants**: Each controller type has specific unit bias (LedWiz: 0, Pinscape: 50, PinscapePico: 119, DudesCab: 90-94, PinOne: 1-16)
 - **Device Recognition**: Each controller has specific VID/PID patterns and recognition logic
 - **Parameter Consistency**: All method parameters use camelCase naming (`cabinet`, `outputValues`, etc.)
 - **Static vs Instance**: Use s_ for static members, m_ for instance members
@@ -191,6 +206,8 @@ Each test ROM runs identical L88 scenarios:
 - **String Formatting**: StringExtensions::Build() requires all parameters as strings - use `std::to_string()` for integers, supports vector<string> overload for >4 parameters
 - **Serial Communication**: Use libserialport for cross-platform serial port access instead of System.IO.Ports
 - **FTDI Integration**: FTDI-based controllers use libftdi1 for cross-platform USB communication with exact C# API correspondence
+- **Named Pipe Communication**: PinOne uses cross-platform named pipes (Windows: CreateNamedPipe, Unix: domain sockets)
+- **Windows API Conflicts**: Use `SendPipeMessage()` instead of `SendMessage()` in PinOneCommunication to avoid Windows API macro collision
 - **MSVC Array Initialization**: Use double-brace syntax for std::array initialization: `{{0.0f, 0.0f, 0.0f}}` instead of `{0.0f, 0.0f, 0.0f}`
 
 ## References
@@ -207,3 +224,9 @@ Each test ROM runs identical L88 scenarios:
 - Matrix effects should only target matrix toys - use AnalogToyValueEffect for single outputs
 - DudesCab controllers use units 90-94 in DOF config, require hidapi for cross-platform HID communication
 - StringExtensions::Build() supports vector<string> overload for more than 4 parameters
+- **Addressable LED Strip Controllers**: TeensyStripController and WemosD1StripController with stable ESP8266/Teensy communication
+- **LED Positioning**: Use 0-based indexing for FirstLedNumber to match firmware expectations (Strip 1/D5 = LEDs 0-35)
+- **Brightness Parsing**: LedStrip brightness uses `std::stoi()` for integer values (0-100 in XML) with gamma correction applied after fading table lookup
+- **Serial Port Cleanup**: Destructors call DisconnectFromController() for proper cleanup during exceptions or forceful termination
+- **ESP8266 Timing**: Buffer flushing with `sp_flush()` + 500ms delay ensures reliable Wemos D1 communication
+- **ScheduledSettings Implementation**: Complete time-based scheduling system with military time format (HHmm), midnight crossover logic, device ID matching, and percentage-based output strength modification

@@ -221,8 +221,13 @@ tinyxml2::XMLElement* Pinscape::ToXml(tinyxml2::XMLDocument& doc) const
 {
    tinyxml2::XMLElement* element = OutputControllerFlexCompleteBase::ToXml(doc);
 
-   element->SetAttribute("Number", m_number);
-   element->SetAttribute("MinCommandIntervalMs", m_minCommandIntervalMs);
+   tinyxml2::XMLElement* numberElement = doc.NewElement("Number");
+   numberElement->SetText(m_number);
+   element->InsertEndChild(numberElement);
+
+   tinyxml2::XMLElement* intervalElement = doc.NewElement("MinCommandIntervalMs");
+   intervalElement->SetText(m_minCommandIntervalMs);
+   element->InsertEndChild(intervalElement);
 
    return element;
 }
@@ -232,13 +237,32 @@ bool Pinscape::FromXml(const tinyxml2::XMLElement* element)
    if (!OutputControllerFlexCompleteBase::FromXml(element))
       return false;
 
-   int number = m_number;
-   element->QueryIntAttribute("Number", &number);
-   SetNumber(number);
+   const tinyxml2::XMLElement* numberElement = element->FirstChildElement("Number");
+   if (numberElement && numberElement->GetText())
+   {
+      try
+      {
+         int number = std::stoi(numberElement->GetText());
+         SetNumber(number);
+      }
+      catch (...)
+      {
+         return false;
+      }
+   }
 
-   int minInterval = m_minCommandIntervalMs;
-   element->QueryIntAttribute("MinCommandIntervalMs", &minInterval);
-   SetMinCommandIntervalMs(minInterval);
+   const tinyxml2::XMLElement* intervalElement = element->FirstChildElement("MinCommandIntervalMs");
+   if (intervalElement && intervalElement->GetText())
+   {
+      try
+      {
+         int interval = std::stoi(intervalElement->GetText());
+         SetMinCommandIntervalMs(interval);
+      }
+      catch (...)
+      {
+      }
+   }
 
    return true;
 }

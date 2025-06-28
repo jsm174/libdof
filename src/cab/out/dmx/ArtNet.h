@@ -21,6 +21,8 @@ public:
    void SetBroadcastAddress(const std::string& value) { m_broadcastAddress = value; }
 
    virtual std::string GetXmlElementName() const override { return "ArtNet"; }
+   virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;
+   virtual bool FromXml(const tinyxml2::XMLElement* element) override;
 
 protected:
    virtual int GetNumberOfConfiguredOutputs() override;

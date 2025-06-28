@@ -278,7 +278,6 @@ std::unordered_map<std::string, std::string> GlobalConfig::GetReplaceValuesDicti
    d.emplace("AssemblyDirectory", fi.Directory()->FullName());
    d.emplace("AssemblyDir", fi.Directory()->FullName());
 
-   // Add InstallDir and BinDir path resolution
    std::string installFolder = DirectOutputHandler::GetInstallFolder();
    if (!installFolder.empty())
    {

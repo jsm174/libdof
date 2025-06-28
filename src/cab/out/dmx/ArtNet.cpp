@@ -95,4 +95,50 @@ void ArtNet::DisconnectFromController()
    }
 }
 
+bool ArtNet::FromXml(const tinyxml2::XMLElement* element)
+{
+   if (!OutputControllerCompleteBase::FromXml(element))
+      return false;
+
+   const tinyxml2::XMLElement* universeElement = element->FirstChildElement("Universe");
+   if (universeElement && universeElement->GetText())
+   {
+      try
+      {
+         int universe = std::stoi(universeElement->GetText());
+         SetUniverse(static_cast<short>(universe));
+      }
+      catch (...)
+      {
+         return false;
+      }
+   }
+
+   const tinyxml2::XMLElement* broadcastElement = element->FirstChildElement("BroadcastAddress");
+   if (broadcastElement && broadcastElement->GetText())
+   {
+      SetBroadcastAddress(broadcastElement->GetText());
+   }
+
+   return true;
+}
+
+tinyxml2::XMLElement* ArtNet::ToXml(tinyxml2::XMLDocument& doc) const
+{
+   tinyxml2::XMLElement* element = OutputControllerCompleteBase::ToXml(doc);
+
+   tinyxml2::XMLElement* universeElement = doc.NewElement("Universe");
+   universeElement->SetText(m_universe);
+   element->InsertEndChild(universeElement);
+
+   if (!m_broadcastAddress.empty())
+   {
+      tinyxml2::XMLElement* broadcastElement = doc.NewElement("BroadcastAddress");
+      broadcastElement->SetText(m_broadcastAddress.c_str());
+      element->InsertEndChild(broadcastElement);
+   }
+
+   return element;
+}
+
 }

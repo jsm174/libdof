@@ -2,6 +2,7 @@
 #include "../../../Log.h"
 #include "../../../general/StringExtensions.h"
 #include "../../Cabinet.h"
+#include "../Output.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -102,9 +103,29 @@ void LedWiz::Update() { }
 
 void LedWiz::AddOutputs()
 {
+   OutputList* outputs = GetOutputs();
+   if (!outputs)
+      return;
+
    for (int i = 1; i <= 32; i++)
    {
-      // Simplified for C++ - just placeholder until proper output system is implemented
+      bool found = false;
+      for (auto* output : *outputs)
+      {
+         if (output->GetNumber() == i)
+         {
+            found = true;
+            break;
+         }
+      }
+
+      if (!found)
+      {
+         Output* newOutput = new Output();
+         newOutput->SetName(StringExtensions::Build("{0}.{1:00}", GetName(), std::to_string(i)));
+         newOutput->SetNumber(i);
+         outputs->push_back(newOutput);
+      }
    }
 }
 

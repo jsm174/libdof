@@ -42,18 +42,14 @@ DudesCab::~DudesCab() { Finish(); }
 void DudesCab::SetNumber(int value)
 {
    if (!MathExtensions::IsBetween(value, 1, 5))
-   {
       throw std::runtime_error(StringExtensions::Build("DudesCab Unit Numbers must be between 1-5. The supplied number {0} is out of range.", std::to_string(value)));
-   }
 
    std::lock_guard<std::mutex> lock(m_numberUpdateLocker);
 
    if (m_number != value)
    {
       if (GetName().empty() || GetName() == StringExtensions::Build("DudesCab Controller {0:00}", std::to_string(m_number)))
-      {
          SetName(StringExtensions::Build("DudesCab Controller {0:00}", std::to_string(value)));
-      }
 
       m_number = value;
 
@@ -78,10 +74,7 @@ void DudesCab::Init(Cabinet* cabinet)
 {
    if (!m_minCommandIntervalMsSet && cabinet && cabinet->GetOwner()
       && cabinet->GetOwner()->GetConfigurationSettings().find("DudesCabDefaultMinCommandIntervalMs") != cabinet->GetOwner()->GetConfigurationSettings().end())
-   {
-      // Get value from global config if available
-      m_minCommandIntervalMs = 1; // Default fallback
-   }
+      m_minCommandIntervalMs = 1;
 
    OutputControllerFlexCompleteBase::Init(cabinet);
 }
@@ -89,9 +82,7 @@ void DudesCab::Init(Cabinet* cabinet)
 void DudesCab::Finish()
 {
    if (m_dev)
-   {
       m_dev->AllOff();
-   }
    OutputControllerFlexCompleteBase::Finish();
 }
 
@@ -104,14 +95,12 @@ void DudesCab::UpdateOutputs(const std::vector<uint8_t>& newOutputValues)
    if (std::all_of(newOutputValues.begin(), newOutputValues.end(), [](uint8_t x) { return x == 0; }))
    {
       if (m_dev)
-      {
          m_dev->AllOff();
-      }
    }
    else
    {
       m_outputBuffer.clear();
-      m_outputBuffer.push_back(0); // extension mask
+      m_outputBuffer.push_back(0);
       int nbValuesToSend = 0;
 
       uint8_t extMask = 0;
@@ -143,8 +132,8 @@ void DudesCab::UpdateOutputs(const std::vector<uint8_t>& newOutputValues)
                }
                Instrumentation(StringExtensions::Build("    Extension {0} has changes", std::to_string(extNum)));
                outputMaskOffset = static_cast<int>(m_outputBuffer.size());
-               m_outputBuffer.push_back(0); // Low bits of output mask
-               m_outputBuffer.push_back(0); // High bits of output mask
+               m_outputBuffer.push_back(0);
+               m_outputBuffer.push_back(0);
             }
 
             outputMask |= (1 << outputNum);
@@ -165,9 +154,7 @@ void DudesCab::UpdateOutputs(const std::vector<uint8_t>& newOutputValues)
       Instrumentation(StringExtensions::Build("{0} Dof Values to send to Dude's cab", std::to_string(nbValuesToSend)));
 
       if (m_dev)
-      {
          m_dev->SendCommand(Device::RT_PWM_OUTPUTS, m_outputBuffer);
-      }
    }
 
    m_oldOutputValues = newOutputValues;
@@ -179,9 +166,7 @@ void DudesCab::UpdateDelay()
    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastUpdate).count();
 
    if (elapsed < m_minCommandIntervalMs)
-   {
       std::this_thread::sleep_for(std::chrono::milliseconds(m_minCommandIntervalMs - elapsed));
-   }
    m_lastUpdate = std::chrono::steady_clock::now();
 }
 
@@ -190,17 +175,13 @@ void DudesCab::ConnectToController() { }
 void DudesCab::DisconnectFromController()
 {
    if (m_inUseState == InUseState::Running && m_dev)
-   {
       m_dev->AllOff();
-   }
 }
 
 std::vector<DudesCab::Device*> DudesCab::AllDevices()
 {
    if (s_devices.empty())
-   {
       s_devices = FindDevices();
-   }
    return s_devices;
 }
 
@@ -254,9 +235,7 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
 #endif
          }
          else
-         {
             serialNumber = "<not available>";
-         }
 
          bool alreadyEnumerated = false;
          for (Device* existingDevice : devices)
@@ -283,7 +262,6 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
    return devices;
 }
 
-// Device implementation
 DudesCab::Device::Device(const std::string& path, const std::string& name, const std::string& serial, uint16_t vendorID, uint16_t productID, uint16_t version)
    : m_path(path)
    , m_name(name)
@@ -302,7 +280,6 @@ DudesCab::Device::Device(const std::string& path, const std::string& name, const
    m_hidDevice = hid_open_path(path.c_str());
    if (m_hidDevice)
    {
-      // Send HandShake
       SendCommand(RT_HANDSHAKE);
       std::vector<uint8_t> answer = ReadUSB();
       if (answer.size() > HID_COMMAND_PREFIX_SIZE)
@@ -323,7 +300,6 @@ DudesCab::Device::Device(const std::string& path, const std::string& name, const
          Log::Write(StringExtensions::Build("{0} says : {1}", m_name, handShake));
       }
 
-      // Ask for Card Infos
       SendCommand(RT_INFOS);
       answer = ReadUSB();
       if (answer.size() > HID_COMMAND_PREFIX_SIZE)
@@ -338,7 +314,6 @@ DudesCab::Device::Device(const std::string& path, const std::string& name, const
          }
       }
 
-      // Ask for Pwm Configuration
       SendCommand(RT_PWM_GETEXTENSIONSINFOS);
       answer = ReadUSB();
       if (answer.size() > HID_COMMAND_PREFIX_SIZE)
@@ -353,7 +328,6 @@ DudesCab::Device::Device(const std::string& path, const std::string& name, const
 
             if (pwmInfo.size() > 2)
             {
-               // Calculate actual number of outputs based on configuration
                m_numOutputs = 0;
                uint8_t nbMasks = pwmInfo[2];
                if (pwmInfo.size() >= 4 + (nbMasks * 2))
@@ -393,7 +367,7 @@ std::vector<uint8_t> DudesCab::Device::ReadUSB()
 #ifdef __HIDAPI__
    if (m_hidDevice)
    {
-      uint8_t buffer[65]; // Typical HID report size
+      uint8_t buffer[65];
       int bytes_read = hid_read_timeout(m_hidDevice, buffer, sizeof(buffer), 1000);
       if (bytes_read > 0)
       {
@@ -428,7 +402,7 @@ void DudesCab::Device::SendCommand(HIDReportType command, const std::vector<uint
    Log::Instrumentation("DudesCab", StringExtensions::Build("DudesCab SendCommand: {0}", std::to_string(static_cast<int>(command))));
 
    uint8_t bufferOffset = 5;
-   uint8_t partSize = 60; // Conservative HID report size minus header
+   uint8_t partSize = 60;
    uint8_t nbParts = static_cast<uint8_t>((parameters.size() / partSize) + 1);
 
    for (uint8_t i = 0; i < nbParts; i++)
@@ -452,6 +426,56 @@ void DudesCab::Device::SendCommand(HIDReportType command, const std::vector<uint
       WriteUSB(sendData);
    }
 #endif
+}
+
+bool DudesCab::FromXml(const tinyxml2::XMLElement* element)
+{
+   if (!OutputControllerFlexCompleteBase::FromXml(element))
+      return false;
+
+   const tinyxml2::XMLElement* numberElement = element->FirstChildElement("Number");
+   if (numberElement && numberElement->GetText())
+   {
+      try
+      {
+         int number = std::stoi(numberElement->GetText());
+         SetNumber(number);
+      }
+      catch (...)
+      {
+         return false;
+      }
+   }
+
+   const tinyxml2::XMLElement* intervalElement = element->FirstChildElement("MinCommandIntervalMs");
+   if (intervalElement && intervalElement->GetText())
+   {
+      try
+      {
+         int interval = std::stoi(intervalElement->GetText());
+         SetMinCommandIntervalMs(interval);
+      }
+      catch (...)
+      {
+      }
+   }
+
+   return true;
+}
+
+tinyxml2::XMLElement* DudesCab::ToXml(tinyxml2::XMLDocument& doc) const
+{
+   tinyxml2::XMLElement* element = OutputControllerFlexCompleteBase::ToXml(doc);
+
+   tinyxml2::XMLElement* numberElement = doc.NewElement("Number");
+   numberElement->SetText(m_number);
+   element->InsertEndChild(numberElement);
+
+   tinyxml2::XMLElement* intervalElement = doc.NewElement("MinCommandIntervalMs");
+   intervalElement->SetText(m_minCommandIntervalMs);
+   element->InsertEndChild(intervalElement);
+
+   return element;
 }
 
 }

@@ -15,6 +15,7 @@
 #include "adressableledstrip/TeensyStripController.h"
 #include "adressableledstrip/WemosD1StripController.h"
 #include "comport/PinControl.h"
+#include "pinone/PinOne.h"
 #endif
 
 #ifdef __LIBFTDI__
@@ -110,6 +111,8 @@ IOutputController* OutputControllerList::CreateController(const std::string& typ
       return new WemosD1MPStripController();
    else if (typeName == "PinControl")
       return new PinControl();
+   else if (typeName == "PinOne")
+      return new PinOne();
 #endif
 #ifdef __LIBFTDI__
    else if (typeName == "FT245RBitbangController")

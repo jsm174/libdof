@@ -19,7 +19,6 @@ namespace DOF
 
 std::string DirectOutputHandler::GetInstallFolder()
 {
-   // Get the full path to the running executable
    std::string executablePath;
 
 #ifdef _WIN32
@@ -49,19 +48,14 @@ std::string DirectOutputHandler::GetInstallFolder()
    if (executablePath.empty())
       return "";
 
-   // Get the directory path of the executable
    std::filesystem::path execPath(executablePath);
    std::string assemblyPath = execPath.parent_path().string();
 
-   // Check for the existence of a Config folder in this directory
    std::filesystem::path assemblyConfigPath = std::filesystem::path(assemblyPath) / "Config";
    std::filesystem::path assemblyParentConfigPath = std::filesystem::path(assemblyPath).parent_path() / "Config";
 
    if (!std::filesystem::exists(assemblyConfigPath) && std::filesystem::exists(assemblyParentConfigPath))
    {
-      // New configuration with binary subfolders - the executable is in
-      // a subfolder within the install folder, so the install folder
-      // is the parent of the executable folder
       std::string parent = std::filesystem::path(assemblyPath).parent_path().string();
       Log::Once("InstallFolderLoc",
          StringExtensions::Build("Install folder lookup: executable: {0}, install folder: {1} (PARENT of the executable folder -> new shared x86/x64 install)", executablePath, parent));
@@ -69,7 +63,6 @@ std::string DirectOutputHandler::GetInstallFolder()
    }
    else
    {
-      // Old flat configuration - the executable is in the install folder
       Log::Once("InstallFolderLoc",
          StringExtensions::Build("Install folder lookup: executable: {0}, install folder: {1} (EXECUTABLE folder -> original flat install configuration)", executablePath, assemblyPath));
       return assemblyPath;
