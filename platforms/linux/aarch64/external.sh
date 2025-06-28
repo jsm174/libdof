@@ -74,6 +74,7 @@ curl -sL "http://developer.intra2net.com/git/?p=libftdi;a=snapshot;h=${LIBFTDI_S
 tar xzf libftdi-${LIBFTDI_SHA}.tar.gz
 mv libftdi-${LIBFTDI_SHA:0:7} libftdi
 cd libftdi
+sed -i.bak 's/cmake_minimum_required([^)]*)/cmake_minimum_required(VERSION 3.10)/' CMakeLists.txt
 cmake \
    -DFTDI_EEPROM=OFF \
    -DEXAMPLES=OFF \
