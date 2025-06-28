@@ -77,6 +77,7 @@ curl -sL "http://developer.intra2net.com/git/?p=libftdi;a=snapshot;h=${LIBFTDI_S
 tar xzf libftdi-${LIBFTDI_SHA}.tar.gz
 mv libftdi-${LIBFTDI_SHA:0:7} libftdi
 cd libftdi
+sed -i.bak 's/cmake_minimum_required(VERSION 2.6 FATAL_ERROR)/cmake_minimum_required(VERSION 3.10)\ncmake_policy(SET CMP0042 NEW)/' CMakeLists.txt
 cmake \
    -DFTDI_EEPROM=OFF \
    -DEXAMPLES=OFF \
@@ -85,7 +86,8 @@ cmake \
    -DLIBUSB_LIBRARIES=$(pwd)/../libusb/libusb/.libs/libusb-1.0.dylib \
    -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
    -DCMAKE_OSX_ARCHITECTURES=x86_64 \
-   -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+   -DCMAKE_INSTALL_NAME_DIR=@rpath \
+   -DCMAKE_INSTALL_RPATH=@loader_path \
    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
    -B build
 cmake --build build -- -j${NUM_PROCS}
