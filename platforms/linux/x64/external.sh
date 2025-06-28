@@ -80,7 +80,8 @@ cmake \
    -DSTATICLIBS=OFF \
    -DLIBUSB_INCLUDE_DIR=../libusb/libusb \
    -DLIBUSB_LIBRARIES=$(pwd)/../libusb/libusb/.libs/libusb-1.0.so \
-   -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+   -DCMAKE_INSTALL_RPATH='$$ORIGIN' \
+   -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
    -B build
 cmake --build build -- -j${NUM_PROCS}
