@@ -3,7 +3,7 @@
 #include <string>
 #include <memory>
 #include <functional>
-#include <ftdi.h>
+#include <libftdi1/ftdi.h>
 
 namespace DOF
 {

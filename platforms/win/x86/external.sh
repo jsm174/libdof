@@ -96,7 +96,8 @@ MSYSTEM=MINGW32 "${MSYS2_PATH}/usr/bin/bash.exe" -l -c "
       -B build &&
    cmake --build build -- -j$(nproc)
 "
-cp src/ftdi.h ../../third-party/include/
+mkdir -p ../../third-party/include/libftdi1
+cp src/ftdi.h ../../third-party/include/libftdi1
 cp build/src/libftdi1.dll.a ../../third-party/build-libs/win/x86/libftdi1.lib
 cp build/src/libftdi1.dll ../../third-party/runtime-libs/win/x86/
 cd ..
