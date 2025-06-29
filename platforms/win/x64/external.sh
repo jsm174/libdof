@@ -101,7 +101,8 @@ CURRENT_DIR="$(pwd)"
    cmake --build build -- -j$(nproc)
 "
 
-cp src/ftdi.h ../../third-party/include/
+mkdir -p ../../third-party/include/libftdi1
+cp src/ftdi.h ../../third-party/include/libftdi1
 cp build/src/libftdi164.dll.a ../../third-party/build-libs/win/x64/libftdi164.lib
 cp build/src/libftdi164.dll ../../third-party/runtime-libs/win/x64/
 cd ..

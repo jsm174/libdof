@@ -91,7 +91,8 @@ cmake \
    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
    -B build
 cmake --build build -- -j${NUM_PROCS}
-cp src/ftdi.h ../../third-party/include/
+mkdir -p ../../third-party/include/libftdi1
+cp src/ftdi.h ../../third-party/include/libftdi1
 cp -a build/src/libftdi*.dylib ../../third-party/runtime-libs/macos/arm64/
 cd ..
 

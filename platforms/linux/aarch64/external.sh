@@ -86,6 +86,7 @@ cmake \
    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
    -B build
 cmake --build build -- -j${NUM_PROCS}
-cp src/ftdi.h ../../third-party/include/
+mkdir -p ../../third-party/include/libftdi1
+cp src/ftdi.h ../../third-party/include/libftdi1
 cp -a build/src/libftdi1.{so,so.*} ../../third-party/runtime-libs/linux/aarch64
 cd ..
