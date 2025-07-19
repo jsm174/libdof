@@ -39,6 +39,8 @@ bool TableConfigColumn::ParseColumnData(const std::string& columnData, bool thro
             TableConfigSetting* tcs = new TableConfigSetting(cc);
             if (tcs->GetOutputControl() != OutputControlEnum::FixedOff)
                push_back(tcs);
+            else
+               delete tcs;
          }
          catch (const std::exception& e)
          {

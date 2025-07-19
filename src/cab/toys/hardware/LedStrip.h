@@ -25,14 +25,6 @@ public:
    LedStrip();
    virtual ~LedStrip();
 
-   virtual void Init(Cabinet* cabinet) override;
-   virtual void Reset() override;
-   virtual void Finish() override;
-   virtual void UpdateToy() override;
-
-   virtual RGBAColor* GetLayer(int layerNr) override;
-   virtual RGBAColor GetElement(int layerNr, int x, int y) override;
-   virtual void SetElement(int layerNr, int x, int y, const RGBAColor& value) override;
    virtual int GetWidth() const override { return m_width; }
    void SetWidth(int value);
    virtual int GetHeight() const override { return m_height; }
@@ -45,18 +37,30 @@ public:
    void SetColorOrder(RGBOrderEnum value) { m_colorOrder = value; }
    int GetFirstLedNumber() const { return m_firstLedNumber; }
    void SetFirstLedNumber(int value);
-   int GetBrightness() const { return static_cast<int>((m_brightness * 100.0f) + 0.5f); }
-   void SetBrightness(int value);
-   const std::string& GetOutputControllerName() const { return m_outputControllerName; }
-   void SetOutputControllerName(const std::string& name) { m_outputControllerName = name; }
    const std::string& GetFadingCurveName() const { return m_fadingCurveName; }
    void SetFadingCurveName(const std::string& name);
    float GetBrightnessGammaCorrection() const { return m_brightnessGammaCorrection; }
    void SetBrightnessGammaCorrection(float value);
+   int GetBrightness() const { return static_cast<int>((m_brightness * 100.0f) + 0.5f); }
+   void SetBrightness(int value);
+   const std::string& GetOutputControllerName() const { return m_outputControllerName; }
+   void SetOutputControllerName(const std::string& name) { m_outputControllerName = name; }
+
    MatrixDictionaryBase<RGBAColor>& GetLayers() { return m_layers; }
    const MatrixDictionaryBase<RGBAColor>& GetLayers() const { return m_layers; }
 
+   virtual void Init(Cabinet* cabinet) override;
+   virtual void Reset() override;
+   virtual void Finish() override;
+   virtual void UpdateToy() override;
+
+   virtual RGBAColor* GetLayer(int layerNr) override;
+   virtual RGBAColor GetElement(int layerNr, int x, int y) override;
+   virtual void SetElement(int layerNr, int x, int y, const RGBAColor& value) override;
+
+   virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const;
    virtual bool FromXml(const tinyxml2::XMLElement* element);
+   virtual std::string GetXmlElementName() const { return "LedStrip"; }
 
 protected:
    virtual void UpdateOutputs() override;
@@ -67,28 +71,25 @@ private:
    LedStripArrangementEnum m_ledStripArrangement;
    RGBOrderEnum m_colorOrder;
    int m_firstLedNumber;
-   float m_brightness;
-   float m_brightnessGammaCorrection;
-   std::string m_outputControllerName;
    std::string m_fadingCurveName;
-
+   Curve* m_fadingCurve;
+   float m_brightnessGammaCorrection;
+   float m_brightness;
+   std::string m_outputControllerName;
+   ISupportsSetValues* m_outputController;
 
    MatrixDictionaryBase<RGBAColor> m_layers;
-   Curve* m_fadingCurve;
-
-
-   std::vector<uint8_t> m_outputData;
    std::vector<std::vector<int>> m_outputMappingTable;
-   ISupportsSetValues* m_outputController;
+   std::vector<uint8_t> m_outputData;
    Cabinet* m_cabinet;
 
-
+   void InitFadingCurve(Cabinet* cabinet);
    void BuildMappingTables();
+   Curve GetFadingTableFromPercent(int outputPercent) const;
    void SetOutputData();
    int CalculateLedNumber(int x, int y) const;
    void ApplyColorOrder(uint8_t& r, uint8_t& g, uint8_t& b) const;
    uint8_t ApplyFadingCurve(uint8_t value) const;
-   Curve GetFadingTableFromPercent(int outputPercent) const;
 };
 
 }

@@ -17,9 +17,10 @@ public:
    const AnalogAlpha& GetInactiveValue() const { return m_inactiveValue; }
    void SetInactiveValue(const AnalogAlpha& value) { m_inactiveValue = value; }
 
+   virtual std::string GetXmlElementName() const override { return "AnalogAlphaMatrixFlickerEffect"; }
+
 protected:
-   virtual AnalogAlpha GetInactiveValue() override;
-   virtual AnalogAlpha GetActiveValue(int triggerValue) override;
+   virtual AnalogAlpha GetEffectValue(int triggerValue) override;
 
 private:
    AnalogAlpha m_activeValue;

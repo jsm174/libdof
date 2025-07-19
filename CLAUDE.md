@@ -20,7 +20,9 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **Parameter Naming**: Use camelCase for method parameters (matching C# converted to C++)
 - **Member Variables**: Use m_ prefix for instance members, s_ prefix for static members
 - **Exact Property Names**: C# properties become Get/Set methods with identical names
+- **Public Fields Rule**: C# public fields MUST become private members with m_ prefix and public Get/Set methods - NEVER expose public data members directly
 - **Variable Naming**: Short, descriptive names matching C# patterns (e.g. `cabinet`, `lw`, `curDev`, `okBecause`)
+- **Method Order Exception**: While preserving C# method order for easier comparison, in C++ place constructor and destructor at the top of header files for better C++ convention
 - **No Comments**: Do not add comments or implement comments
 
 ### Critical Implementation Rules
@@ -97,12 +99,14 @@ Each test ROM runs identical L88 scenarios:
 ## Implementation Status
 
 ### ✅ COMPLETE (100% C# Correspondence)
-- **Core Framework**: Cabinet, Table, GlobalConfig, Effects infrastructure
-- **Effects System**: All effect types and base classes, correct effect chain creation order
+- **Core Framework**: Cabinet with CurveList support, Table, GlobalConfig, Effects infrastructure
+- **Effects System**: All effect types and base classes, correct effect chain creation order with nested blink effects
 - **AlarmHandler**: Perfect 1:1 interface match - removed extra methods, uses standard RegisterAlarm/UnregisterAlarm
 - **Toys System**: All toy types, layers, hardware toys, perfect IRGBOutputToy implementation
-- **Configuration**: GlobalConfig, LedControl loader and setup
-- **Utilities**: Most general utilities, string extensions, math extensions
+- **Configuration**: GlobalConfig, LedControl loader and setup with plasma effects support
+- **Utilities**: Most general utilities, string extensions, math extensions, CurveList
+- **Matrix Effects**: Matrix flicker effects with perfect 1:1 C# correspondence (debug logging removed)
+- **LedStrip**: Reorganized to match C# method order exactly, proper InitFadingCurve with Cabinet.Curves support
 - **Output Controllers**: Perfect 1:1 correspondence with C# structure
   - **LedWiz**: Uses LWDEVICE struct pattern matching C# exactly
   - **PinscapePico**: ✅ **VERIFIED WORKING** - Uses nested private Device class, proper toy targeting
@@ -122,6 +126,10 @@ Each test ROM runs identical L88 scenarios:
 - PAC Controllers (`Pac/`) - PacDrive, PacLed64, PacUIO 
 - SSF Controllers (`SSF/`) - 7 variants, feedback systems  
 - Philips Hue Controllers (`PhilipsHue/`) - Smart lighting
+
+**Matrix Effects** (85% complete):
+- Shape Effects (`RGBAMatrixShapeEffect`, `RGBAMatrixColorScaleShapeEffect`) - Requires shape rendering implementation
+- Bitmap Effects (`RGBAMatrixBitmapEffect`, `RGBAMatrixBitmapAnimationEffect`) - Requires bitmap loading and animation
 
 **Other Missing**:
 - Extensions utilities (`Extensions/` directory - 11 utility classes)
@@ -209,6 +217,7 @@ Each test ROM runs identical L88 scenarios:
 - **Named Pipe Communication**: PinOne uses cross-platform named pipes (Windows: CreateNamedPipe, Unix: domain sockets)
 - **Windows API Conflicts**: Use `SendPipeMessage()` instead of `SendMessage()` in PinOneCommunication to avoid Windows API macro collision
 - **MSVC Array Initialization**: Use double-brace syntax for std::array initialization: `{{0.0f, 0.0f, 0.0f}}` instead of `{0.0f, 0.0f, 0.0f}`
+- **Cabinet.Curves Integration**: Cabinet now includes CurveList support matching C# - LedStrip.InitFadingCurve() checks Cabinet.Curves first, then creates new curves if needed
 
 ## References
 - **C# source**: `/Users/jmillard/libdof/csharp_code/DirectOutput`
@@ -219,7 +228,7 @@ Each test ROM runs identical L88 scenarios:
 
 ## Memories
 - PinscapePico requires sudo access for HID device detection and communication (regular Pinscape works without sudo)
-- Always verify effect chain order matches C# exactly: Base → Fade → Blink → Duration → Delay → Invert → FullRange
+- Always verify effect chain order matches C# exactly: Base → Fade → NestedBlink → Blink → Duration → MaxDuration → MinDuration → ExtendDuration → Delay → Invert → FullRange
 - RGBAToy now implements IRGBOutputToy interface with proper output name methods
 - Matrix effects should only target matrix toys - use AnalogToyValueEffect for single outputs
 - DudesCab controllers use units 90-94 in DOF config, require hidapi for cross-platform HID communication
@@ -230,3 +239,9 @@ Each test ROM runs identical L88 scenarios:
 - **Serial Port Cleanup**: Destructors call DisconnectFromController() for proper cleanup during exceptions or forceful termination
 - **ESP8266 Timing**: Buffer flushing with `sp_flush()` + 500ms delay ensures reliable Wemos D1 communication
 - **ScheduledSettings Implementation**: Complete time-based scheduling system with military time format (HHmm), midnight crossover logic, device ID matching, and percentage-based output strength modification
+- **Matrix Flicker Effects**: Removed all debug logging from MatrixFlickerEffectBase.h to achieve perfect 1:1 C# correspondence
+- **Configurator 1:1 Correspondence**: Added nested blink effects (BlinkIntervalMsNested) and plasma effects support, following exact C# effect chain order
+- **Plasma Effects**: RGBAMatrixPlasmaEffect supports dual-color plasma rendering with PlasmaSpeed and PlasmaDensity parameters
+- **LedStrip 1:1 Reorganization**: Completely reorganized LedStrip.h and LedStrip.cpp to match C# method order exactly for easier comparison
+- **CurveList Implementation**: Cabinet now includes CurveList functionality matching C# - allows InitFadingCurve to check Cabinet.Curves before creating new curves
+- you don't have timeout command

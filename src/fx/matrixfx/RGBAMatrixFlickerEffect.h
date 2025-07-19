@@ -17,9 +17,10 @@ public:
    const RGBAColor& GetInactiveColor() const { return m_inactiveColor; }
    void SetInactiveColor(const RGBAColor& value) { m_inactiveColor = value; }
 
+   virtual std::string GetXmlElementName() const override { return "RGBAMatrixFlickerEffect"; }
+
 protected:
-   virtual RGBAColor GetInactiveValue() override;
-   virtual RGBAColor GetActiveValue(int triggerValue) override;
+   virtual RGBAColor GetEffectValue(int triggerValue) override;
 
 private:
    RGBAColor m_activeColor;

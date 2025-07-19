@@ -19,6 +19,8 @@ public:
    const RGBAColor& GetSecondaryColor() const { return m_secondaryColor; }
    void SetSecondaryColor(const RGBAColor& value) { m_secondaryColor = value; }
 
+   virtual std::string GetXmlElementName() const override { return "RGBAMatrixPlasmaEffect"; }
+
 protected:
    virtual RGBAColor GetInactiveValue() override;
    virtual RGBAColor GetPlasmaValue(int triggerValue, double intensity) override;

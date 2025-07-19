@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RGBAColorNamed.h"
+#include "../generic/IXmlSerializable.h"
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -9,7 +10,7 @@
 namespace DOF
 {
 
-class ColorList
+class ColorList : public IXmlSerializable
 {
 private:
    std::vector<RGBAColorNamed> m_colors;
@@ -47,6 +48,10 @@ public:
 
 
    void Sort();
+
+   virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;
+   virtual bool FromXml(const tinyxml2::XMLElement* element) override;
+   virtual std::string GetXmlElementName() const override { return "ColorList"; }
 };
 
 }

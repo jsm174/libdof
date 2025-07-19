@@ -21,6 +21,7 @@ public:
    bool GetActive() const { return m_active; }
    virtual void Trigger(TableElementData* tableElementData) override;
    virtual void Finish() override;
+   virtual std::string GetXmlElementName() const override { return "MinDurationEffect"; }
 
 private:
    void MinDurationReached(TableElementData* tableElementData);

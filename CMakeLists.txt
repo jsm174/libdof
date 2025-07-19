@@ -79,6 +79,7 @@ set(LIBDOF_SOURCES
    src/Pinball.cpp
 
    src/general/Curve.cpp
+   src/general/CurveList.cpp
    src/general/DirectoryInfo.cpp
    src/general/FileInfo.cpp
    src/general/FilePattern.cpp
