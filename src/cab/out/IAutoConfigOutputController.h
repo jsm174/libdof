@@ -9,9 +9,9 @@ class IAutoConfigOutputController
 {
 public:
    IAutoConfigOutputController() { }
-   ~IAutoConfigOutputController() { }
+   virtual ~IAutoConfigOutputController() { }
 
-   virtual void AutoConfig(Cabinet* pCabinet) = 0;
+   virtual void AutoConfig(Cabinet* cabinet) = 0;
 };
 
 }

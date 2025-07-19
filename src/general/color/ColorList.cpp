@@ -1,4 +1,5 @@
 #include "ColorList.h"
+#include <tinyxml2/tinyxml2.h>
 
 namespace DOF
 {
@@ -91,6 +92,44 @@ void ColorList::Sort()
 {
    std::sort(m_colors.begin(), m_colors.end(), [](const RGBAColorNamed& a, const RGBAColorNamed& b) { return a.GetName() < b.GetName(); });
    UpdateIndex();
+}
+
+tinyxml2::XMLElement* ColorList::ToXml(tinyxml2::XMLDocument& doc) const
+{
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+
+   for (const auto& color : m_colors)
+   {
+      tinyxml2::XMLElement* colorElement = color.ToXml(doc);
+      if (colorElement)
+      {
+         element->InsertEndChild(colorElement);
+      }
+   }
+
+   return element;
+}
+
+bool ColorList::FromXml(const tinyxml2::XMLElement* element)
+{
+   if (!element)
+      return false;
+
+   Clear();
+
+   for (const tinyxml2::XMLElement* colorElement = element->FirstChildElement("RGBAColorNamed"); colorElement; colorElement = colorElement->NextSiblingElement("RGBAColorNamed"))
+   {
+      RGBAColorNamed color;
+      if (color.FromXml(colorElement))
+      {
+         if (!color.GetName().empty() && !Contains(color.GetName()))
+         {
+            Add(color);
+         }
+      }
+   }
+
+   return true;
 }
 
 }

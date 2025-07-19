@@ -25,11 +25,18 @@
 #include "../../fx/analogtoyfx/AnalogToyValueEffect.h"
 #include "../../fx/timmedfx/BlinkEffect.h"
 #include "../../fx/timmedfx/DurationEffect.h"
+#include "../../fx/timmedfx/MaxDurationEffect.h"
+#include "../../fx/timmedfx/MinDurationEffect.h"
+#include "../../fx/timmedfx/ExtendDurationEffect.h"
 #include "../../fx/timmedfx/DelayEffect.h"
 #include "../../fx/timmedfx/FadeEffect.h"
 #include "../../fx/valuefx/ValueInvertEffect.h"
+#include <set>
+
 #include "../../fx/valuefx/ValueMapFullRangeEffect.h"
 #include "../../fx/matrixfx/RGBAMatrixColorEffect.h"
+#include "../../fx/matrixfx/RGBAMatrixFlickerEffect.h"
+#include "../../fx/matrixfx/RGBAMatrixPlasmaEffect.h"
 #include "../../fx/matrixfx/AnalogAlphaMatrixValueEffect.h"
 #include "../../fx/nullfx/NullEffect.h"
 #include "../../fx/FadeModeEnum.h"
@@ -312,18 +319,103 @@ void Configurator::SetupTable(
                   IRGBAToy* rgbaToy = dynamic_cast<IRGBAToy*>(toy);
                   IAnalogAlphaToy* analogToy = dynamic_cast<IAnalogAlphaToy*>(toy);
 
+
                   if (rgbaMatrixToy != nullptr)
                   {
                      if (tcs->GetColorConfig() != nullptr)
                      {
-                        if (tcs->HasLayer())
+                        Log::Debug(StringExtensions::Build(
+                           "Effect creation: rgbaMatrixToy, IsArea={0}, FlickerDensity={1}", tcs->IsArea() ? "true" : "false", std::to_string(tcs->GetAreaFlickerDensity())));
+                        if (tcs->IsArea() && tcs->GetAreaFlickerDensity() > 0)
+                        {
+                           Log::Debug(StringExtensions::Build("Creating RGBAMatrixFlickerEffect for effect {0}", effectName));
+                           RGBAMatrixFlickerEffect* flickerEffect = new RGBAMatrixFlickerEffect();
+                           effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixFlickerEffect", std::to_string(ledWizNr),
+                              std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                           flickerEffect->SetName(effectName);
+                           flickerEffect->SetToyName(toy->GetName());
+                           if (tcs->HasLayer())
+                              flickerEffect->SetLayerNr(tcs->GetLayer());
+
+                           ColorConfig* colorConfig = tcs->GetColorConfig();
+                           flickerEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
+                           flickerEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
+                           flickerEffect->SetDensity(tcs->GetAreaFlickerDensity());
+                           flickerEffect->SetMinFlickerDurationMs(tcs->GetAreaFlickerMinDurationMs());
+                           if (tcs->GetAreaFlickerMaxDurationMs() > 0)
+                              flickerEffect->SetMaxFlickerDurationMs(tcs->GetAreaFlickerMaxDurationMs());
+                           if (tcs->GetAreaFlickerFadeDurationMs() > 0)
+                              flickerEffect->SetFadeDurationMs(tcs->GetAreaFlickerFadeDurationMs());
+
+                           flickerEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                           flickerEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                           flickerEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                           flickerEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+
+                           effect = static_cast<EffectBase*>(flickerEffect);
+                        }
+                        else if (tcs->IsPlasma())
+                        {
+                           RGBAMatrixPlasmaEffect* plasmaEffect = new RGBAMatrixPlasmaEffect();
+                           effectName = StringExtensions::Build(
+                              "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixPlasmaEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                           plasmaEffect->SetName(effectName);
+                           plasmaEffect->SetToyName(toy->GetName());
+                           if (tcs->HasLayer())
+                              plasmaEffect->SetLayerNr(tcs->GetLayer());
+
+                           ColorConfig* colorConfig = tcs->GetColorConfig();
+                           RGBAColor activeColor1;
+                           RGBAColor activeColor2;
+                           RGBAColor inactiveColor;
+
+                           if (colorConfig != nullptr)
+                           {
+                              activeColor1 = RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
+                           }
+                           else
+                           {
+                              activeColor1 = RGBAColor(0xff, 0, 0, 0xff);
+                           }
+
+                           ColorConfig* colorConfig2 = tcs->GetColorConfig2();
+                           if (colorConfig2 != nullptr)
+                           {
+                              activeColor2 = RGBAColor(colorConfig2->GetRed(), colorConfig2->GetGreen(), colorConfig2->GetBlue(), colorConfig2->GetAlpha());
+                           }
+                           else
+                           {
+                              activeColor2 = RGBAColor(0, 0xff, 0, 0xff);
+                           }
+
+                           inactiveColor = activeColor1;
+                           inactiveColor.SetAlpha(0);
+
+                           plasmaEffect->SetActiveColor(activeColor1);
+                           plasmaEffect->SetSecondaryColor(activeColor2);
+                           plasmaEffect->SetInactiveColor(inactiveColor);
+                           plasmaEffect->SetPlasmaSpeed(tcs->GetPlasmaSpeed());
+                           plasmaEffect->SetPlasmaDensity(tcs->GetPlasmaDensity());
+
+                           if (tcs->IsArea())
+                           {
+                              plasmaEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                              plasmaEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                              plasmaEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                              plasmaEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                           }
+
+                           effect = static_cast<EffectBase*>(plasmaEffect);
+                        }
+                        else if (tcs->HasLayer() || (tcs->IsArea() && tcs->GetAreaFlickerDensity() == 0))
                         {
                            RGBAMatrixColorEffect* matrixEffect = new RGBAMatrixColorEffect();
                            effectName = StringExtensions::Build(
                               "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                            matrixEffect->SetName(effectName);
                            matrixEffect->SetToyName(toy->GetName());
-                           matrixEffect->SetLayerNr(tcs->GetLayer());
+                           if (tcs->HasLayer())
+                              matrixEffect->SetLayerNr(tcs->GetLayer());
 
                            ColorConfig* colorConfig = tcs->GetColorConfig();
                            matrixEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
@@ -332,6 +424,14 @@ void Configurator::SetupTable(
 
                            matrixEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
                            matrixEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
+
+                           if (tcs->IsArea())
+                           {
+                              matrixEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                              matrixEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                              matrixEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                              matrixEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                           }
 
                            effect = static_cast<EffectBase*>(matrixEffect);
                         }
@@ -384,6 +484,8 @@ void Configurator::SetupTable(
                   }
                   else if (rgbaToy != nullptr)
                   {
+                     Log::Debug(
+                        StringExtensions::Build("Effect creation: rgbaToy, IsArea={0}, FlickerDensity={1}", tcs->IsArea() ? "true" : "false", std::to_string(tcs->GetAreaFlickerDensity())));
                      if (tcs->GetColorConfig() != nullptr)
                      {
                         RGBAColorEffect* rgbaEffect = new RGBAColorEffect();
@@ -440,7 +542,26 @@ void Configurator::SetupTable(
                         finalEffect = fadeEffect;
                      }
 
-                     if (tcs->GetBlink())
+                     if (tcs->GetBlink() != 0 && tcs->GetBlinkIntervalMsNested() > 0)
+                     {
+                        BlinkEffect* nestedBlinkEffect = new BlinkEffect();
+                        std::string nestedBlinkName = StringExtensions::Build(
+                           "Ledwiz {0:00} Column {1:00} Setting {2:00} BlinkEffect Inner", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                        nestedBlinkEffect->SetName(nestedBlinkName);
+                        nestedBlinkEffect->SetTargetEffectName(finalEffect->GetName());
+                        nestedBlinkEffect->SetLowValue(tcs->GetBlinkLow());
+
+                        int nestedActiveMs = (int)((double)tcs->GetBlinkIntervalMsNested() * (double)tcs->GetBlinkPulseWidthNested() / 100);
+                        int nestedInactiveMs = (int)((double)tcs->GetBlinkIntervalMsNested() * (100 - (double)tcs->GetBlinkPulseWidthNested()) / 100);
+                        nestedBlinkEffect->SetDurationActiveMs(nestedActiveMs);
+                        nestedBlinkEffect->SetDurationInactiveMs(nestedInactiveMs);
+
+                        MakeEffectNameUnique(nestedBlinkEffect, table);
+                        table->GetEffects()->insert(std::make_pair(nestedBlinkEffect->GetName(), nestedBlinkEffect));
+                        finalEffect = nestedBlinkEffect;
+                     }
+
+                     if (tcs->GetBlink() != 0)
                      {
                         BlinkEffect* blinkEffect = new BlinkEffect();
                         std::string blinkName = StringExtensions::Build(
@@ -452,7 +573,11 @@ void Configurator::SetupTable(
                         int inactiveMs = (int)((double)tcs->GetBlinkIntervalMs() * (100 - (double)tcs->GetBlinkPulseWidth()) / 100);
                         blinkEffect->SetDurationActiveMs(activeMs);
                         blinkEffect->SetDurationInactiveMs(inactiveMs);
-                        blinkEffect->SetUntriggerBehaviour(BlinkEffectUntriggerBehaviourEnum::Immediate);
+
+                        if (tcs->GetBlinkIntervalMsNested() == 0)
+                        {
+                           blinkEffect->SetLowValue(tcs->GetBlinkLow());
+                        }
 
                         MakeEffectNameUnique(blinkEffect, table);
                         table->GetEffects()->insert(std::make_pair(blinkEffect->GetName(), blinkEffect));
@@ -488,6 +613,47 @@ void Configurator::SetupTable(
                         finalEffect = durationEffect;
                      }
 
+                     if (tcs->GetMaxDurationMs() > 0)
+                     {
+                        MaxDurationEffect* maxDurationEffect = new MaxDurationEffect();
+                        std::string maxDurationName = StringExtensions::Build(
+                           "Ledwiz {0:00} Column {1:00} Setting {2:00} MaxDurationEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                        maxDurationEffect->SetName(maxDurationName);
+                        maxDurationEffect->SetTargetEffectName(finalEffect->GetName());
+                        maxDurationEffect->SetMaxDurationMs(tcs->GetMaxDurationMs());
+                        MakeEffectNameUnique(maxDurationEffect, table);
+                        table->GetEffects()->insert(std::make_pair(maxDurationEffect->GetName(), maxDurationEffect));
+                        finalEffect = maxDurationEffect;
+                     }
+
+                     if (tcs->GetMinDurationMs() > 0 || (rgbaToy != nullptr && m_effectRGBMinDurationMs > 0) || (rgbaToy == nullptr && m_effectMinDurationMs > 0))
+                     {
+                        MinDurationEffect* minDurationEffect = new MinDurationEffect();
+                        std::string effectTypeName = (tcs->GetMinDurationMs() > 0 ? "MinDurationEffect" : "DefaultMinDurationEffect");
+                        int minDuration = (tcs->GetMinDurationMs() > 0 ? tcs->GetMinDurationMs() : (rgbaToy != nullptr ? m_effectRGBMinDurationMs : m_effectMinDurationMs));
+                        std::string minDurationName = StringExtensions::Build(
+                           "Ledwiz {0:00} Column {1:00} Setting {2:00} {3}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber), effectTypeName);
+                        minDurationEffect->SetName(minDurationName);
+                        minDurationEffect->SetTargetEffectName(finalEffect->GetName());
+                        minDurationEffect->SetMinDurationMs(minDuration);
+                        MakeEffectNameUnique(minDurationEffect, table);
+                        table->GetEffects()->insert(std::make_pair(minDurationEffect->GetName(), minDurationEffect));
+                        finalEffect = minDurationEffect;
+                     }
+
+                     if (tcs->GetExtDurationMs() > 0)
+                     {
+                        ExtendDurationEffect* extendDurationEffect = new ExtendDurationEffect();
+                        std::string extendDurationName = StringExtensions::Build(
+                           "Ledwiz {0:00} Column {1:00} Setting {2:00} ExtendDurationEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                        extendDurationEffect->SetName(extendDurationName);
+                        extendDurationEffect->SetTargetEffectName(finalEffect->GetName());
+                        extendDurationEffect->SetDurationMs(tcs->GetExtDurationMs());
+                        MakeEffectNameUnique(extendDurationEffect, table);
+                        table->GetEffects()->insert(std::make_pair(extendDurationEffect->GetName(), extendDurationEffect));
+                        finalEffect = extendDurationEffect;
+                     }
+
                      if (tcs->GetWaitDurationMs() > 0)
                      {
                         DelayEffect* delayEffect = new DelayEffect();
@@ -520,6 +686,7 @@ void Configurator::SetupTable(
                            "Ledwiz {0:00} Column {1:00} Setting {2:00} FullRangeEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                         fullRangeEffect->SetName(fullRangeName);
                         fullRangeEffect->SetTargetEffectName(finalEffect->GetName());
+                        Log::Debug(StringExtensions::Build("FullRangeEffect {0} -> target {1}", fullRangeName, finalEffect->GetName()));
                         MakeEffectNameUnique(fullRangeEffect, table);
                         table->GetEffects()->insert(std::make_pair(fullRangeEffect->GetName(), fullRangeEffect));
                         finalEffect = fullRangeEffect;
@@ -624,8 +791,8 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
       {
          std::string elementName = descriptor.substr(1);
 
-         TableElementData* elementData = new TableElementData(elementName, 0);
-         tableElements->UpdateState(elementData);
+         TableElementData elementData(elementName, 0);
+         tableElements->UpdateState(&elementData);
 
          for (TableElement* te : *tableElements)
          {
@@ -635,8 +802,6 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
                break;
             }
          }
-
-         delete elementData;
       }
       else if (descriptor.find('.') != std::string::npos)
       {
@@ -652,8 +817,8 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
                TableElementTypeEnum elementType = TableElementTypeEnum::Solenoid;
                int elementNumber = ledWizNumber * 100 + columnNumber;
 
-               TableElementData* elementData = new TableElementData(elementType, elementNumber, 0);
-               tableElements->UpdateState(elementData);
+               TableElementData elementData(elementType, elementNumber, 0);
+               tableElements->UpdateState(&elementData);
 
                for (TableElement* te : *tableElements)
                {
@@ -663,8 +828,6 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
                      break;
                   }
                }
-
-               delete elementData;
             }
             catch (const std::exception&)
             {
@@ -733,9 +896,9 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
                {
                   int number = std::stoi(numberStr);
 
-                  TableElementData* elementData = new TableElementData(elementType, number, 0);
+                  TableElementData elementData(elementType, number, 0);
                   Log::Write(StringExtensions::Build("Configuration: Creating table element type={0}, number={1}", std::string(1, (char)elementType), std::to_string(number)));
-                  tableElements->UpdateState(elementData);
+                  tableElements->UpdateState(&elementData);
 
                   for (TableElement* te : *tableElements)
                   {
@@ -745,8 +908,6 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
                         break;
                      }
                   }
-
-                  delete elementData;
                }
                catch (const std::exception&)
                {

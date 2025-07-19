@@ -37,12 +37,12 @@ TableElementData::TableElementData(char tableElementTypeChar, int number, int va
    m_value = value;
 }
 
-TableElementData::TableElementData(TableElement* pTableElement)
+TableElementData::TableElementData(TableElement* tableElement)
 {
-   m_number = pTableElement->GetNumber();
-   m_tableElementType = pTableElement->GetTableElementType();
-   m_name = pTableElement->GetName();
-   m_value = pTableElement->GetValue();
+   m_number = tableElement->GetNumber();
+   m_tableElementType = tableElement->GetTableElementType();
+   m_name = tableElement->GetName();
+   m_value = tableElement->GetValue();
 }
 
 TableElementData::TableElementData(const std::string& tableElementName, int value)

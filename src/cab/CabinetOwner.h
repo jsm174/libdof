@@ -28,12 +28,12 @@ public:
    void ClearConfigurationSettings() override;
 
 
-   void SetAlarms(AlarmHandler* pAlarms) override { m_pAlarms = pAlarms; }
-   AlarmHandler* GetAlarms() override { return m_pAlarms; }
+   void SetAlarms(AlarmHandler* alarms) override { m_alarms = alarms; }
+   AlarmHandler* GetAlarms() override { return m_alarms; }
 
 private:
    std::unordered_map<std::string, std::string> m_configurationSettings;
-   AlarmHandler* m_pAlarms;
+   AlarmHandler* m_alarms;
 };
 
 }

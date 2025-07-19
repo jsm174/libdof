@@ -8,13 +8,13 @@
 namespace DOF
 {
 
-TableOverrideSettings* TableOverrideSettings::m_pInstance = nullptr;
+TableOverrideSettings* TableOverrideSettings::m_instance = nullptr;
 
 TableOverrideSettings* TableOverrideSettings::GetInstance()
 {
-   if (!m_pInstance)
-      m_pInstance = new TableOverrideSettings();
-   return m_pInstance;
+   if (!m_instance)
+      m_instance = new TableOverrideSettings();
+   return m_instance;
 }
 
 TableOverrideSettings::TableOverrideSettings() { }

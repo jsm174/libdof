@@ -9,30 +9,39 @@
 namespace DOF
 {
 
+TableElementList::~TableElementList()
+{
+   for (TableElement* element : *this)
+   {
+      delete element;
+   }
+   clear();
+}
+
 void TableElementList::Init(Table* table)
 {
-   for (TableElement* pTableElement : *this)
-      pTableElement->GetAssignedEffects()->Init(table);
+   for (TableElement* tableElement : *this)
+      tableElement->GetAssignedEffects()->Init(table);
 }
 
 void TableElementList::FinishAssignedEffects()
 {
-   for (TableElement* pTableElement : *this)
-      pTableElement->GetAssignedEffects()->Finish();
+   for (TableElement* tableElement : *this)
+      tableElement->GetAssignedEffects()->Finish();
 }
 
-void TableElementList::UpdateState(TableElementData* pData)
+void TableElementList::UpdateState(TableElementData* data)
 {
-   if (!pData)
+   if (!data)
       return;
 
    TableElement* targetElement = nullptr;
 
-   if (!pData->m_name.empty())
+   if (!data->m_name.empty())
    {
       for (TableElement* element : *this)
       {
-         if (element && element->GetName() == pData->m_name)
+         if (element && element->GetName() == data->m_name)
          {
             targetElement = element;
             break;
@@ -44,20 +53,22 @@ void TableElementList::UpdateState(TableElementData* pData)
    {
       for (TableElement* element : *this)
       {
-         if (element && element->GetTableElementType() == pData->m_tableElementType && element->GetNumber() == pData->m_number)
+         if (element && element->GetTableElementType() == data->m_tableElementType && element->GetNumber() == data->m_number)
          {
             targetElement = element;
             Log::Debug(StringExtensions::Build("Found matching element: type={0}, number={1}", std::string(1, (char)element->GetTableElementType()), std::to_string(element->GetNumber())));
+            Log::Debug(StringExtensions::Build("TableElement - type: {0}, number: {1}, name: {2}, value: {3}", std::string(1, (char)element->GetTableElementType()),
+               std::to_string(element->GetNumber()), element->GetName(), std::to_string(data->m_value)));
             break;
          }
       }
    }
 
    if (targetElement)
-      targetElement->SetValue(pData->m_value);
+      targetElement->SetValue(data->m_value);
    else
    {
-      TableElement* newElement = new TableElement(pData->m_tableElementType, pData->m_number, pData->m_value);
+      TableElement* newElement = new TableElement(data->m_tableElementType, data->m_number, data->m_value);
       push_back(newElement);
    }
 }

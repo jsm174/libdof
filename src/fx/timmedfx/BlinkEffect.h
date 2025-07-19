@@ -2,12 +2,11 @@
 
 #include "../EffectEffectBase.h"
 #include "BlinkEffectUntriggerBehaviourEnum.h"
+#include "../../table/TableElementData.h"
 #include <functional>
 
 namespace DOF
 {
-
-class TableElementData;
 
 class BlinkEffect : public EffectEffectBase
 {
@@ -46,7 +45,7 @@ private:
    bool m_blinkEnabled;
    bool m_blinkState;
    int m_blinkOrgTableElementDataValue;
-   TableElementData* m_blinkTableElementData;
+   TableElementData m_blinkTableElementData;
 
    std::function<void()> m_alarmCallback;
 };

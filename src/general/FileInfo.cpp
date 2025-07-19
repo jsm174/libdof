@@ -22,6 +22,6 @@ std::string FileInfo::Extension() const { return m_path.extension().string(); }
 
 bool FileInfo::Delete() const { return std::filesystem::remove(m_path); }
 
-DirectoryInfo* FileInfo::Directory() const { return new DirectoryInfo(m_path.parent_path().string()); }
+DirectoryInfo FileInfo::Directory() const { return DirectoryInfo(m_path.parent_path().string()); }
 
 }

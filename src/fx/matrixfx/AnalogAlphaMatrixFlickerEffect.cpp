@@ -10,9 +10,7 @@ AnalogAlphaMatrixFlickerEffect::AnalogAlphaMatrixFlickerEffect()
 {
 }
 
-AnalogAlpha AnalogAlphaMatrixFlickerEffect::GetInactiveValue() { return m_inactiveValue; }
-
-AnalogAlpha AnalogAlphaMatrixFlickerEffect::GetActiveValue(int triggerValue)
+AnalogAlpha AnalogAlphaMatrixFlickerEffect::GetEffectValue(int triggerValue)
 {
    AnalogAlpha d;
 

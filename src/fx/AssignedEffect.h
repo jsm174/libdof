@@ -20,9 +20,9 @@ public:
    const std::string& GetEffectName() const { return m_effectName; }
    void SetEffectName(const std::string& effectName);
    std::function<void()> m_effectNameChanged;
-   IEffect* GetEffect() { return m_pEffect; }
-   void SetEffect(IEffect* pEffect) { m_pEffect = pEffect; }
-   void Trigger(TableElementData* tableElementData);
+   IEffect* GetEffect() { return m_effect; }
+   void SetEffect(IEffect* effect) { m_effect = effect; }
+   void Trigger(TableElementData tableElementData);
    void Init(Table* table);
    void Finish();
 
@@ -33,7 +33,7 @@ private:
    void ResolveEffectName(Table* table);
 
    std::string m_effectName;
-   IEffect* m_pEffect;
+   IEffect* m_effect;
 };
 
 }

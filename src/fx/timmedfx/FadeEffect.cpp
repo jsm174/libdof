@@ -19,18 +19,11 @@ FadeEffect::FadeEffect()
    , m_currentValue(0)
    , m_stepValue(0)
    , m_lastTargetTriggerValue(-1)
-   , m_tableElementData(nullptr)
+   , m_tableElementData()
 {
 }
 
-FadeEffect::~FadeEffect()
-{
-   if (m_tableElementData)
-   {
-      delete m_tableElementData;
-      m_tableElementData = nullptr;
-   }
-}
+FadeEffect::~FadeEffect() { }
 
 void FadeEffect::Trigger(TableElementData* tableElementData)
 {
@@ -38,11 +31,7 @@ void FadeEffect::Trigger(TableElementData* tableElementData)
    {
       m_targetValue = MathExtensions::Limit(tableElementData->m_value, 0, 255);
 
-      if (m_tableElementData)
-      {
-         delete m_tableElementData;
-      }
-      m_tableElementData = new TableElementData(*tableElementData);
+      m_tableElementData = *tableElementData;
 
       double duration = (m_currentValue < m_targetValue ? m_fadeUpDuration : m_fadeDownDuration);
       if (m_fadeDurationMode == FadeEffectDurationModeEnum::FullValueRange)
@@ -59,10 +48,10 @@ void FadeEffect::Trigger(TableElementData* tableElementData)
       }
       else
       {
-         m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm([this]() { this->FadingStep(); });
+         m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(this);
          m_currentValue = m_targetValue;
          m_lastTargetTriggerValue = -1;
-         TriggerTargetEffect(m_tableElementData);
+         TriggerTargetEffect(&m_tableElementData);
       }
    }
 }
@@ -73,19 +62,19 @@ void FadeEffect::FadingStep()
 
    if ((m_currentValue < m_targetValue && m_stepValue > 0) || (m_currentValue > m_targetValue && m_stepValue < 0))
    {
-      m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(FadingRefreshIntervalMs, [this]() { this->FadingStep(); });
+      m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(FadingRefreshIntervalMs, this, [this]() { this->FadingStep(); });
    }
    else
    {
-      m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm([this]() { this->FadingStep(); });
+      m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(this);
       m_currentValue = m_targetValue;
    }
 
    if (m_lastTargetTriggerValue != (int)m_currentValue)
    {
       m_lastTargetTriggerValue = (int)m_currentValue;
-      m_tableElementData->m_value = m_lastTargetTriggerValue;
-      TriggerTargetEffect(m_tableElementData);
+      m_tableElementData.m_value = m_lastTargetTriggerValue;
+      TriggerTargetEffect(&m_tableElementData);
    }
 }
 
@@ -93,16 +82,10 @@ void FadeEffect::Finish()
 {
    try
    {
-      m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm([this]() { this->FadingStep(); });
+      m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(this);
    }
    catch (...)
    {
-   }
-
-   if (m_tableElementData)
-   {
-      delete m_tableElementData;
-      m_tableElementData = nullptr;
    }
 
    EffectEffectBase::Finish();

@@ -17,7 +17,7 @@ public:
    virtual OutputList* GetOutputs() override { return m_outputs; }
    virtual const OutputList* GetOutputs() const override { return m_outputs; }
    virtual void SetOutputs(OutputList* outputs);
-   virtual void Init(Cabinet* pCabinet) override = 0;
+   virtual void Init(Cabinet* cabinet) override = 0;
    virtual void Finish() override = 0;
    virtual void Update() override = 0;
 

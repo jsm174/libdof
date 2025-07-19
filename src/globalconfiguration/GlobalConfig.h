@@ -36,7 +36,7 @@ public:
    const FilePattern& GetCabinetConfigFilePattern() const { return m_cabinetConfigFilePattern; }
    void SetCabinetConfigFilePattern(const std::string& pattern) { m_cabinetConfigFilePattern.SetPattern(pattern); }
    FileInfo* GetCabinetConfigFile() const;
-   DirectoryInfo* GetCabinetConfigDirectory() const;
+   DirectoryInfo GetCabinetConfigDirectory() const;
    const FilePatternList& GetTableConfigFilePatterns() const { return m_tableConfigFilePatterns; }
    FilePatternList& GetTableConfigFilePatterns() { return m_tableConfigFilePatterns; }
    FileInfo* GetTableConfigFile(const std::string& tableFilename) const;
@@ -49,7 +49,7 @@ public:
    std::string GetLogFilename(const std::string& tableFilename = "", const std::string& romName = "") const;
    std::unordered_map<std::string, std::string> GetReplaceValuesDictionary(const std::string& tableFilename = "", const std::string& romName = "") const;
    std::string GetGlobalConfigDirectoryName() const;
-   DirectoryInfo* GetGlobalConfigDirectory() const;
+   DirectoryInfo GetGlobalConfigDirectory() const;
    const std::string& GetGlobalConfigFilename() const { return m_globalConfigFileName; }
    void SetGlobalConfigFilename(const std::string& filename) { m_globalConfigFileName = filename; }
    FileInfo* GetGlobalConfigFile() const;

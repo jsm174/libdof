@@ -13,7 +13,7 @@ public:
    OutputControllerList();
    virtual ~OutputControllerList();
 
-   void Init(Cabinet* pCabinet);
+   void Init(Cabinet* cabinet);
    void Finish();
    void Update();
    bool Contains(const std::string& name) const;

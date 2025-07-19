@@ -1,12 +1,11 @@
 #pragma once
 
 #include "../EffectEffectBase.h"
+#include "../../table/TableElementData.h"
 #include <functional>
 
 namespace DOF
 {
-
-class TableElementData;
 
 class DelayEffect : public EffectEffectBase
 {
@@ -27,6 +26,7 @@ private:
 
    int m_delayMs;
    std::function<void()> m_afterDelayCallback;
+   TableElementData m_delayTableElementData;
 };
 
 }

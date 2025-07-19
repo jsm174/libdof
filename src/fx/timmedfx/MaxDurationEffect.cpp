@@ -11,6 +11,7 @@ MaxDurationEffect::MaxDurationEffect()
    : m_retriggerBehaviour(RetriggerBehaviourEnum::Restart)
    , m_maxDurationMs(5000)
    , m_active(false)
+   , m_durationTimerTableElementData()
 {
 }
 
@@ -23,13 +24,15 @@ void MaxDurationEffect::Trigger(TableElementData* tableElementData)
          if (!m_active)
          {
             TriggerTargetEffect(tableElementData);
-            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_maxDurationMs, [this, tableElementData]() { this->MaxDurationReached(tableElementData); }, true);
+            m_durationTimerTableElementData = *tableElementData;
+            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_maxDurationMs, [this]() { this->MaxDurationReached(&m_durationTimerTableElementData); }, true);
             m_active = true;
          }
          else if (m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
          {
             TriggerTargetEffect(tableElementData);
-            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_maxDurationMs, [this, tableElementData]() { this->MaxDurationReached(tableElementData); }, true);
+            m_durationTimerTableElementData = *tableElementData;
+            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_maxDurationMs, [this]() { this->MaxDurationReached(&m_durationTimerTableElementData); }, true);
          }
       }
       else

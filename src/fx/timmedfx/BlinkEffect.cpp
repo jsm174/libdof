@@ -21,19 +21,12 @@ BlinkEffect::BlinkEffect()
    , m_blinkEnabled(false)
    , m_blinkState(false)
    , m_blinkOrgTableElementDataValue(1)
-   , m_blinkTableElementData(nullptr)
+   , m_blinkTableElementData()
 {
    m_alarmCallback = [this]() { this->DoBlink(); };
 }
 
-BlinkEffect::~BlinkEffect()
-{
-   if (m_blinkTableElementData)
-   {
-      delete m_blinkTableElementData;
-      m_blinkTableElementData = nullptr;
-   }
-}
+BlinkEffect::~BlinkEffect() { }
 
 void BlinkEffect::SetHighValue(int value) { m_activeValue = MathExtensions::Limit(value, -1, 255); }
 
@@ -45,11 +38,8 @@ void BlinkEffect::SetDurationInactiveMs(int value) { m_durationInactiveMs = Math
 
 void BlinkEffect::StartBlinking(TableElementData* tableElementData)
 {
-   if (m_blinkTableElementData)
-      delete m_blinkTableElementData;
-
-   m_blinkTableElementData = new TableElementData(tableElementData->m_tableElementType, tableElementData->m_number, tableElementData->m_value);
-   m_blinkOrgTableElementDataValue = m_blinkTableElementData->m_value;
+   m_blinkTableElementData = *tableElementData;
+   m_blinkOrgTableElementDataValue = m_blinkTableElementData.m_value;
 
    if (!m_blinkEnabled)
    {
@@ -61,22 +51,22 @@ void BlinkEffect::StartBlinking(TableElementData* tableElementData)
    {
       if (m_blinkState)
       {
-         m_blinkTableElementData->m_value = (m_activeValue >= 0 ? m_activeValue : m_blinkOrgTableElementDataValue);
-         TriggerTargetEffect(m_blinkTableElementData);
+         m_blinkTableElementData.m_value = (m_activeValue >= 0 ? m_activeValue : m_blinkOrgTableElementDataValue);
+         TriggerTargetEffect(&m_blinkTableElementData);
       }
    }
 }
 
 void BlinkEffect::StopBlinking()
 {
-   m_blinkEnabled = false;
-   if (m_untriggerBehaviour == BlinkEffectUntriggerBehaviourEnum::Immediate)
+   if (m_blinkEnabled)
    {
-      m_table->GetPinball()->GetAlarms()->UnregisterAlarm(m_alarmCallback);
-      if (m_blinkTableElementData)
+      m_blinkEnabled = false;
+      if (m_untriggerBehaviour == BlinkEffectUntriggerBehaviourEnum::Immediate)
       {
-         m_blinkTableElementData->m_value = 0;
-         TriggerTargetEffect(m_blinkTableElementData);
+         m_table->GetPinball()->GetAlarms()->UnregisterAlarm(m_alarmCallback);
+         m_blinkTableElementData.m_value = 0;
+         TriggerTargetEffect(&m_blinkTableElementData);
       }
    }
 }
@@ -86,20 +76,20 @@ void BlinkEffect::DoBlink()
    m_blinkState = !m_blinkState;
    if (m_blinkState)
    {
-      m_blinkTableElementData->m_value = (m_activeValue >= 0 ? m_activeValue : m_blinkOrgTableElementDataValue);
+      m_blinkTableElementData.m_value = (m_activeValue >= 0 ? m_activeValue : m_blinkOrgTableElementDataValue);
       m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationActiveMs, m_alarmCallback);
    }
    else
    {
       if (m_blinkEnabled)
       {
-         m_blinkTableElementData->m_value = m_lowValue;
+         m_blinkTableElementData.m_value = m_lowValue;
          m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationInactiveMs, m_alarmCallback);
       }
       else
-         m_blinkTableElementData->m_value = 0;
+         m_blinkTableElementData.m_value = 0;
    }
-   TriggerTargetEffect(m_blinkTableElementData);
+   TriggerTargetEffect(&m_blinkTableElementData);
 }
 
 void BlinkEffect::Trigger(TableElementData* tableElementData)

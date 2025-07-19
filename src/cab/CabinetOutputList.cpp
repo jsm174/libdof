@@ -10,14 +10,14 @@
 namespace DOF
 {
 
-CabinetOutputList::CabinetOutputList(Cabinet* pCabinet)
-   : m_pCabinet(pCabinet)
+CabinetOutputList::CabinetOutputList(Cabinet* cabinet)
+   : m_cabinet(cabinet)
 {
 }
 
 CabinetOutputList::~CabinetOutputList() { }
 
-OutputControllerList* CabinetOutputList::GetOutputControllers() const { return m_pCabinet ? m_pCabinet->GetOutputControllers() : nullptr; }
+OutputControllerList* CabinetOutputList::GetOutputControllers() const { return m_cabinet ? m_cabinet->GetOutputControllers() : nullptr; }
 
 IOutput* CabinetOutputList::GetByName(const std::string& name) { return const_cast<IOutput*>(static_cast<const CabinetOutputList*>(this)->GetByName(name)); }
 

@@ -43,10 +43,15 @@ void TableConfigList::ParseLedcontrolData(const std::string& ledControlData, boo
    {
       if (Contains(tc->GetShortRomName()))
       {
-         Log::Exception(StringExtensions::Build("Table with ShortRomName {0} has already been loaded (Exists more than once in ledcontrol file).", tc->GetShortRomName()));
+         const std::string shortRomName = tc->GetShortRomName();
          delete tc;
+         tc = nullptr;
+
+         Log::Exception(StringExtensions::Build("Table with ShortRomName {0} has already been loaded (Exists more than once in ledcontrol file).", shortRomName));
          if (throwExceptions)
-            throw std::runtime_error(StringExtensions::Build("Table with ShortRomName {0} has already been loaded.", tc->GetShortRomName()));
+         {
+            throw std::runtime_error(StringExtensions::Build("Table with ShortRomName {0} has already been loaded.", shortRomName));
+         }
       }
       else
       {

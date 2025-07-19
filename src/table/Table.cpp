@@ -20,29 +20,29 @@ namespace DOF
 {
 Table::Table()
 {
-   m_pPinball = nullptr;
+   m_pinball = nullptr;
    m_tableName = "";
    m_romName = "";
    m_tableFilename = "";
    m_tableConfigurationFilename = "";
    m_addLedControlConfig = false;
    m_configurationSource = TableConfigSourceEnum::Unknown;
-   m_pEffects = new EffectList();
-   m_pTableElements = new TableElementList();
-   m_pAssignedStaticEffects = new AssignedEffectList();
-   m_pShapeDefinitions = new ShapeDefinitions();
+   m_effects = new EffectList();
+   m_tableElements = new TableElementList();
+   m_assignedStaticEffects = new AssignedEffectList();
+   m_shapeDefinitions = new ShapeDefinitions();
 }
 
 Table::~Table()
 {
-   delete m_pEffects;
-   delete m_pTableElements;
-   delete m_pAssignedStaticEffects;
-   delete m_pShapeDefinitions;
-   m_pEffects = nullptr;
-   m_pTableElements = nullptr;
-   m_pAssignedStaticEffects = nullptr;
-   m_pShapeDefinitions = nullptr;
+   delete m_effects;
+   delete m_tableElements;
+   delete m_assignedStaticEffects;
+   delete m_shapeDefinitions;
+   m_effects = nullptr;
+   m_tableElements = nullptr;
+   m_assignedStaticEffects = nullptr;
+   m_shapeDefinitions = nullptr;
 }
 
 void Table::SetTableName(const std::string& tableName)
@@ -61,7 +61,7 @@ void Table::SetRomName(const std::string& romName)
    }
 }
 
-void Table::UpdateTableElement(TableElementData* pData) { m_pTableElements->UpdateState(pData); }
+void Table::UpdateTableElement(TableElementData* data) { m_tableElements->UpdateState(data); }
 
 void Table::UpdateTableElement(const std::string& elementName, int value)
 {
@@ -79,19 +79,19 @@ void Table::UpdateTableElement(TableElementTypeEnum elementType, int number, int
 void Table::TriggerStaticEffects()
 {
    TableElementData data(TableElementTypeEnum::Unknown, 0, 1);
-   if (m_pAssignedStaticEffects)
-      m_pAssignedStaticEffects->Trigger(&data);
+   if (m_assignedStaticEffects)
+      m_assignedStaticEffects->Trigger(data);
 }
 
-void Table::Init(Pinball* pPinball)
+void Table::Init(Pinball* pinball)
 {
-   m_pPinball = pPinball;
-   if (m_pEffects)
-      m_pEffects->Init(this);
-   if (m_pTableElements)
-      m_pTableElements->Init(this);
-   if (m_pAssignedStaticEffects)
-      m_pAssignedStaticEffects->Init(this);
+   m_pinball = pinball;
+   if (m_effects)
+      m_effects->Init(this);
+   if (m_tableElements)
+      m_tableElements->Init(this);
+   if (m_assignedStaticEffects)
+      m_assignedStaticEffects->Init(this);
 }
 
 std::string Table::ToXml() const
@@ -113,34 +113,34 @@ std::string Table::ToXml() const
    element->SetText(m_addLedControlConfig);
    root->InsertEndChild(element);
 
-   if (m_pEffects)
+   if (m_effects)
    {
-      tinyxml2::XMLElement* effectsElement = m_pEffects->ToXml(doc);
+      tinyxml2::XMLElement* effectsElement = m_effects->ToXml(doc);
       if (effectsElement)
          root->InsertEndChild(effectsElement);
    }
 
-   if (m_pTableElements && !m_pTableElements->empty())
+   if (m_tableElements && !m_tableElements->empty())
    {
       tinyxml2::XMLElement* tableElementsElement = doc.NewElement("TableElements");
-      for (const auto& pTableElement : *m_pTableElements)
+      for (const auto& tableElement : *m_tableElements)
       {
-         if (pTableElement)
+         if (tableElement)
          {
             tinyxml2::XMLElement* elementNode = doc.NewElement("TableElement");
 
             tinyxml2::XMLElement* typeElement = doc.NewElement("TableElementType");
-            typeElement->SetText((int)pTableElement->GetTableElementType());
+            typeElement->SetText((int)tableElement->GetTableElementType());
             elementNode->InsertEndChild(typeElement);
 
             tinyxml2::XMLElement* numberElement = doc.NewElement("Number");
-            numberElement->SetText(pTableElement->GetNumber());
+            numberElement->SetText(tableElement->GetNumber());
             elementNode->InsertEndChild(numberElement);
 
-            if (!pTableElement->GetName().empty())
+            if (!tableElement->GetName().empty())
             {
                tinyxml2::XMLElement* nameElement = doc.NewElement("Name");
-               nameElement->SetText(pTableElement->GetName().c_str());
+               nameElement->SetText(tableElement->GetName().c_str());
                elementNode->InsertEndChild(nameElement);
             }
 
@@ -150,7 +150,7 @@ std::string Table::ToXml() const
       root->InsertEndChild(tableElementsElement);
    }
 
-   if (m_pAssignedStaticEffects)
+   if (m_assignedStaticEffects)
    {
       tinyxml2::XMLElement* staticEffectsElement = doc.NewElement("AssignedStaticEffects");
 
@@ -192,13 +192,13 @@ Table* Table::GetTableFromConfigXmlFile(const std::string& filename)
       if (std::filesystem::exists(filename))
       {
          std::string xml = FileReader::ReadFileToString(filename);
-         Table* pTable = FromXml(xml);
-         if (pTable)
+         Table* table = FromXml(xml);
+         if (table)
          {
-            pTable->SetConfigurationSource(TableConfigSourceEnum::TableConfigurationFile);
+            table->SetConfigurationSource(TableConfigSourceEnum::TableConfigurationFile);
             Log::Write(StringExtensions::Build("Table configuration loaded from: {0}", filename));
          }
-         return pTable;
+         return table;
       }
       else
       {
@@ -229,24 +229,24 @@ Table* Table::FromXml(const std::string& configXml)
       return nullptr;
    }
 
-   Table* pTable = new Table();
+   Table* table = new Table();
 
    tinyxml2::XMLElement* element = root->FirstChildElement("TableName");
    if (element && element->GetText())
-      pTable->SetTableName(element->GetText());
+      table->SetTableName(element->GetText());
 
    element = root->FirstChildElement("AddLedControlConfig");
    if (element)
    {
       bool value;
       if (element->QueryBoolText(&value) == tinyxml2::XML_SUCCESS)
-         pTable->SetAddLedControlConfig(value);
+         table->SetAddLedControlConfig(value);
    }
 
    element = root->FirstChildElement("Effects");
    if (element)
    {
-      pTable->GetEffects()->FromXml(element);
+      table->GetEffects()->FromXml(element);
    }
 
    element = root->FirstChildElement("TableElements");
@@ -275,14 +275,14 @@ Table* Table::FromXml(const std::string& configXml)
          if (nameElement && nameElement->GetText())
             name = nameElement->GetText();
 
-         TableElement* pTableElement = nullptr;
+         TableElement* tableElement = nullptr;
          if (!name.empty())
-            pTableElement = new TableElement(name, 0);
+            tableElement = new TableElement(name, 0);
          else
-            pTableElement = new TableElement(type, number, 0);
+            tableElement = new TableElement(type, number, 0);
 
-         if (pTableElement)
-            pTable->GetTableElements()->push_back(pTableElement);
+         if (tableElement)
+            table->GetTableElements()->push_back(tableElement);
 
          tableElementNode = tableElementNode->NextSiblingElement("TableElement");
       }
@@ -293,20 +293,20 @@ Table* Table::FromXml(const std::string& configXml)
    {
    }
 
-   pTable->SetConfigurationSource(TableConfigSourceEnum::TableConfigurationFile);
+   table->SetConfigurationSource(TableConfigSourceEnum::TableConfigurationFile);
    Log::Write("Table configuration loaded from XML");
-   return pTable;
+   return table;
 }
 
 void Table::Finish()
 {
-   if (m_pAssignedStaticEffects)
-      m_pAssignedStaticEffects->Finish();
-   if (m_pTableElements)
-      m_pTableElements->FinishAssignedEffects();
-   if (m_pEffects)
-      m_pEffects->Finish();
-   m_pPinball = nullptr;
+   if (m_assignedStaticEffects)
+      m_assignedStaticEffects->Finish();
+   if (m_tableElements)
+      m_tableElements->FinishAssignedEffects();
+   if (m_effects)
+      m_effects->Finish();
+   m_pinball = nullptr;
 }
 
 std::string Table::GetConfigXml() const { return ToXml(); }

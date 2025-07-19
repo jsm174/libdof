@@ -21,15 +21,16 @@ class TableElementData;
 class Pinball
 {
 public:
-   static Pinball* GetInstance();
+   Pinball();
+   ~Pinball();
 
-   void SetTable(Table* pTable) { m_pTable = pTable; }
-   Table* GetTable() { return m_pTable; }
-   void SetCabinet(Cabinet* pCabinet) { m_pCabinet = pCabinet; }
-   Cabinet* GetCabinet() { return m_pCabinet; }
-   AlarmHandler* GetAlarms() { return m_pAlarms; }
-   GlobalConfig* GetGlobalConfig() { return m_pGlobalConfig; }
-   const GlobalConfig* GetGlobalConfig() const { return m_pGlobalConfig; }
+   void SetTable(Table* table) { m_table = table; }
+   Table* GetTable() { return m_table; }
+   void SetCabinet(Cabinet* cabinet) { m_cabinet = cabinet; }
+   Cabinet* GetCabinet() { return m_cabinet; }
+   AlarmHandler* GetAlarms() { return m_alarms; }
+   GlobalConfig* GetGlobalConfig() { return m_globalConfig; }
+   const GlobalConfig* GetGlobalConfig() const { return m_globalConfig; }
    void Setup(const std::string& globalConfigFileName = "", const std::string& tableFilename = "", const std::string& romName = "");
    void Init();
    void Finish();
@@ -40,23 +41,18 @@ public:
    void ReceiveData(const TableElementData& tableElementData);
 
 private:
-   Pinball();
-   ~Pinball() { };
-
-   void SetAlarms(AlarmHandler* pAlarms) { m_pAlarms = pAlarms; }
-   void SetGlobalConfig(GlobalConfig* pGlobalConfig) { m_pGlobalConfig = pGlobalConfig; }
+   void SetAlarms(AlarmHandler* alarms) { m_alarms = alarms; }
+   void SetGlobalConfig(GlobalConfig* globalConfig) { m_globalConfig = globalConfig; }
 
    void InitMainThread();
    void FinishMainThread();
    void MainThreadDoIt();
 
-   static Pinball* m_pInstance;
-
-   Cabinet* m_pCabinet;
-   Table* m_pTable;
-   AlarmHandler* m_pAlarms;
-   GlobalConfig* m_pGlobalConfig;
-   InputQueue* m_pInputQueue;
+   Cabinet* m_cabinet;
+   Table* m_table;
+   AlarmHandler* m_alarms;
+   GlobalConfig* m_globalConfig;
+   InputQueue* m_inputQueue;
 
    std::thread m_mainThread;
    std::mutex m_mainThreadMutex;

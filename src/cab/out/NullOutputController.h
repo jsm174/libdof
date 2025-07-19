@@ -12,7 +12,7 @@ public:
    NullOutputController(int numberOfOutputs);
    virtual ~NullOutputController() = default;
 
-   virtual void Init(Cabinet* pCabinet) override;
+   virtual void Init(Cabinet* cabinet) override;
    virtual void Finish() override;
    virtual void Update() override;
    int GetNumberOfOutputs() const { return m_numberOfOutputs; }

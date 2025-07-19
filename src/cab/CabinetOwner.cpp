@@ -5,7 +5,7 @@ namespace DOF
 {
 
 CabinetOwner::CabinetOwner()
-   : m_pAlarms(nullptr)
+   : m_alarms(nullptr)
 {
 }
 

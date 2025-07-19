@@ -42,7 +42,6 @@ void TableOverrideSettingDevice::ParseOutputs()
 
    while (std::getline(ss, item, ','))
    {
-
       item.erase(0, item.find_first_not_of(" \t"));
       item.erase(item.find_last_not_of(" \t") + 1);
 

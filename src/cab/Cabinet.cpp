@@ -4,6 +4,8 @@
 #include "../general/StringExtensions.h"
 #include "../general/FileInfo.h"
 #include "../general/FileReader.h"
+#include "../general/CurveList.h"
+#include "../general/color/ColorList.h"
 #include "CabinetOutputList.h"
 #include "out/IAutoConfigOutputController.h"
 #include "out/OutputControllerList.h"
@@ -12,6 +14,7 @@
 #include "toys/hardware/LedStrip.h"
 #include "schedules/ScheduledSettings.h"
 #include "sequencer/SequentialOutputSettings.h"
+#include "overrides/TableOverrideSettings.h"
 #include <sstream>
 
 #ifdef __HIDAPI__
@@ -38,9 +41,11 @@ namespace DOF
 Cabinet::Cabinet()
 {
    m_autoConfigEnabled = true;
-   m_pOutputControllers = new OutputControllerList();
-   m_pOutputs = new CabinetOutputList(this);
-   m_pToys = new ToyList();
+   m_outputControllers = new OutputControllerList();
+   m_outputs = new CabinetOutputList(this);
+   m_toys = new ToyList();
+   m_curves = new CurveList();
+   m_colors = new ColorList();
 
 #ifdef __HIDAPI__
    hid_init();
@@ -52,6 +57,32 @@ Cabinet::Cabinet()
 
 Cabinet::~Cabinet()
 {
+   if (m_colors)
+   {
+      delete m_colors;
+      m_colors = nullptr;
+   }
+   if (m_curves)
+   {
+      delete m_curves;
+      m_curves = nullptr;
+   }
+   if (m_toys)
+   {
+      delete m_toys;
+      m_toys = nullptr;
+   }
+   if (m_outputs)
+   {
+      m_outputs->SetCabinet(nullptr); // Break cycle before deletion
+      delete m_outputs;
+      m_outputs = nullptr;
+   }
+   if (m_outputControllers)
+   {
+      delete m_outputControllers;
+      m_outputControllers = nullptr;
+   }
 #ifdef __HIDAPI__
    hid_exit();
 #endif
@@ -81,8 +112,19 @@ void Cabinet::AutoConfig()
    for (auto& item : items)
       item->AutoConfig(this);
 
+   for (auto& item : items)
+      delete item;
+
    Log::Write("Cabinet auto configuration finished");
 }
+
+ScheduledSettings* Cabinet::GetScheduledSettings() { return &ScheduledSettings::GetInstance(); }
+
+SequentialOutputSettings* Cabinet::GetSequentialOutputSettings() { return &SequentialOutputSettings::GetInstance(); }
+
+TableOverrideSettings* Cabinet::GetTableOverrideSettings() { return TableOverrideSettings::GetInstance(); }
+
+void Cabinet::SetTableOverrideSettings(TableOverrideSettings* tableOverrideSettings) { }
 
 std::string Cabinet::GetConfigXml()
 {
@@ -98,7 +140,7 @@ std::string Cabinet::GetConfigXml()
    return printer.CStr();
 }
 
-void Cabinet::SaveConfigXml(const std::string& filename)
+void Cabinet::SaveConfigXmlFile(const std::string& filename)
 {
    std::string xml = GetConfigXml();
    if (xml.empty())
@@ -195,36 +237,32 @@ bool Cabinet::TestCabinetConfigXmlFile(const std::string& filename)
    return false;
 }
 
-void Cabinet::Init(ICabinetOwner* pCabinetOwner)
+void Cabinet::Init(ICabinetOwner* cabinetOwner)
 {
    Log::Write("Initializing cabinet");
-   m_pOwner = pCabinetOwner;
-   m_pOutputControllers->Init(this);
-   m_pToys->Init(this);
+   m_owner = cabinetOwner;
+   m_outputControllers->Init(this);
+   m_toys->Init(this);
 
-   m_pOutputs->ConnectOutputsToControllers();
+   m_outputs->ConnectOutputsToControllers();
 
    Log::Write("Cabinet initialized");
 }
 
 void Cabinet::Update()
 {
-   m_pToys->UpdateOutputs();
-   m_pOutputControllers->Update();
+   m_toys->UpdateOutputs();
+   m_outputControllers->Update();
 }
 
 void Cabinet::Finish()
 {
    Log::Write("Finishing cabinet");
 
-   m_pToys->Finish();
-   m_pOutputControllers->Finish();
+   m_toys->Finish();
+   m_outputControllers->Finish();
    Log::Write("Cabinet finished");
 }
-
-ScheduledSettings* Cabinet::GetScheduledSettings() { return &ScheduledSettings::GetInstance(); }
-
-SequentialOutputSettings* Cabinet::GetSequentialOutputSettings() { return &SequentialOutputSettings::GetInstance(); }
 
 tinyxml2::XMLElement* Cabinet::ToXml(tinyxml2::XMLDocument& doc) const
 {
@@ -237,17 +275,31 @@ tinyxml2::XMLElement* Cabinet::ToXml(tinyxml2::XMLDocument& doc) const
    autoConfigElement->SetText(m_autoConfigEnabled ? "true" : "false");
    element->InsertEndChild(autoConfigElement);
 
-   if (m_pOutputControllers)
+   if (m_outputControllers)
    {
-      tinyxml2::XMLElement* controllersElement = m_pOutputControllers->ToXml(doc);
+      tinyxml2::XMLElement* controllersElement = m_outputControllers->ToXml(doc);
       if (controllersElement)
          element->InsertEndChild(controllersElement);
    }
 
-   if (m_pToys)
+   if (m_toys)
    {
       tinyxml2::XMLElement* toysElement = doc.NewElement("Toys");
       element->InsertEndChild(toysElement);
+   }
+
+   if (m_colors && !m_colors->Empty())
+   {
+      tinyxml2::XMLElement* colorsElement = m_colors->ToXml(doc);
+      if (colorsElement)
+         element->InsertEndChild(colorsElement);
+   }
+
+   if (m_curves && !m_curves->empty())
+   {
+      tinyxml2::XMLElement* curvesElement = m_curves->ToXml(doc);
+      if (curvesElement)
+         element->InsertEndChild(curvesElement);
    }
 
    ScheduledSettings* scheduledSettings = &ScheduledSettings::GetInstance();
@@ -264,6 +316,11 @@ tinyxml2::XMLElement* Cabinet::ToXml(tinyxml2::XMLDocument& doc) const
       tinyxml2::XMLElement* sequentialElement = sequentialSettings->ToXml(doc);
       if (sequentialElement)
          element->InsertEndChild(sequentialElement);
+   }
+
+   TableOverrideSettings* tableOverrideSettings = TableOverrideSettings::GetInstance();
+   if (tableOverrideSettings)
+   {
    }
 
    return element;
@@ -300,13 +357,30 @@ bool Cabinet::FromXml(const tinyxml2::XMLElement* element)
    }
 
    const tinyxml2::XMLElement* controllersElement = element->FirstChildElement("OutputControllers");
-   if (controllersElement && m_pOutputControllers)
+   if (controllersElement && m_outputControllers)
    {
-      m_pOutputControllers->FromXml(controllersElement);
+      m_outputControllers->FromXml(controllersElement);
+   }
+
+   const tinyxml2::XMLElement* colorsElement = element->FirstChildElement("ColorList");
+   if (colorsElement && m_colors)
+   {
+      m_colors->FromXml(colorsElement);
+   }
+
+   const tinyxml2::XMLElement* curvesElement = element->FirstChildElement("CurveList");
+   if (curvesElement && m_curves)
+   {
+      m_curves->FromXml(curvesElement);
+   }
+
+   const tinyxml2::XMLElement* tableOverrideElement = element->FirstChildElement("TableOverrideSettings");
+   if (tableOverrideElement)
+   {
    }
 
    const tinyxml2::XMLElement* toysElement = element->FirstChildElement("Toys");
-   if (toysElement && m_pToys)
+   if (toysElement && m_toys)
    {
       for (const tinyxml2::XMLElement* toyElement = toysElement->FirstChildElement(); toyElement; toyElement = toyElement->NextSiblingElement())
       {
@@ -318,7 +392,7 @@ bool Cabinet::FromXml(const tinyxml2::XMLElement* element)
                LedWizEquivalent* ledWizEquivalent = new LedWizEquivalent();
                if (ledWizEquivalent->FromXml(toyElement))
                {
-                  m_pToys->push_back(ledWizEquivalent);
+                  m_toys->push_back(ledWizEquivalent);
                }
                else
                {
@@ -330,7 +404,7 @@ bool Cabinet::FromXml(const tinyxml2::XMLElement* element)
                LedStrip* ledStrip = new LedStrip();
                if (ledStrip->FromXml(toyElement))
                {
-                  m_pToys->push_back(ledStrip);
+                  m_toys->push_back(ledStrip);
                }
                else
                {

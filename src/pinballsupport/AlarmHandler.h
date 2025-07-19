@@ -24,9 +24,9 @@ public:
    void Init(Pinball* pPinball);
    void Finish();
    void RegisterAlarm(int durationMs, AlarmCallback alarmHandler, bool dontUnregister = false);
-   void RegisterIntervalAlarm(int intervalMs, AlarmCallback intervalAlarmHandler);
+   void RegisterIntervalAlarm(int intervalMs, void* owner, AlarmCallback intervalAlarmHandler);
    void UnregisterAlarm(AlarmCallback alarmHandler);
-   void UnregisterIntervalAlarm(AlarmCallback intervalAlarmHandler);
+   void UnregisterIntervalAlarm(void* owner);
    TimePoint GetNextAlarmTime();
    bool ExecuteAlarms(TimePoint alarmTime);
 
@@ -50,11 +50,13 @@ private:
       int intervalMs;
       TimePoint nextAlarm;
       AlarmCallback intervalAlarmHandler;
+      void* owner;
 
-      IntervalAlarmSetting(int interval, AlarmCallback handler)
+      IntervalAlarmSetting(int interval, AlarmCallback handler, void* ownerPtr = nullptr)
          : intervalMs(interval)
          , intervalAlarmHandler(handler)
          , nextAlarm(std::chrono::steady_clock::now() + std::chrono::milliseconds(interval))
+         , owner(ownerPtr)
       {
       }
    };

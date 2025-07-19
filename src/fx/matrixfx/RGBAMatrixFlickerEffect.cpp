@@ -10,9 +10,7 @@ RGBAMatrixFlickerEffect::RGBAMatrixFlickerEffect()
 {
 }
 
-RGBAColor RGBAMatrixFlickerEffect::GetInactiveValue() { return m_inactiveColor; }
-
-RGBAColor RGBAMatrixFlickerEffect::GetActiveValue(int triggerValue)
+RGBAColor RGBAMatrixFlickerEffect::GetEffectValue(int triggerValue)
 {
    RGBAColor d;
 
@@ -21,7 +19,6 @@ RGBAColor RGBAMatrixFlickerEffect::GetActiveValue(int triggerValue)
    d.SetGreen(m_inactiveColor.GetGreen() + MathExtensions::Limit((int)((float)(m_activeColor.GetGreen() - m_inactiveColor.GetGreen()) * v / 255), 0, 255));
    d.SetBlue(m_inactiveColor.GetBlue() + MathExtensions::Limit((int)((float)(m_activeColor.GetBlue() - m_inactiveColor.GetBlue()) * v / 255), 0, 255));
    d.SetAlpha(m_inactiveColor.GetAlpha() + MathExtensions::Limit((int)((float)(m_activeColor.GetAlpha() - m_inactiveColor.GetAlpha()) * v / 255), 0, 255));
-
    return d;
 }
 

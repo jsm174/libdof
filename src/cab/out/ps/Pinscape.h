@@ -47,7 +47,7 @@ private:
    class Device
    {
    public:
-      Device(hid_device* pDevice, const std::string& path, const std::string& name, uint16_t vendorID, uint16_t productID, uint16_t version);
+      Device(hid_device* device, const std::string& path, const std::string& name, uint16_t vendorID, uint16_t productID, uint16_t version);
       ~Device();
 
       std::string ToString() const { return m_name + " (unit " + std::to_string(GetUnitNo()) + ")"; }
@@ -61,7 +61,7 @@ private:
       void UpdateOutputs(uint8_t* NewOutputValues);
 
    private:
-      hid_device* m_pDevice;
+      hid_device* m_device;
       std::string m_path;
       std::string m_name;
       uint16_t m_vendorID;
