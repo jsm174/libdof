@@ -36,7 +36,7 @@ private:
    TableOverrideSettings();
    ~TableOverrideSettings();
 
-   static TableOverrideSettings* m_pInstance;
+   static TableOverrideSettings* m_instance;
 
    std::string m_activeTableName;
    std::string m_activeRomName;

@@ -30,9 +30,9 @@ void NullOutputController::SetNumberOfOutputs(int numberOfOutputs)
    SetupOutputs();
 }
 
-void NullOutputController::Init(Cabinet* pCabinet)
+void NullOutputController::Init(Cabinet* cabinet)
 {
-   OutputControllerCompleteBase::Init(pCabinet);
+   OutputControllerCompleteBase::Init(cabinet);
    SetupOutputs();
    Log::Write(StringExtensions::Build("NullOutputController initialized with {0} outputs", std::to_string(m_numberOfOutputs)));
 }

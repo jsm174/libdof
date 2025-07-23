@@ -10,13 +10,13 @@ namespace DOF
 {
 
 AssignedEffect::AssignedEffect()
-   : m_pEffect(nullptr)
+   : m_effect(nullptr)
 {
    m_effectNameChanged = [this]() { TableElementEffect_EffectNameChanged(); };
 }
 
 AssignedEffect::AssignedEffect(const std::string& effectName)
-   : m_pEffect(nullptr)
+   : m_effect(nullptr)
    , m_effectName(effectName)
 {
    m_effectNameChanged = [this]() { TableElementEffect_EffectNameChanged(); };
@@ -32,11 +32,11 @@ void AssignedEffect::SetEffectName(const std::string& effectName)
    }
 }
 
-void AssignedEffect::TableElementEffect_EffectNameChanged() { m_pEffect = nullptr; }
+void AssignedEffect::TableElementEffect_EffectNameChanged() { m_effect = nullptr; }
 
 void AssignedEffect::ResolveEffectName(Table* table)
 {
-   m_pEffect = nullptr;
+   m_effect = nullptr;
 
    if (table == nullptr || m_effectName.empty())
       return;
@@ -59,7 +59,7 @@ void AssignedEffect::ResolveEffectName(Table* table)
    auto it = effects->find(m_effectName);
    if (it != effects->end())
    {
-      m_pEffect = it->second;
+      m_effect = it->second;
       Log::Debug(StringExtensions::Build("AssignedEffect: Resolved effect '{0}' successfully", m_effectName));
    }
    else
@@ -68,28 +68,28 @@ void AssignedEffect::ResolveEffectName(Table* table)
    }
 }
 
-void AssignedEffect::Trigger(TableElementData* tableElementData)
+void AssignedEffect::Trigger(TableElementData tableElementData)
 {
-   if (m_pEffect != nullptr && tableElementData != nullptr)
+   if (m_effect != nullptr)
    {
-      Log::Debug(StringExtensions::Build("AssignedEffect::Trigger: Triggering effect '{0}' for element {1}{2} with value {3}", m_pEffect->GetName(),
-         std::string(1, (char)tableElementData->m_tableElementType), std::to_string(tableElementData->m_number), std::to_string(tableElementData->m_value)));
+      Log::Debug(StringExtensions::Build("AssignedEffect::Trigger: Triggering effect '{0}' for element {1}{2} with value {3}", m_effect->GetName(),
+         std::string(1, (char)tableElementData.m_tableElementType), std::to_string(tableElementData.m_number), std::to_string(tableElementData.m_value)));
       try
       {
-         m_pEffect->Trigger(tableElementData);
-         Log::Debug(StringExtensions::Build("AssignedEffect::Trigger: Effect '{0}' completed", m_pEffect->GetName()));
+         m_effect->Trigger(&tableElementData);
+         Log::Debug(StringExtensions::Build("AssignedEffect::Trigger: Effect '{0}' completed", m_effect->GetName()));
       }
       catch (const std::exception& ex)
       {
-         Log::Exception(StringExtensions::Build("A exception occured when triggering effect {0} for table element {1} {2}. Effect assignement will be deactivated.", m_pEffect->GetName(),
-            std::string(1, (char)tableElementData->m_tableElementType), std::to_string(tableElementData->m_number) + " with value " + std::to_string(tableElementData->m_value)));
-         m_pEffect = nullptr;
+         Log::Exception(StringExtensions::Build("A exception occured when triggering effect {0} for table element {1} {2}. Effect assignement will be deactivated.", m_effect->GetName(),
+            std::string(1, (char)tableElementData.m_tableElementType), std::to_string(tableElementData.m_number) + " with value " + std::to_string(tableElementData.m_value)));
+         m_effect = nullptr;
       }
    }
 }
 
 void AssignedEffect::Init(Table* table) { ResolveEffectName(table); }
 
-void AssignedEffect::Finish() { m_pEffect = nullptr; }
+void AssignedEffect::Finish() { m_effect = nullptr; }
 
 }

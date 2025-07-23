@@ -16,8 +16,8 @@ public:
    ~AssignedEffectList() { Finish(); }
 
    void Add(const std::string& effectName);
-   void Trigger(TableElementData* pTableElementData);
-   void Init(Table* pTable);
+   void Trigger(TableElementData tableElementData);
+   void Init(Table* table);
    void Finish();
 };
 

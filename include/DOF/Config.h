@@ -41,7 +41,7 @@ private:
    Config();
    ~Config() { }
 
-   static Config* m_pInstance;
+   static Config* m_instance;
 
    std::string m_basePath;
    DOF_LogLevel m_logLevel;

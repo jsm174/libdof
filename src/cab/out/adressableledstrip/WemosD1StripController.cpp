@@ -142,8 +142,8 @@ void WemosD1MPStripController::SendLedstripData(const std::vector<uint8_t>& outp
 
       if (m_compressedData.size() < outputValues.size())
       {
-         int nbData = m_compressedData.size() / 4;
-         int nbLeds = outputValues.size() / 3;
+         int nbData = static_cast<int>(m_compressedData.size()) / 4;
+         int nbLeds = static_cast<int>(outputValues.size()) / 3;
 
          if (targetPosition + nbLeds > GetNumberOfLedsPerChannel() * 10)
          {

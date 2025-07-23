@@ -11,6 +11,7 @@ namespace DOF
 
 DelayEffect::DelayEffect()
    : m_delayMs(0)
+   , m_delayTableElementData()
 {
 }
 
@@ -22,7 +23,8 @@ void DelayEffect::Trigger(TableElementData* tableElementData)
    {
       if (m_delayMs > 0)
       {
-         m_afterDelayCallback = [this, tableElementData]() { this->AfterDelay(tableElementData); };
+         m_delayTableElementData = *tableElementData;
+         m_afterDelayCallback = [this]() { this->AfterDelay(&m_delayTableElementData); };
          m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_delayMs, m_afterDelayCallback, true);
       }
       else

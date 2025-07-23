@@ -34,9 +34,9 @@ public:
    void SetValue(int value);
 
 
-   AssignedEffectList* GetAssignedEffects() { return m_pAssignedEffects; }
-   void SetAssignedEffects(AssignedEffectList* pAssignedEffects) { m_pAssignedEffects = pAssignedEffects; }
-   TableElementData* GetTableElementData();
+   AssignedEffectList* GetAssignedEffects() { return m_assignedEffects; }
+   void SetAssignedEffects(AssignedEffectList* assignedEffects) { m_assignedEffects = assignedEffects; }
+   TableElementData GetTableElementData();
 
 
    std::string ToXml() const;
@@ -47,7 +47,7 @@ private:
    int m_number;
    std::string m_name;
    int m_value;
-   AssignedEffectList* m_pAssignedEffects;
+   AssignedEffectList* m_assignedEffects;
 };
 
 }

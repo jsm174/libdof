@@ -20,7 +20,7 @@ OutputControllerCompleteBase::OutputControllerCompleteBase()
 
 OutputControllerCompleteBase::~OutputControllerCompleteBase() { FinishUpdaterThread(); }
 
-void OutputControllerCompleteBase::Init(Cabinet* pCabinet)
+void OutputControllerCompleteBase::Init(Cabinet* cabinet)
 {
    bool settingsValid = false;
    try
@@ -120,7 +120,8 @@ void OutputControllerCompleteBase::SetupOutputs()
       }
    }
 
-   m_outputValues.resize(numberOfOutputs, 0);
+   if (static_cast<int>(m_outputValues.size()) != numberOfOutputs)
+      m_outputValues.resize(numberOfOutputs, 0);
    for (int i = 1; i <= numberOfOutputs; ++i)
    {
       IOutput* output = outputList->FindByNumber(i);

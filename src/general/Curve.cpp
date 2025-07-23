@@ -1,7 +1,10 @@
 #include "Curve.h"
 #include "MathExtensions.h"
+#include "StringExtensions.h"
 #include <algorithm>
 #include <cstring>
+#include <sstream>
+#include <tinyxml2/tinyxml2.h>
 
 namespace DOF
 {
@@ -109,6 +112,167 @@ void Curve::BuildCurve(CurveTypeEnum curveType)
       }
       break;
    }
+}
+
+std::string Curve::CurveTypeEnumToString(CurveTypeEnum curveType)
+{
+   switch (curveType)
+   {
+   case CurveTypeEnum::Linear: return "Linear";
+   case CurveTypeEnum::Linear0To224: return "Linear0To224";
+   case CurveTypeEnum::Linear0To192: return "Linear0To192";
+   case CurveTypeEnum::Linear0To160: return "Linear0To160";
+   case CurveTypeEnum::Linear0To128: return "Linear0To128";
+   case CurveTypeEnum::Linear0To96: return "Linear0To96";
+   case CurveTypeEnum::Linear0To64: return "Linear0To64";
+   case CurveTypeEnum::Linear0To32: return "Linear0To32";
+   case CurveTypeEnum::Linear0To16: return "Linear0To16";
+   case CurveTypeEnum::InvertedLinear: return "InvertedLinear";
+   case CurveTypeEnum::SwissLizardsLedCurve: return "SwissLizardsLedCurve";
+   default: return "Linear";
+   }
+}
+
+Curve::CurveTypeEnum Curve::StringToCurveTypeEnum(const std::string& str)
+{
+   std::string lowerStr = StringExtensions::ToLower(str);
+   if (lowerStr == "linear")
+      return CurveTypeEnum::Linear;
+   if (lowerStr == "linear0to224")
+      return CurveTypeEnum::Linear0To224;
+   if (lowerStr == "linear0to192")
+      return CurveTypeEnum::Linear0To192;
+   if (lowerStr == "linear0to160")
+      return CurveTypeEnum::Linear0To160;
+   if (lowerStr == "linear0to128")
+      return CurveTypeEnum::Linear0To128;
+   if (lowerStr == "linear0to96")
+      return CurveTypeEnum::Linear0To96;
+   if (lowerStr == "linear0to64")
+      return CurveTypeEnum::Linear0To64;
+   if (lowerStr == "linear0to32")
+      return CurveTypeEnum::Linear0To32;
+   if (lowerStr == "linear0to16")
+      return CurveTypeEnum::Linear0To16;
+   if (lowerStr == "invertedlinear")
+      return CurveTypeEnum::InvertedLinear;
+   if (lowerStr == "swisslizardsledcurve")
+      return CurveTypeEnum::SwissLizardsLedCurve;
+   return CurveTypeEnum::Linear;
+}
+
+Curve::CurveTypeEnum* Curve::GetCurveTypeEnum() const
+{
+   for (int enumVal = static_cast<int>(CurveTypeEnum::Linear); enumVal <= static_cast<int>(CurveTypeEnum::SwissLizardsLedCurve); enumVal++)
+   {
+      Curve testCurve(static_cast<CurveTypeEnum>(enumVal));
+      bool matches = true;
+      for (int i = 0; i < 256; i++)
+      {
+         if (m_data[i] != testCurve.m_data[i])
+         {
+            matches = false;
+            break;
+         }
+      }
+      if (matches)
+      {
+         return new CurveTypeEnum(static_cast<CurveTypeEnum>(enumVal));
+      }
+   }
+   return nullptr;
+}
+
+tinyxml2::XMLElement* Curve::ToXml(tinyxml2::XMLDocument& doc) const
+{
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+
+   if (!m_name.empty())
+   {
+      tinyxml2::XMLElement* nameElement = doc.NewElement("Name");
+      nameElement->SetText(m_name.c_str());
+      element->InsertEndChild(nameElement);
+   }
+
+   tinyxml2::XMLElement* curveElement = doc.NewElement("Curve");
+
+   CurveTypeEnum* curveType = GetCurveTypeEnum();
+   if (curveType != nullptr)
+   {
+      curveElement->SetText(CurveTypeEnumToString(*curveType).c_str());
+      delete curveType;
+   }
+   else
+   {
+      std::ostringstream oss;
+      for (int i = 0; i < 256; i++)
+      {
+         if (i > 0)
+            oss << ", ";
+         oss << static_cast<int>(m_data[i]);
+      }
+      curveElement->SetText(oss.str().c_str());
+   }
+
+   element->InsertEndChild(curveElement);
+   return element;
+}
+
+bool Curve::FromXml(const tinyxml2::XMLElement* element)
+{
+   if (!element)
+      return false;
+
+   const tinyxml2::XMLElement* nameElement = element->FirstChildElement("Name");
+   if (nameElement && nameElement->GetText())
+   {
+      m_name = nameElement->GetText();
+   }
+
+   const tinyxml2::XMLElement* curveElement = element->FirstChildElement("Curve");
+   if (curveElement && curveElement->GetText())
+   {
+      std::string curveData = curveElement->GetText();
+
+      if (curveData.find(',') == std::string::npos)
+      {
+         SetCurve(StringToCurveTypeEnum(curveData));
+      }
+      else
+      {
+         std::istringstream iss(curveData);
+         std::string token;
+         int index = 0;
+
+         while (std::getline(iss, token, ',') && index < 256)
+         {
+            token.erase(0, token.find_first_not_of(" \t"));
+            token.erase(token.find_last_not_of(" \t") + 1);
+
+            try
+            {
+               int value = std::stoi(token);
+               if (value < 0 || value > 255)
+               {
+                  return false;
+               }
+               m_data[index] = static_cast<uint8_t>(value);
+               index++;
+            }
+            catch (...)
+            {
+               return false;
+            }
+         }
+
+         if (index != 256)
+         {
+            return false;
+         }
+      }
+   }
+
+   return true;
 }
 
 }

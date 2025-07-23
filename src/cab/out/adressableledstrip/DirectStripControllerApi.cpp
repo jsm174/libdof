@@ -48,7 +48,7 @@ void DirectStripControllerApi::SetAndDisplayData(const std::vector<uint8_t>& dat
 {
    std::lock_guard<std::mutex> lock(m_ftdiLocker);
    SetData(data);
-   DisplayData(data.size());
+   DisplayData(static_cast<int>(data.size()));
 }
 
 void DirectStripControllerApi::SetData(const std::vector<uint8_t>& data)
@@ -77,7 +77,7 @@ void DirectStripControllerApi::SetAndDisplayPackedData(const std::vector<uint8_t
 {
    std::lock_guard<std::mutex> lock(m_ftdiLocker);
    SetPackedData(data);
-   DisplayData(data.size());
+   DisplayData(static_cast<int>(data.size()));
 }
 
 void DirectStripControllerApi::SetPackedData(const std::vector<uint8_t>& data)

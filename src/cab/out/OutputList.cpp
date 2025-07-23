@@ -7,7 +7,14 @@ namespace DOF
 
 OutputList::OutputList() { }
 
-OutputList::~OutputList() { clear(); }
+OutputList::~OutputList()
+{
+   for (IOutput* output : *this)
+   {
+      delete output;
+   }
+   clear();
+}
 
 void OutputList::Add(IOutput* output)
 {
@@ -35,6 +42,7 @@ bool OutputList::Remove(IOutput* output)
    {
       RemoveFromNameDict(output);
       erase(it);
+      delete output;
       return true;
    }
    return false;
@@ -153,6 +161,10 @@ bool OutputList::FromXml(const tinyxml2::XMLElement* element)
    if (!element)
       return false;
 
+   for (IOutput* output : *this)
+   {
+      delete output;
+   }
    clear();
    m_nameDict.clear();
    return true;

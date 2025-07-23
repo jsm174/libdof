@@ -28,7 +28,7 @@ public:
    virtual void RemoveConfigurationSetting(const std::string& key) = 0;
    virtual void ClearConfigurationSettings() = 0;
 
-   virtual void SetAlarms(AlarmHandler* pAlarms) = 0;
+   virtual void SetAlarms(AlarmHandler* alarms) = 0;
    virtual AlarmHandler* GetAlarms() = 0;
 };
 

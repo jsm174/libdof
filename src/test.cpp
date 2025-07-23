@@ -1,14 +1,15 @@
 //
 // libdof test app
 //
-// The following entries should be in
-// ~/.vpinball/directoutputconfig/directoutputconfig51.ini
+// The following entries should be in ~/.vpinball/directoutputconfig/directoutputconfig51.ini:
 //
 // ij_l7,0,0,0,0,0,0,0,L88 Blink fu500 fd550
-// test_basic,0,0,0,0,0,0,0,L88
-// test_fade,0,0,0,0,0,0,0,L88 fu500 fd550
-// test_blink,0,0,0,0,0,0,0,L88 Blink
-// test_both,0,0,0,0,0,0,0,L88 Blink fu500 fd550
+// tna,0,0,0,0,0,0,0,E140 Blink fu500 fd600
+//
+// The following entries should be in ~/.vpinball/directoutputconfig/directoutputconfig30.ini:
+//
+// ij_l7,S10 Red AT0 AH12 L0/S20 Red AT0 AH12 L1/S24 Red AT0 AH12 L2/S52 Orange AT0 AH12 L3/S53 Red AT0 AH12 L4/W17 Orange AT0 AH12 L5/W51 Red AT0 AH12 L6/W52 Red AT0 AH12 L7/W53 Red AT0 AH12 L8/W75 Yellow AT0 AH12 L9/W76 Yellow AT0 AH12 L10/W77 Yellow AT0 AH12 L11/W78 Yellow AT0 AH12 L12/W88 Yellow AT85  AH15 FU250 FD270 BLINK 500,S9 Red AT0 AH12 L0/S51 Green AT0 AH12 L1/S53 Red AT0 AH12 L2/W16 Orange AT0 AH12 L3/W61 Red AT0 AH12 L4/W62 Red AT0 AH12 L5/W63 Red AT0 AH12 L6
+// tna,E144 Yellow AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E146 Blue AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E147 Red F100 AFDEN5 AFMIN200 AFMAX300/E148 Green AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E149 Purple AL0 AT0 AW100 AH100 AFDEN50 AFMIN500 AFMAX1000/E105 Red 50 AH100 ADU AS300/E107 White 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E107 White 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E116 Red 700 AT85 AH15 AFDEN40 AFMIN100 AFMAX160/E125 White 50 AH100 ADU AS300/E111 Red 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E111 Red 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E112 Purple L13 AT0 AFDEN15 AFMIN10 AFMAX20/E179 Red 60 AW100 AH100 ADD AS300/E150|E151|E152|E153 Yellow 40 AT15 AL0 AH10 AW100 AS400 ADU L25/E150|E151|E152|E153 Yellow 40 AT25 AL0 AH10 AW100 AS400 ADD L25,E144 Yellow AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E146 Blue AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E147 Red F100 AFDEN5 AFMIN200 AFMAX300/E148 Green AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E149 Purple AL0 AT0 AW100 AH100 AFDEN50 AFMIN500 AFMAX1000/E103 Red 50 AH100 ADU AS300/E116 Red 700 AT85 AH15 AFDEN40 AFMIN100 AFMAX160/E108 White 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E108 White 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E110 Red 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E110 Red 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E112 Purple L13 AT0 AFDEN15 AFMIN10 AFMAX20/E179 Red 60 AW100 AH100 ADD AS300/E150|E151|E152|E153 Yellow 40 AT15 AL0 AH10 AW100 AS400 ADU L25/E150|E151|E152|E153 Yellow 40 AT25 AL0 AH10 AW100 AS400 ADD L25
 //
 
 #include "DOF/DOF.h"
@@ -32,12 +33,11 @@ struct TestRom
    std::string description;
 };
 
-std::vector<TestRom> testRoms = { { "ij_l7", "IJ - L88 Blink fu500 fd550" }, { "test_basic", "Basic L88 - no effects" }, { "test_fade", "L88 fu500 fd550 - fade only" },
-   { "test_blink", "L88 Blink - blink only" }, { "test_both", "L88 Blink fu500 fd550 - blink + fade" } };
+std::vector<TestRom> testRoms = { { "ij_l7", "" }, { "tna", "" } };
 
 void LIBDOFCALLBACK LogCallback(DOF_LogLevel logLevel, const char* format, va_list args)
 {
-   const char* levelStr = "";
+   const char* levelStr;
    switch (logLevel)
    {
    case DOF_LogLevel_WARN: levelStr = "[WARN] "; break;
@@ -69,8 +69,13 @@ void Log(const char* format, ...)
    va_end(args);
 }
 
-void RunDOFTests(DOF::DOF* pDof)
+void RunIJTests(DOF::DOF* pDof)
 {
+   Log("========================================");
+   Log("Testing ROM: ij_l7 - Indiana Jones L7");
+   Log("========================================");
+   pDof->Init("", "ij_l7");
+
    Log("=== DOF Protocol Test Scenarios ===");
 
    Log("1. L88 lamp test - 5 seconds on");
@@ -93,54 +98,202 @@ void RunDOFTests(DOF::DOF* pDof)
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
    Log("=== DOF Protocol Tests Complete ===");
+   pDof->Finish();
 }
 
-void RunL88Tests(DOF::DOF* pDof)
+void RunTNATests(DOF::DOF* pDof)
 {
-   Log("=== L88 Test Scenarios ===");
+   Log("========================================");
+   Log("Testing ROM: tna - Total Nuclear Annihilation");
+   Log("========================================");
+   pDof->Init("", "tna");
 
-   Log("1. Basic L88 on/off test");
-   Log("   L88 1 (should fade up + start blinking)...");
-   pDof->DataReceive('L', 88, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+   Log("=== TNA Matrix Effects Test Scenarios ===");
 
-   Log("   L88 0 (should fade down + stop blinking)...");
-   pDof->DataReceive('L', 88, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+   Log("1. Run E149 for 5 seconds ON");
 
-   Log("2. Rapid toggle test");
-   for (int i = 0; i < 3; i++)
-   {
-      Log("   L88 1...");
-      pDof->DataReceive('L', 88, 1);
-      std::this_thread::sleep_for(std::chrono::milliseconds(300));
+   pDof->DataReceive('E', 149, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000 * 5));
 
-      Log("   L88 0...");
-      pDof->DataReceive('L', 88, 0);
-      std::this_thread::sleep_for(std::chrono::milliseconds(300));
-   }
+   Log("2. Run E149 for 5 seconds OFF");
 
-   Log("3. Value comparison test");
-   Log("   L88 1 (should convert to 255)...");
-   pDof->DataReceive('L', 88, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   pDof->DataReceive('E', 149, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000 * 5));
 
-   Log("   L88 255 (direct value)...");
-   pDof->DataReceive('L', 88, 255);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   Log("3. Run sample of events");
 
-   Log("   L88 0 (off)...");
-   pDof->DataReceive('L', 88, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   pDof->DataReceive('E', 140, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(2));
+   pDof->DataReceive('E', 146, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(0));
+   pDof->DataReceive('E', 149, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1));
+   pDof->DataReceive('E', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(2351));
+   pDof->DataReceive('E', 140, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(716));
+   pDof->DataReceive('E', 149, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(2));
+   pDof->DataReceive('E', 146, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(0));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3));
+   pDof->DataReceive('E', 196, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(0));
+   pDof->DataReceive('E', 196, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(2));
+   pDof->DataReceive('E', 146, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(0));
+   pDof->DataReceive('E', 1, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(494));
+   pDof->DataReceive('E', 146, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1));
+   pDof->DataReceive('E', 145, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(0));
+   pDof->DataReceive('E', 145, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(17));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(14));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(31));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(31));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(29));
+   pDof->DataReceive('E', 112, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(0));
+   pDof->DataReceive('E', 112, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(0));
+   pDof->DataReceive('C', 1, 110);
+   std::this_thread::sleep_for(std::chrono::milliseconds(17));
+   pDof->DataReceive('C', 1, 110);
+   std::this_thread::sleep_for(std::chrono::milliseconds(43));
+   pDof->DataReceive('C', 1, 110);
+   std::this_thread::sleep_for(std::chrono::milliseconds(45));
+   pDof->DataReceive('C', 1, 110);
+   std::this_thread::sleep_for(std::chrono::milliseconds(2));
+   pDof->DataReceive('E', 112, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(0));
+   pDof->DataReceive('E', 112, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(0));
+   pDof->DataReceive('C', 1, 220);
 
-   Log("4. Blink timing test (3 seconds)");
-   pDof->DataReceive('L', 88, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-
-   pDof->DataReceive('L', 88, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-   Log("=== L88 Tests Complete ===");
+   Log("=== TNA Matrix Effects Tests Complete ===");
+   pDof->Finish();
 }
 
 std::string GetDefaultBasePath()
@@ -224,6 +377,8 @@ int main(int argc, const char* argv[])
 
    Log("Using base path: %s", basePath.c_str());
 
+   DOF::DOF* pDof = new DOF::DOF();
+
    if (!romName.empty())
    {
       bool found = false;
@@ -232,21 +387,10 @@ int main(int argc, const char* argv[])
          if (testRom.name == romName)
          {
             found = true;
-            Log("========================================");
-            Log("Testing ROM: %s - %s", testRom.name.c_str(), testRom.description.c_str());
-            Log("========================================");
-
-            DOF::DOF* pDof = new DOF::DOF();
-            pDof->Init("", testRom.name.c_str());
-
             if (testRom.name == "ij_l7")
-               RunDOFTests(pDof);
-            else
-               RunL88Tests(pDof);
-
-            Log("Shutting down %s...", testRom.name.c_str());
-            pDof->Finish();
-            delete pDof;
+               RunIJTests(pDof);
+            else if (testRom.name == "tna")
+               RunTNATests(pDof);
             break;
          }
       }
@@ -262,32 +406,20 @@ int main(int argc, const char* argv[])
                std::cout << ", ";
          }
          std::cout << std::endl;
+         delete pDof;
          return 1;
       }
    }
    else
    {
-      for (const auto& testRom : testRoms)
-      {
-         Log("========================================");
-         Log("Testing ROM: %s - %s", testRom.name.c_str(), testRom.description.c_str());
-         Log("========================================");
-
-         DOF::DOF* pDof = new DOF::DOF();
-         pDof->Init("", testRom.name.c_str());
-
-         if (testRom.name == "ij_l7")
-            RunDOFTests(pDof);
-         else
-            RunL88Tests(pDof);
-
-         Log("Shutting down %s...", testRom.name.c_str());
-         pDof->Finish();
-         delete pDof;
-      }
-
-      Log("All tests completed!");
+      RunIJTests(pDof);
+      RunTNATests(pDof);
    }
+
+   Log("Shutting down...");
+   delete pDof;
+
+   Log("All tests completed!");
 
    return 0;
 }

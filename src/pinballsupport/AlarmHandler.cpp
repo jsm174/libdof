@@ -124,28 +124,28 @@ bool AlarmHandler::ProcessAlarms(TimePoint alarmTime)
    return alarmsExecuted;
 }
 
-void AlarmHandler::RegisterIntervalAlarm(int intervalMs, AlarmCallback intervalAlarmHandler)
+void AlarmHandler::RegisterIntervalAlarm(int intervalMs, void* owner, AlarmCallback intervalAlarmHandler)
 {
    std::lock_guard<std::recursive_mutex> lock(m_intervalAlarmMutex);
 
-   UnregisterIntervalAlarm(intervalAlarmHandler);
-   m_intervalAlarmList.emplace_back(intervalMs, intervalAlarmHandler);
+   UnregisterIntervalAlarm(owner);
+   m_intervalAlarmList.emplace_back(intervalMs, intervalAlarmHandler, owner);
 
-   Log::Debug(StringExtensions::Build(
-      "AlarmHandler::RegisterIntervalAlarm: interval={0}ms, totalIntervalAlarms={1}", std::to_string(intervalMs), std::to_string(static_cast<int>(m_intervalAlarmList.size()))));
+   Log::Debug(StringExtensions::Build("AlarmHandler::RegisterIntervalAlarm: interval={0}ms, owner={1}, totalIntervalAlarms={2}", std::to_string(intervalMs), std::to_string((uintptr_t)owner),
+      std::to_string(static_cast<int>(m_intervalAlarmList.size()))));
 }
 
-void AlarmHandler::UnregisterIntervalAlarm(AlarmCallback intervalAlarmHandler)
+void AlarmHandler::UnregisterIntervalAlarm(void* owner)
 {
    std::lock_guard<std::recursive_mutex> lock(m_intervalAlarmMutex);
 
    auto it = m_intervalAlarmList.begin();
    while (it != m_intervalAlarmList.end())
    {
-      if (it->intervalAlarmHandler.target<void (*)()>() == intervalAlarmHandler.target<void (*)()>())
+      if (it->owner == owner)
       {
-         Log::Debug(
-            StringExtensions::Build("AlarmHandler::UnregisterIntervalAlarm: removing interval alarm, remaining={0}", std::to_string(static_cast<int>(m_intervalAlarmList.size() - 1))));
+         Log::Debug(StringExtensions::Build("AlarmHandler::UnregisterIntervalAlarm: removing alarm for owner={0}, remaining={1}", std::to_string((uintptr_t)owner),
+            std::to_string(static_cast<int>(m_intervalAlarmList.size() - 1))));
          it = m_intervalAlarmList.erase(it);
       }
       else
@@ -172,33 +172,59 @@ AlarmHandler::TimePoint AlarmHandler::GetNextIntervalAlarm()
 
 bool AlarmHandler::ProcessIntervalAlarms(TimePoint alarmTime)
 {
-   std::lock_guard<std::recursive_mutex> lock(m_intervalAlarmMutex);
+   std::vector<AlarmCallback> toExecute;
+   std::vector<size_t> toUpdateIndices;
 
-   bool alarmsExecuted = false;
-
-   for (auto& intervalAlarm : m_intervalAlarmList)
    {
-      if (intervalAlarm.nextAlarm <= alarmTime)
-      {
-         try
-         {
-            Log::Debug("AlarmHandler::ProcessIntervalAlarms: calling interval alarm function");
-            intervalAlarm.intervalAlarmHandler();
-            Log::Debug("AlarmHandler::ProcessIntervalAlarms: interval alarm function completed");
-            alarmsExecuted = true;
-         }
-         catch (...)
-         {
-            Log::Debug("AlarmHandler::ProcessIntervalAlarms: interval alarm function threw exception");
-         }
+      std::lock_guard<std::recursive_mutex> lock(m_intervalAlarmMutex);
 
-         if (intervalAlarm.nextAlarm + std::chrono::milliseconds(intervalAlarm.intervalMs) <= alarmTime)
+      for (size_t i = 0; i < m_intervalAlarmList.size(); ++i)
+      {
+         if (m_intervalAlarmList[i].nextAlarm <= alarmTime)
          {
-            intervalAlarm.nextAlarm = alarmTime + std::chrono::milliseconds(1);
+            toExecute.push_back(m_intervalAlarmList[i].intervalAlarmHandler);
+            toUpdateIndices.push_back(i);
          }
-         else
+      }
+   }
+
+   bool alarmsExecuted = !toExecute.empty();
+
+   if (alarmsExecuted)
+   {
+      Log::Debug(StringExtensions::Build("AlarmHandler::ProcessIntervalAlarms: executing {0} interval alarms", std::to_string(static_cast<int>(toExecute.size()))));
+   }
+
+   for (const auto& alarmHandler : toExecute)
+   {
+      try
+      {
+         Log::Debug("AlarmHandler::ProcessIntervalAlarms: calling interval alarm function");
+         alarmHandler();
+         Log::Debug("AlarmHandler::ProcessIntervalAlarms: interval alarm function completed");
+      }
+      catch (...)
+      {
+         Log::Debug("AlarmHandler::ProcessIntervalAlarms: interval alarm function threw exception");
+      }
+   }
+
+   {
+      std::lock_guard<std::recursive_mutex> lock(m_intervalAlarmMutex);
+
+      for (size_t i : toUpdateIndices)
+      {
+         if (i < m_intervalAlarmList.size())
          {
-            intervalAlarm.nextAlarm = intervalAlarm.nextAlarm + std::chrono::milliseconds(intervalAlarm.intervalMs);
+            auto& intervalAlarm = m_intervalAlarmList[i];
+            if (intervalAlarm.nextAlarm + std::chrono::milliseconds(intervalAlarm.intervalMs) <= alarmTime)
+            {
+               intervalAlarm.nextAlarm = alarmTime + std::chrono::milliseconds(1);
+            }
+            else
+            {
+               intervalAlarm.nextAlarm = intervalAlarm.nextAlarm + std::chrono::milliseconds(intervalAlarm.intervalMs);
+            }
          }
       }
    }

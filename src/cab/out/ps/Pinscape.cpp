@@ -189,11 +189,11 @@ void Pinscape::FindDevices()
                hid_device* pHandle = hid_open_path(pCurrentDevice->path);
                if (pHandle)
                {
-                  Device* pDevice = new Device(pHandle, pCurrentDevice->path, productName, pCurrentDevice->vendor_id, pCurrentDevice->product_id, pCurrentDevice->release_number);
+                  Device* device = new Device(pHandle, pCurrentDevice->path, productName, pCurrentDevice->vendor_id, pCurrentDevice->product_id, pCurrentDevice->release_number);
 
-                  Log::Write(StringExtensions::Build("Found Pinscape device: {0} (path={1})", pDevice->ToString(), pCurrentDevice->path));
+                  Log::Write(StringExtensions::Build("Found Pinscape device: {0} (path={1})", device->ToString(), pCurrentDevice->path));
 
-                  s_devices.push_back(pDevice);
+                  s_devices.push_back(device);
                }
             }
          }
@@ -270,16 +270,16 @@ bool Pinscape::FromXml(const tinyxml2::XMLElement* element)
 std::vector<void*> Pinscape::GetAllDevices()
 {
    std::vector<void*> devicePointers;
-   for (Device* pDevice : s_devices)
+   for (Device* device : s_devices)
    {
-      devicePointers.push_back(static_cast<void*>(pDevice));
+      devicePointers.push_back(static_cast<void*>(device));
    }
    return devicePointers;
 }
 
-Pinscape::Device::Device(hid_device* pDevice, const std::string& path, const std::string& name, uint16_t vendorID, uint16_t productID, uint16_t version)
+Pinscape::Device::Device(hid_device* device, const std::string& path, const std::string& name, uint16_t vendorID, uint16_t productID, uint16_t version)
 {
-   m_pDevice = pDevice;
+   m_device = device;
    m_path = path;
    m_name = name;
    m_vendorID = vendorID;
@@ -316,7 +316,7 @@ Pinscape::Device::Device(hid_device* pDevice, const std::string& path, const std
    }
 }
 
-Pinscape::Device::~Device() { hid_close(m_pDevice); }
+Pinscape::Device::~Device() { hid_close(m_device); }
 
 bool Pinscape::Device::IsLedWizEmulator(int unitNum) { return (uint16_t)m_vendorID == 0xFAFA && m_productID == 0x00F1 + unitNum; }
 
@@ -324,7 +324,7 @@ bool Pinscape::Device::ReadUSB(uint8_t* pBuf)
 {
    memset(pBuf, 0x00, 15);
 
-   int actual = hid_read(m_pDevice, pBuf + 1, 14);
+   int actual = hid_read(m_device, pBuf + 1, 14);
    if (actual != 14)
    {
       Log::Write("Pinscape Controller USB error reading from device: not all bytes received");
@@ -349,7 +349,7 @@ bool Pinscape::Device::SpecialRequest(uint8_t id)
 
 bool Pinscape::Device::WriteUSB(uint8_t* pBuf)
 {
-   int actual = hid_write(m_pDevice, pBuf, 9);
+   int actual = hid_write(m_device, pBuf, 9);
    if (actual != 9)
    {
       Log::Write("Pinscape Controller USB error sending request: not all bytes sent");

@@ -65,8 +65,8 @@ std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std:
    {
       try
       {
-         if (FileInfo(tableFilename).Directory()->Exists())
-            lookupPaths.push_back(FileInfo(tableFilename).Directory()->FullName());
+         if (FileInfo(tableFilename).Directory().Exists())
+            lookupPaths.push_back(FileInfo(tableFilename).Directory().FullName());
       }
 
       catch (...)
@@ -74,9 +74,14 @@ std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std:
       }
    }
 
-   if (GetGlobalConfigDirectory() != nullptr)
+   try
    {
-      lookupPaths.push_back(GetGlobalConfigDirectory()->FullName());
+      DirectoryInfo gcd = GetGlobalConfigDirectory();
+      if (gcd.Exists())
+         lookupPaths.push_back(gcd.FullName());
+   }
+   catch (...)
+   {
    }
 
    lookupPaths.push_back(std::filesystem::current_path().string());
@@ -151,7 +156,7 @@ FileInfo* GlobalConfig::GetTableMappingFile(const std::string& tableFilename) co
    if (iniFilesDict.size() > 0)
    {
       auto [firstKey, firstValue] = *iniFilesDict.begin();
-      return new FileInfo(firstValue.Directory()->GetFiles("tablemappings.*").front());
+      return new FileInfo(firstValue.Directory().GetFiles("tablemappings.*").front().FullName());
    }
    else
    {
@@ -168,13 +173,13 @@ FileInfo* GlobalConfig::GetShapeDefintionFile(const std::string& tableFilename, 
    if (iniFilesDict.size() > 0)
    {
       auto [firstKey, firstValue] = *iniFilesDict.begin();
-      FileInfo* pFI = new FileInfo(firstValue.Directory()->FullName() + PATH_SEPARATOR_CHAR + "DirectOutputShapes.xml");
-      if (pFI->Exists())
-         return pFI;
+      FileInfo* fi = new FileInfo(firstValue.Directory().FullName() + PATH_SEPARATOR_CHAR + "DirectOutputShapes.xml");
+      if (fi->Exists())
+         return fi;
    }
-   FileInfo* pFII = FilePattern(std::string("{DllDir}") + PATH_SEPARATOR_CHAR + "DirectOutputShapes.xml").GetFirstMatchingFile(GetReplaceValuesDictionary(tableFilename, romName));
-   if (pFII != nullptr && pFII->Exists())
-      return pFII;
+   FileInfo* fii = FilePattern(std::string("{DllDir}") + PATH_SEPARATOR_CHAR + "DirectOutputShapes.xml").GetFirstMatchingFile(GetReplaceValuesDictionary(tableFilename, romName));
+   if (fii != nullptr && fii->Exists())
+      return fii;
 
    return nullptr;
 }
@@ -186,12 +191,16 @@ FileInfo* GlobalConfig::GetCabinetConfigFile() const
    return nullptr;
 }
 
-DirectoryInfo* GlobalConfig::GetCabinetConfigDirectory() const
+DirectoryInfo GlobalConfig::GetCabinetConfigDirectory() const
 {
-   FileInfo* pCC = GetCabinetConfigFile();
-   if (pCC != nullptr)
-      return pCC->Directory();
-   return nullptr;
+   FileInfo* cc = GetCabinetConfigFile();
+   if (cc != nullptr)
+   {
+      DirectoryInfo result = cc->Directory();
+      delete cc;
+      return result;
+   }
+   return DirectoryInfo("");
 }
 
 FileInfo* GlobalConfig::GetTableConfigFile(const std::string& fullTableFilename) const
@@ -225,10 +234,16 @@ std::string GlobalConfig::GetLogFilename(const std::string& tableFilename, const
 std::unordered_map<std::string, std::string> GlobalConfig::GetReplaceValuesDictionary(const std::string& tableFilename, const std::string& romName) const
 {
    std::unordered_map<std::string, std::string> d;
-   if (GetGlobalConfigFile() != nullptr)
+   FileInfo* globalConfigFile = GetGlobalConfigFile();
+   if (globalConfigFile != nullptr)
    {
-      d.emplace("GlobalConfigDirectory", GetGlobalConfigDirectory()->FullName());
-      d.emplace("GlobalConfigDir", GetGlobalConfigDirectory()->FullName());
+      DirectoryInfo gcd = GetGlobalConfigDirectory();
+      if (gcd.Exists())
+      {
+         d.emplace("GlobalConfigDirectory", gcd.FullName());
+         d.emplace("GlobalConfigDir", gcd.FullName());
+      }
+      delete globalConfigFile;
    }
 
    std::string executablePath;
@@ -273,27 +288,29 @@ std::unordered_map<std::string, std::string> GlobalConfig::GetReplaceValuesDicti
    }
 
    FileInfo fi(executablePath);
-   d.emplace("DllDirectory", fi.Directory()->FullName());
-   d.emplace("DllDir", fi.Directory()->FullName());
-   d.emplace("AssemblyDirectory", fi.Directory()->FullName());
-   d.emplace("AssemblyDir", fi.Directory()->FullName());
+   DirectoryInfo dir = fi.Directory();
+   d.emplace("DllDirectory", dir.FullName());
+   d.emplace("DllDir", dir.FullName());
+   d.emplace("AssemblyDirectory", dir.FullName());
+   d.emplace("AssemblyDir", dir.FullName());
 
    std::string installFolder = DirectOutputHandler::GetInstallFolder();
    if (!installFolder.empty())
    {
       d.emplace("InstallDir", installFolder);
-      d.emplace("BinDir", fi.Directory()->FullName());
+      d.emplace("BinDir", dir.FullName());
    }
 
    if (!StringExtensions::IsNullOrWhiteSpace(tableFilename))
    {
       FileInfo fi(tableFilename);
-      if (fi.Directory()->Exists())
+      DirectoryInfo tableDir = fi.Directory();
+      if (tableDir.Exists())
       {
-         d.emplace("TableDirectory", fi.Directory()->FullName());
-         d.emplace("TableDir", fi.Directory()->FullName());
-         d.emplace("TableDirectoryName", fi.Directory()->Name());
-         d.emplace("TableDirName", fi.Directory()->Name());
+         d.emplace("TableDirectory", tableDir.FullName());
+         d.emplace("TableDir", tableDir.FullName());
+         d.emplace("TableDirectoryName", tableDir.Name());
+         d.emplace("TableDirName", tableDir.Name());
       }
       d.emplace("TableName", StringExtensions::GetFileNameWithoutExtension(fi.FullName()));
    }
@@ -306,18 +323,20 @@ std::unordered_map<std::string, std::string> GlobalConfig::GetReplaceValuesDicti
 
 std::string GlobalConfig::GetGlobalConfigDirectoryName() const
 {
-   DirectoryInfo* pDI = GetGlobalConfigDirectory();
-   if (pDI == nullptr)
-      return nullptr;
-   return pDI->FullName();
+   DirectoryInfo di = GetGlobalConfigDirectory();
+   if (di.Exists())
+      return di.FullName();
+   return "";
 }
 
-DirectoryInfo* GlobalConfig::GetGlobalConfigDirectory() const
+DirectoryInfo GlobalConfig::GetGlobalConfigDirectory() const
 {
-   FileInfo* pFI = GetGlobalConfigFile();
-   if (pFI == nullptr)
-      return nullptr;
-   return pFI->Directory();
+   FileInfo* fi = GetGlobalConfigFile();
+   if (fi == nullptr)
+      return DirectoryInfo("");
+   DirectoryInfo result = fi->Directory();
+   delete fi;
+   return result;
 }
 
 FileInfo* GlobalConfig::GetGlobalConfigFile() const
@@ -335,10 +354,10 @@ GlobalConfig* GlobalConfig::GetGlobalConfigFromConfigXmlFile(const std::string& 
       {
          std::string xml = FileReader::ReadFileToString(globalConfigFileName);
 
-         GlobalConfig* pGlobalConfig = FromXml(xml);
-         if (pGlobalConfig != nullptr)
-            pGlobalConfig->SetGlobalConfigFilename(globalConfigFileName);
-         return pGlobalConfig;
+         GlobalConfig* globalConfig = FromXml(xml);
+         if (globalConfig != nullptr)
+            globalConfig->SetGlobalConfigFilename(globalConfigFileName);
+         return globalConfig;
       }
       else
       {
@@ -371,8 +390,8 @@ void GlobalConfig::SaveGlobalConfig(const std::string& globalConfigFilename)
       std::filesystem::copy_file(p, p.parent_path() / backupName);
    }
 
-   DirectoryInfo* pGCDirectory = FileInfo(gcFileName).Directory();
-   pGCDirectory->CreateDirectoryPath();
+   DirectoryInfo gcDirectory = FileInfo(gcFileName).Directory();
+   gcDirectory.CreateDirectoryPath();
 
    StringExtensions::WriteToFile(GetGlobalConfigXml(), gcFileName, false);
 }
@@ -466,14 +485,14 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
       return nullptr;
    }
 
-   GlobalConfig* pGlobalConfig = new GlobalConfig();
+   GlobalConfig* globalConfig = new GlobalConfig();
 
    tinyxml2::XMLElement* element = root->FirstChildElement("LedWizDefaultMinCommandIntervalMs");
    if (element && element->GetText())
    {
       int value;
       if (element->QueryIntText(&value) == tinyxml2::XML_SUCCESS)
-         pGlobalConfig->SetLedWizDefaultMinCommandIntervalMs(value);
+         globalConfig->SetLedWizDefaultMinCommandIntervalMs(value);
    }
 
    element = root->FirstChildElement("LedControlMinimumEffectDurationMs");
@@ -481,7 +500,7 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    {
       int value;
       if (element->QueryIntText(&value) == tinyxml2::XML_SUCCESS)
-         pGlobalConfig->SetLedControlMinimumEffectDurationMs(value);
+         globalConfig->SetLedControlMinimumEffectDurationMs(value);
    }
 
    element = root->FirstChildElement("LedControlMinimumRGBEffectDurationMs");
@@ -489,7 +508,7 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    {
       int value;
       if (element->QueryIntText(&value) == tinyxml2::XML_SUCCESS)
-         pGlobalConfig->SetLedControlMinimumRGBEffectDurationMs(value);
+         globalConfig->SetLedControlMinimumRGBEffectDurationMs(value);
    }
 
    element = root->FirstChildElement("PacLedDefaultMinCommandIntervalMs");
@@ -497,20 +516,20 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    {
       int value;
       if (element->QueryIntText(&value) == tinyxml2::XML_SUCCESS)
-         pGlobalConfig->SetPacLedDefaultMinCommandIntervalMs(value);
+         globalConfig->SetPacLedDefaultMinCommandIntervalMs(value);
    }
 
    element = root->FirstChildElement("IniFilesPath");
    if (element && element->GetText())
-      pGlobalConfig->SetIniFilesPath(element->GetText());
+      globalConfig->SetIniFilesPath(element->GetText());
 
    element = root->FirstChildElement("ShapeDefintionFilePattern");
    if (element && element->GetText())
-      pGlobalConfig->SetShapeDefintionFilePattern(element->GetText());
+      globalConfig->SetShapeDefintionFilePattern(element->GetText());
 
    element = root->FirstChildElement("CabinetConfigFilePattern");
    if (element && element->GetText())
-      pGlobalConfig->SetCabinetConfigFilePattern(element->GetText());
+      globalConfig->SetCabinetConfigFilePattern(element->GetText());
 
    element = root->FirstChildElement("TableConfigFilePatterns");
    if (element)
@@ -519,7 +538,7 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
       while (patternElement)
       {
          if (patternElement->GetText())
-            pGlobalConfig->GetTableConfigFilePatterns().push_back(FilePattern(patternElement->GetText()));
+            globalConfig->GetTableConfigFilePatterns().push_back(FilePattern(patternElement->GetText()));
 
          patternElement = patternElement->NextSiblingElement("FilePattern");
       }
@@ -530,7 +549,7 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    {
       bool value;
       if (element->QueryBoolText(&value) == tinyxml2::XML_SUCCESS)
-         pGlobalConfig->SetEnableLogging(value);
+         globalConfig->SetEnableLogging(value);
    }
 
    element = root->FirstChildElement("ClearLogOnSessionStart");
@@ -538,14 +557,14 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    {
       bool value;
       if (element->QueryBoolText(&value) == tinyxml2::XML_SUCCESS)
-         pGlobalConfig->SetClearLogOnSessionStart(value);
+         globalConfig->SetClearLogOnSessionStart(value);
    }
 
    element = root->FirstChildElement("LogFilePattern");
    if (element && element->GetText())
-      pGlobalConfig->SetLogFilePattern(element->GetText());
+      globalConfig->SetLogFilePattern(element->GetText());
 
-   return pGlobalConfig;
+   return globalConfig;
 }
 
 }

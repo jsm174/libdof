@@ -14,32 +14,32 @@ void AssignedEffectList::Add(const std::string& effectName)
    }
 }
 
-void AssignedEffectList::Trigger(TableElementData* pTableElementData)
+void AssignedEffectList::Trigger(TableElementData tableElementData)
 {
-   for (AssignedEffect* pAssignedEffect : *this)
+   for (AssignedEffect* assignedEffect : *this)
    {
-      if (pAssignedEffect != nullptr)
-         pAssignedEffect->Trigger(pTableElementData);
+      if (assignedEffect != nullptr)
+         assignedEffect->Trigger(tableElementData);
    }
 }
 
-void AssignedEffectList::Init(Table* pTable)
+void AssignedEffectList::Init(Table* table)
 {
-   for (AssignedEffect* pAssignedEffect : *this)
+   for (AssignedEffect* assignedEffect : *this)
    {
-      if (pAssignedEffect != nullptr)
-         pAssignedEffect->Init(pTable);
+      if (assignedEffect != nullptr)
+         assignedEffect->Init(table);
    }
 }
 
 void AssignedEffectList::Finish()
 {
-   for (AssignedEffect* pAssignedEffect : *this)
+   for (AssignedEffect* assignedEffect : *this)
    {
-      if (pAssignedEffect != nullptr)
+      if (assignedEffect != nullptr)
       {
-         pAssignedEffect->Finish();
-         delete pAssignedEffect;
+         assignedEffect->Finish();
+         delete assignedEffect;
       }
    }
    clear();

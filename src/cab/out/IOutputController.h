@@ -15,7 +15,7 @@ public:
    IOutputController() { }
    virtual ~IOutputController() { }
 
-   virtual void Init(Cabinet* pCabinet) = 0;
+   virtual void Init(Cabinet* cabinet) = 0;
    virtual void Finish() = 0;
    virtual void Update() = 0;
 

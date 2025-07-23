@@ -2,11 +2,10 @@
 
 #include "../EffectEffectBase.h"
 #include "../RetriggerBehaviourEnum.h"
+#include "../../table/TableElementData.h"
 
 namespace DOF
 {
-
-class TableElementData;
 
 class ExtendDurationEffect : public EffectEffectBase
 {
@@ -21,6 +20,7 @@ public:
    bool GetActive() const { return m_active; }
    virtual void Trigger(TableElementData* tableElementData) override;
    virtual void Finish() override;
+   virtual std::string GetXmlElementName() const override { return "ExtendDurationEffect"; }
 
 private:
    void ExtendDurationEnd(TableElementData* tableElementData);
@@ -28,6 +28,7 @@ private:
    RetriggerBehaviourEnum m_retriggerBehaviour;
    int m_durationMs;
    bool m_active;
+   TableElementData m_durationTimerTableElementData;
 };
 
 }

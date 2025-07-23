@@ -48,7 +48,7 @@ TableElementData InputQueue::Peek()
 int InputQueue::Count()
 {
    std::lock_guard<std::mutex> lock(m_queueLocker);
-   return this->size();
+   return static_cast<int>(this->size());
 }
 
 void InputQueue::Clear()

@@ -28,6 +28,8 @@ void TableConfig::ParseLedControlDataLine(const std::string& ledControlData, boo
 
    m_shortRomName = dataColumns[0];
 
+   if (m_columns != nullptr)
+      delete m_columns;
    m_columns = new TableConfigColumnList();
 
    m_columns->ParseControlData(ledControlData, throwExceptions);

@@ -203,7 +203,7 @@ bool TeensyStripController::VerifySettings()
 
 void TeensyStripController::SendLedstripData(const std::vector<uint8_t>& outputValues, int targetPosition)
 {
-   int nrOfLeds = outputValues.size() / 3;
+   int nrOfLeds = static_cast<int>(outputValues.size()) / 3;
    std::vector<uint8_t> commandData = { (uint8_t)'R', (uint8_t)(targetPosition >> 8), (uint8_t)(targetPosition & 255), (uint8_t)(nrOfLeds >> 8), (uint8_t)(nrOfLeds & 255) };
 
    enum sp_return result = sp_blocking_write(m_comPort, commandData.data(), 5, m_comPortTimeOutMs);

@@ -3,14 +3,14 @@
 namespace DOF
 {
 
-Config* Config::m_pInstance = nullptr;
+Config* Config::m_instance = nullptr;
 
 Config* Config::GetInstance()
 {
-   if (!m_pInstance)
-      m_pInstance = new Config();
+   if (!m_instance)
+      m_instance = new Config();
 
-   return m_pInstance;
+   return m_instance;
 }
 
 Config::Config()

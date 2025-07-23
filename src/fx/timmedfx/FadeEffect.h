@@ -2,6 +2,7 @@
 
 #include "../EffectEffectBase.h"
 #include "FadeEffectDurationModeEnum.h"
+#include "../../table/TableElementData.h"
 
 namespace DOF
 {
@@ -36,7 +37,7 @@ private:
    float m_currentValue;
    float m_stepValue;
    int m_lastTargetTriggerValue;
-   TableElementData* m_tableElementData;
+   TableElementData m_tableElementData;
 };
 
 }

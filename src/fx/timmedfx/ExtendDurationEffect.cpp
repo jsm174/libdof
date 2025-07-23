@@ -11,6 +11,7 @@ ExtendDurationEffect::ExtendDurationEffect()
    : m_retriggerBehaviour(RetriggerBehaviourEnum::Restart)
    , m_durationMs(500)
    , m_active(false)
+   , m_durationTimerTableElementData()
 {
 }
 
@@ -24,11 +25,15 @@ void ExtendDurationEffect::Trigger(TableElementData* tableElementData)
       {
          if (!m_active)
          {
-            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, [this, tableElementData]() { this->ExtendDurationEnd(tableElementData); }, true);
+            m_durationTimerTableElementData = *tableElementData;
+            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, [this]() { this->ExtendDurationEnd(&m_durationTimerTableElementData); }, true);
             m_active = true;
          }
          else if (m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
-            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, [this, tableElementData]() { this->ExtendDurationEnd(tableElementData); }, true);
+         {
+            m_durationTimerTableElementData = *tableElementData;
+            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, [this]() { this->ExtendDurationEnd(&m_durationTimerTableElementData); }, true);
+         }
       }
    }
 }

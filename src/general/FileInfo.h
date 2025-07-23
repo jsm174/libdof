@@ -18,7 +18,7 @@ public:
    std::string FullName() const;
    std::string Extension() const;
    bool Delete() const;
-   DirectoryInfo* Directory() const;
+   DirectoryInfo Directory() const;
 
 private:
    std::filesystem::path m_path;

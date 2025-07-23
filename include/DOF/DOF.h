@@ -70,7 +70,7 @@ public:
    void Finish();
 
 private:
-   Pinball* m_pPinball;
+   Pinball* m_pinball;
 };
 
 } // namespace DOF

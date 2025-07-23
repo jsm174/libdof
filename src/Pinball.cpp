@@ -27,25 +27,24 @@
 namespace DOF
 {
 
-Pinball* Pinball::m_pInstance = NULL;
-
-Pinball* Pinball::GetInstance()
-{
-   if (!m_pInstance)
-      m_pInstance = new Pinball();
-
-   return m_pInstance;
-}
-
 Pinball::Pinball()
-   : m_pTable(new Table())
-   , m_pCabinet(new Cabinet())
-   , m_pAlarms(new AlarmHandler())
-   , m_pGlobalConfig(new GlobalConfig())
-   , m_pInputQueue(new InputQueue())
+   : m_table(new Table())
+   , m_cabinet(new Cabinet())
+   , m_alarms(new AlarmHandler())
+   , m_globalConfig(new GlobalConfig())
+   , m_inputQueue(new InputQueue())
    , m_keepMainThreadAlive(false)
    , m_mainThreadDoWork(false)
 {
+}
+
+Pinball::~Pinball()
+{
+   delete m_table;
+   delete m_cabinet;
+   delete m_alarms;
+   delete m_globalConfig;
+   delete m_inputQueue;
 }
 
 void Pinball::Setup(const std::string& globalConfigFileName, const std::string& tableFilename, const std::string& romName)
@@ -57,21 +56,25 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
       Log::Write(StringExtensions::Build("Global config filename is \"{0}\"", globalConfigFileName));
       if (!globalConfigFileName.empty())
       {
-         FileInfo* pGlobalConfigFile = new FileInfo(globalConfigFileName);
-         m_pGlobalConfig = GlobalConfig::GetGlobalConfigFromConfigXmlFile(pGlobalConfigFile->FullName());
-         if (!m_pGlobalConfig)
+         FileInfo* globalConfigFile = new FileInfo(globalConfigFileName);
+         GlobalConfig* newGlobalConfig = GlobalConfig::GetGlobalConfigFromConfigXmlFile(globalConfigFile->FullName());
+         if (!newGlobalConfig)
          {
             Log::Write("No global config file loaded");
             globalConfigLoaded = false;
 
-            m_pGlobalConfig = new GlobalConfig();
+            newGlobalConfig = new GlobalConfig();
          }
-         m_pGlobalConfig->SetGlobalConfigFilename(globalConfigFileName);
+         delete m_globalConfig;
+         m_globalConfig = newGlobalConfig;
+         m_globalConfig->SetGlobalConfigFilename(globalConfigFileName);
+         delete globalConfigFile;
       }
       else
       {
-         m_pGlobalConfig = new GlobalConfig();
-         m_pGlobalConfig->SetGlobalConfigFilename(globalConfigFileName);
+         delete m_globalConfig;
+         m_globalConfig = new GlobalConfig();
+         m_globalConfig->SetGlobalConfigFilename(globalConfigFileName);
       }
    }
    catch (const std::exception& e)
@@ -79,15 +82,16 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
       throw std::runtime_error("DirectOutput framework could not initialize global config.");
    }
 
-   if (m_pGlobalConfig->IsEnableLogging())
+   if (m_globalConfig->IsEnableLogging())
    {
-      if (m_pGlobalConfig->IsClearLogOnSessionStart())
+      if (m_globalConfig->IsClearLogOnSessionStart())
       {
          try
          {
-            FileInfo* pLF = new FileInfo(m_pGlobalConfig->GetLogFilename(!StringExtensions::IsNullOrWhiteSpace(tableFilename) ? FileInfo(tableFilename).FullName() : "", romName));
-            if (pLF->Exists())
-               pLF->Delete();
+            FileInfo* logFile = new FileInfo(m_globalConfig->GetLogFilename(!StringExtensions::IsNullOrWhiteSpace(tableFilename) ? FileInfo(tableFilename).FullName() : "", romName));
+            if (logFile->Exists())
+               logFile->Delete();
+            delete logFile;
          }
          catch (const std::exception& e)
          {
@@ -95,7 +99,7 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
       }
       try
       {
-         Log::SetFilename(m_pGlobalConfig->GetLogFilename(!StringExtensions::IsNullOrWhiteSpace(tableFilename) ? FileInfo(tableFilename).FullName() : "", romName));
+         Log::SetFilename(m_globalConfig->GetLogFilename(!StringExtensions::IsNullOrWhiteSpace(tableFilename) ? FileInfo(tableFilename).FullName() : "", romName));
          Log::Init();
       }
       catch (const std::exception& e)
@@ -128,27 +132,28 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
 
       Log::Write("Loading cabinet");
 
-      m_pCabinet = nullptr;
-      FileInfo* pCCF = m_pGlobalConfig->GetCabinetConfigFile();
-      if (pCCF != nullptr)
+      delete m_cabinet;
+      m_cabinet = nullptr;
+      FileInfo* cabinetConfigFile = m_globalConfig->GetCabinetConfigFile();
+      if (cabinetConfigFile != nullptr)
       {
-         if (pCCF->Exists())
+         if (cabinetConfigFile->Exists())
          {
-            Log::Write(StringExtensions::Build("Will load cabinet config file: {0}", pCCF->FullName()));
+            Log::Write(StringExtensions::Build("Will load cabinet config file: {0}", cabinetConfigFile->FullName()));
             try
             {
-               m_pCabinet = Cabinet::GetCabinetFromConfigXmlFile(pCCF);
+               m_cabinet = Cabinet::GetCabinetFromConfigXmlFile(cabinetConfigFile);
 
                Log::Write(StringExtensions::Build("{0} output controller definitions and {1} toy definitions loaded from cabinet config.",
-                  std::to_string(static_cast<int>(m_pCabinet->GetOutputControllers()->size())), std::to_string(static_cast<int>(m_pCabinet->GetToys()->size()))));
+                  std::to_string(static_cast<int>(m_cabinet->GetOutputControllers()->size())), std::to_string(static_cast<int>(m_cabinet->GetToys()->size()))));
 
-               m_pCabinet->SetCabinetConfigurationFilename(pCCF->FullName());
-               if (m_pCabinet->IsAutoConfigEnabled())
+               m_cabinet->SetCabinetConfigurationFilename(cabinetConfigFile->FullName());
+               if (m_cabinet->IsAutoConfigEnabled())
                {
                   Log::Write("Cabinet config file has AutoConfig feature enabled. Calling AutoConfig.");
                   try
                   {
-                     m_pCabinet->AutoConfig();
+                     m_cabinet->AutoConfig();
                   }
                   catch (const std::exception& e)
                   {
@@ -156,51 +161,55 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
                   }
                   Log::Write("Autoconfig complete.");
                }
-               Log::Write(StringExtensions::Build("Cabinet config loaded successfully from {0}", pCCF->FullName()));
+               Log::Write(StringExtensions::Build("Cabinet config loaded successfully from {0}", cabinetConfigFile->FullName()));
             }
             catch (const std::exception& e)
             {
-               Log::Exception(StringExtensions::Build("An exception occured when loading cabinet config file: {0} - {1}", pCCF->FullName(), e.what()));
+               Log::Exception(StringExtensions::Build("An exception occured when loading cabinet config file: {0} - {1}", cabinetConfigFile->FullName(), e.what()));
             }
          }
          else
          {
-            Log::Warning(StringExtensions::Build("Cabinet config file {0} does not exist.", pCCF->FullName()));
+            Log::Warning(StringExtensions::Build("Cabinet config file {0} does not exist.", cabinetConfigFile->FullName()));
          }
+         delete cabinetConfigFile;
       }
-      if (m_pCabinet == nullptr)
+      if (m_cabinet == nullptr)
       {
          Log::Write("No cabinet config file loaded. Will use AutoConfig.");
 
-         m_pCabinet = new Cabinet();
-         m_pCabinet->AutoConfig();
+         m_cabinet = new Cabinet();
+         m_cabinet->AutoConfig();
       }
 
       Log::Write("Cabinet loaded");
 
       Log::Write("Loading table config");
 
-      m_pTable = new Table();
-      m_pTable->SetAddLedControlConfig(true);
+      delete m_table;
+      m_table = new Table();
+      m_table->SetAddLedControlConfig(true);
 
       if (!StringExtensions::IsNullOrWhiteSpace(tableFilename))
       {
-         FileInfo* pTableFile = new FileInfo(tableFilename);
-         FileInfo* pTCF = m_pGlobalConfig->GetTableConfigFile(pTableFile->FullName());
-         if (pTCF != nullptr)
+         FileInfo* tableFile = new FileInfo(tableFilename);
+         FileInfo* tableConfigFile = m_globalConfig->GetTableConfigFile(tableFile->FullName());
+         if (tableConfigFile != nullptr)
          {
-            Log::Write(StringExtensions::Build("Will load table config from {0}", pTCF->FullName()));
+            Log::Write(StringExtensions::Build("Will load table config from {0}", tableConfigFile->FullName()));
             try
             {
-               m_pTable = Table::GetTableFromConfigXmlFile(pTableFile->FullName());
-               m_pTable->SetTableConfigurationFilename(m_pGlobalConfig->GetTableConfigFile(pTableFile->FullName())->FullName());
-               Log::Write(StringExtensions::Build("Table config loaded successfully from {0}", pTCF->FullName()));
+               Table* newTable = Table::GetTableFromConfigXmlFile(tableFile->FullName());
+               delete m_table;
+               m_table = newTable;
+               m_table->SetTableConfigurationFilename(m_globalConfig->GetTableConfigFile(tableFile->FullName())->FullName());
+               Log::Write(StringExtensions::Build("Table config loaded successfully from {0}", tableConfigFile->FullName()));
             }
             catch (const std::exception& e)
             {
-               Log::Exception(StringExtensions::Build("An exception occured when loading table config: {0} - {1}", pTCF->FullName(), e.what()));
+               Log::Exception(StringExtensions::Build("An exception occured when loading table config: {0} - {1}", tableConfigFile->FullName(), e.what()));
             }
-            if (m_pTable->IsAddLedControlConfig())
+            if (m_table->IsAddLedControlConfig())
             {
                Log::Write("Table config allows mix with ledcontrol configs.");
             }
@@ -209,18 +218,19 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
          {
             Log::Warning("No table config file found. Will try to load config from LedControl file(s).");
          }
+         delete tableFile;
       }
       else
       {
          Log::Write("No TableFilename specified, will use empty tableconfig");
       }
-      if (m_pTable->IsAddLedControlConfig())
+      if (m_table->IsAddLedControlConfig())
       {
          if (!StringExtensions::IsNullOrWhiteSpace(romName))
          {
             Log::Write(StringExtensions::Build("Will try to load configs from DirectOutput.ini or LedControl.ini file(s) for RomName {0}", romName));
 
-            std::unordered_map<int, FileInfo> ledControlIniFiles = m_pGlobalConfig->GetIniFilesDictionary(tableFilename);
+            std::unordered_map<int, FileInfo> ledControlIniFiles = m_globalConfig->GetIniFilesDictionary(tableFilename);
 
             LedControlConfigList* l = new LedControlConfigList();
             if (ledControlIniFiles.size() > 0)
@@ -241,11 +251,11 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
             {
                Log::Write(StringExtensions::Build("Config for RomName {0} exists in LedControl data. Updating cabinet and config.", romName));
 
-               Configurator* pConfigurator = new Configurator();
-               pConfigurator->SetEffectMinDurationMs(m_pGlobalConfig->GetLedControlMinimumEffectDurationMs());
-               pConfigurator->SetEffectRGBMinDurationMs(m_pGlobalConfig->GetLedControlMinimumRGBEffectDurationMs());
-               pConfigurator->Setup(l, m_pTable, m_pCabinet, romName);
-               delete pConfigurator;
+               Configurator* c = new Configurator();
+               c->SetEffectMinDurationMs(m_globalConfig->GetLedControlMinimumEffectDurationMs());
+               c->SetEffectRGBMinDurationMs(m_globalConfig->GetLedControlMinimumRGBEffectDurationMs());
+               c->Setup(l, m_table, m_cabinet, romName);
+               delete c;
 
                std::string dofVersion = LIBDOF_VERSION;
 
@@ -280,21 +290,21 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
             Log::Write("Cant load config from directoutput.ini or ledcontrol.ini file(s) since no RomName was supplied. No ledcontrol config will be loaded.");
          }
       }
-      if (StringExtensions::IsNullOrWhiteSpace(m_pTable->GetTableName()))
+      if (StringExtensions::IsNullOrWhiteSpace(m_table->GetTableName()))
       {
          if (!StringExtensions::IsNullOrWhiteSpace(tableFilename))
-            m_pTable->SetTableName(StringExtensions::GetFileNameWithoutExtension(FileInfo(tableFilename).FullName()));
+            m_table->SetTableName(StringExtensions::GetFileNameWithoutExtension(FileInfo(tableFilename).FullName()));
          else if (!StringExtensions::IsNullOrWhiteSpace(romName))
-            m_pTable->SetTableName(romName);
+            m_table->SetTableName(romName);
       }
       if (!StringExtensions::IsNullOrWhiteSpace(tableFilename))
-         m_pTable->SetTableFilename(FileInfo(tableFilename).FullName());
+         m_table->SetTableFilename(FileInfo(tableFilename).FullName());
       if (!StringExtensions::IsNullOrWhiteSpace(romName))
-         m_pTable->SetRomName(romName);
-      Log::Write(StringExtensions::Build("Table config loading finished: romname={0}, tablename={1}", romName, m_pTable->GetTableName()));
+         m_table->SetRomName(romName);
+      Log::Write(StringExtensions::Build("Table config loading finished: romname={0}, tablename={1}", romName, m_table->GetTableName()));
 
       TableOverrideSettings::GetInstance()->SetActiveRomName(romName);
-      TableOverrideSettings::GetInstance()->SetActiveTableName(m_pTable->GetTableName());
+      TableOverrideSettings::GetInstance()->SetActiveTableName(m_table->GetTableName());
       TableOverrideSettings::GetInstance()->ActivateOverrides();
 
       Log::Write("Pinball parts loaded");
@@ -312,17 +322,18 @@ void Pinball::Init()
    {
       Log::Write("Starting processes");
 
-      CabinetOwner* pCO = new CabinetOwner();
-      pCO->SetAlarms(m_pAlarms);
-      pCO->GetConfigurationSettings().emplace("LedControlMinimumEffectDurationMs", std::to_string(m_pGlobalConfig->GetLedControlMinimumEffectDurationMs()));
-      pCO->GetConfigurationSettings().emplace("LedWizDefaultMinCommandIntervalMs", std::to_string(m_pGlobalConfig->GetLedWizDefaultMinCommandIntervalMs()));
-      pCO->GetConfigurationSettings().emplace("PacLedDefaultMinCommandIntervalMs", std::to_string(m_pGlobalConfig->GetPacLedDefaultMinCommandIntervalMs()));
-      m_pCabinet->Init(pCO);
+      CabinetOwner* co = new CabinetOwner();
+      co->SetAlarms(m_alarms);
+      co->GetConfigurationSettings().emplace("LedControlMinimumEffectDurationMs", std::to_string(m_globalConfig->GetLedControlMinimumEffectDurationMs()));
+      co->GetConfigurationSettings().emplace("LedWizDefaultMinCommandIntervalMs", std::to_string(m_globalConfig->GetLedWizDefaultMinCommandIntervalMs()));
+      co->GetConfigurationSettings().emplace("PacLedDefaultMinCommandIntervalMs", std::to_string(m_globalConfig->GetPacLedDefaultMinCommandIntervalMs()));
+      m_cabinet->Init(co);
+      delete co;
 
-      m_pTable->Init(this);
-      m_pAlarms->Init(this);
-      m_pTable->TriggerStaticEffects();
-      m_pCabinet->Update();
+      m_table->Init(this);
+      m_alarms->Init(this);
+      m_table->TriggerStaticEffects();
+      m_cabinet->Update();
 
       InitMainThread();
       Log::Write("Framework initialized.");
@@ -342,9 +353,9 @@ void Pinball::Finish()
       Log::Write("Finishing framework");
       FinishMainThread();
 
-      m_pAlarms->Finish();
-      m_pTable->Finish();
-      m_pCabinet->Finish();
+      m_alarms->Finish();
+      m_table->Finish();
+      m_cabinet->Finish();
 
       Log::Write("DirectOutput framework finished.");
       Log::Write("Bye and thanks for using!");
@@ -411,13 +422,13 @@ void Pinball::MainThreadDoIt()
          bool updateRequired = false;
          auto start = std::chrono::steady_clock::now();
 
-         while (m_pInputQueue->Count() > 0 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() <= MAX_INPUT_DATA_PROCESSING_TIME_MS
+         while (m_inputQueue->Count() > 0 && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() <= MAX_INPUT_DATA_PROCESSING_TIME_MS
             && m_keepMainThreadAlive)
          {
             try
             {
-               TableElementData data = m_pInputQueue->Dequeue();
-               m_pTable->UpdateTableElement(&data);
+               TableElementData data = m_inputQueue->Dequeue();
+               m_table->UpdateTableElement(&data);
                updateRequired = true;
             }
             catch (const std::exception& e)
@@ -432,7 +443,7 @@ void Pinball::MainThreadDoIt()
             {
 
                auto now = std::chrono::steady_clock::now();
-               updateRequired |= m_pAlarms->ExecuteAlarms(now + std::chrono::milliseconds(1));
+               updateRequired |= m_alarms->ExecuteAlarms(now + std::chrono::milliseconds(1));
             }
             catch (const std::exception& e)
             {
@@ -444,7 +455,7 @@ void Pinball::MainThreadDoIt()
          {
             try
             {
-               m_pCabinet->Update();
+               m_cabinet->Update();
             }
             catch (const std::exception& e)
             {
@@ -455,20 +466,20 @@ void Pinball::MainThreadDoIt()
          if (m_keepMainThreadAlive)
          {
 
-            auto nextAlarm = m_pAlarms->GetNextAlarmTime();
+            auto nextAlarm = m_alarms->GetNextAlarmTime();
             auto now = std::chrono::steady_clock::now();
 
             std::unique_lock<std::mutex> lock(m_mainThreadMutex);
 
-            while (m_pInputQueue->Count() == 0 && nextAlarm > now && !m_mainThreadDoWork && m_keepMainThreadAlive)
+            while (m_inputQueue->Count() == 0 && nextAlarm > now && !m_mainThreadDoWork && m_keepMainThreadAlive)
             {
                long timeoutMs = std::chrono::duration_cast<std::chrono::milliseconds>(nextAlarm - now).count();
                timeoutMs = std::max(1L, std::min(timeoutMs, 50L));
 
-               m_mainThreadCV.wait_for(lock, std::chrono::milliseconds(timeoutMs), [this]() { return m_pInputQueue->Count() > 0 || m_mainThreadDoWork || !m_keepMainThreadAlive; });
+               m_mainThreadCV.wait_for(lock, std::chrono::milliseconds(timeoutMs), [this]() { return m_inputQueue->Count() > 0 || m_mainThreadDoWork || !m_keepMainThreadAlive; });
 
                now = std::chrono::steady_clock::now();
-               nextAlarm = m_pAlarms->GetNextAlarmTime();
+               nextAlarm = m_alarms->GetNextAlarmTime();
             }
             m_mainThreadDoWork = false;
          }
@@ -482,19 +493,19 @@ void Pinball::MainThreadDoIt()
 
 void Pinball::ReceiveData(char type, int number, int value)
 {
-   m_pInputQueue->Enqueue(type, number, value);
+   m_inputQueue->Enqueue(type, number, value);
    MainThreadSignal();
 }
 
 void Pinball::ReceiveData(const std::string& tableElementName, int value)
 {
-   m_pInputQueue->Enqueue(tableElementName, value);
+   m_inputQueue->Enqueue(tableElementName, value);
    MainThreadSignal();
 }
 
 void Pinball::ReceiveData(const TableElementData& tableElementData)
 {
-   m_pInputQueue->Enqueue(tableElementData);
+   m_inputQueue->Enqueue(tableElementData);
    MainThreadSignal();
 }
 

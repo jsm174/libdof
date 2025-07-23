@@ -38,12 +38,12 @@ void OutputControllerList::Clear()
    clear();
 }
 
-void OutputControllerList::Init(Cabinet* pCabinet)
+void OutputControllerList::Init(Cabinet* cabinet)
 {
    Log::Write("Initializing output controllers");
 
-   for (IOutputController* pController : *this)
-      pController->Init(pCabinet);
+   for (IOutputController* controller : *this)
+      controller->Init(cabinet);
 
    Log::Write("Output controllers initialized");
 }
@@ -52,23 +52,23 @@ void OutputControllerList::Finish()
 {
    Log::Write("Finishing output controllers");
 
-   for (IOutputController* pController : *this)
-      pController->Finish();
+   for (IOutputController* controller : *this)
+      controller->Finish();
 
    Log::Write("Output controllers finished");
 }
 
 void OutputControllerList::Update()
 {
-   for (IOutputController* pController : *this)
-      pController->Update();
+   for (IOutputController* controller : *this)
+      controller->Update();
 }
 
 bool OutputControllerList::Contains(const std::string& name) const
 {
-   for (IOutputController* pController : *this)
+   for (IOutputController* controller : *this)
    {
-      if (pController->GetName() == name)
+      if (controller->GetName() == name)
       {
          return true;
       }
@@ -78,11 +78,11 @@ bool OutputControllerList::Contains(const std::string& name) const
 
 IOutputController* OutputControllerList::GetByName(const std::string& name) const
 {
-   for (IOutputController* pController : *this)
+   for (IOutputController* controller : *this)
    {
-      if (pController->GetName() == name)
+      if (controller->GetName() == name)
       {
-         return pController;
+         return controller;
       }
    }
    return nullptr;

@@ -16,7 +16,7 @@ public:
    OutputControllerCompleteBase();
    ~OutputControllerCompleteBase();
 
-   virtual void Init(Cabinet* pCabinet) override;
+   virtual void Init(Cabinet* cabinet) override;
    virtual void Finish() override;
    void Update() override;
 

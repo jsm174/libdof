@@ -7,7 +7,7 @@ namespace DOF
 
 ListEffect::ListEffect() { }
 
-void ListEffect::Trigger(TableElementData* tableElementData) { m_assignedEffects.Trigger(tableElementData); }
+void ListEffect::Trigger(TableElementData* tableElementData) { m_assignedEffects.Trigger(*tableElementData); }
 
 void ListEffect::Init(Table* table) { m_assignedEffects.Init(table); }
 

@@ -52,17 +52,17 @@ void Motor::UpdateOutputs()
    if (output == nullptr)
       return;
 
-   int P = GetCurrentValue().GetValue();
-   P = MathExtensions::Limit(P, 0, 255);
+   int p = GetCurrentValue().GetValue();
+   p = MathExtensions::Limit(p, 0, 255);
 
-   if (P != 0)
+   if (p != 0)
    {
       int powerRange = (m_maxPower >= m_minPower) ? (m_maxPower - m_minPower) : (m_minPower - m_maxPower);
-      P = static_cast<int>((static_cast<double>(powerRange) / 255.0 * P) + m_minPower);
-      P = MathExtensions::Limit(P, m_minPower, m_maxPower);
+      p = static_cast<int>((static_cast<double>(powerRange) / 255.0 * p) + m_minPower);
+      p = MathExtensions::Limit(p, m_minPower, m_maxPower);
    }
 
-   if (P == 0)
+   if (p == 0)
       m_turnedOffAfterMaxRunTime = false;
 
    if (!m_turnedOffAfterMaxRunTime)
@@ -70,13 +70,13 @@ void Motor::UpdateOutputs()
       if (m_currentMotorPower == 0)
       {
 
-         if (P > 0)
+         if (p > 0)
          {
 
-            if (m_kickstartDurationMs > 0 && m_kickstartPower > 0 && P <= m_kickstartPower)
+            if (m_kickstartDurationMs > 0 && m_kickstartPower > 0 && p <= m_kickstartPower)
             {
 
-               m_targetMotorPower = P;
+               m_targetMotorPower = p;
 
                if (!m_kickstartActive)
                {
@@ -92,9 +92,9 @@ void Motor::UpdateOutputs()
             else
             {
 
-               m_currentMotorPower = P;
-               m_targetMotorPower = P;
-               output->SetOutput(static_cast<uint8_t>(P));
+               m_currentMotorPower = p;
+               m_targetMotorPower = p;
+               output->SetOutput(static_cast<uint8_t>(p));
                m_kickstartActive = false;
             }
 
@@ -106,10 +106,10 @@ void Motor::UpdateOutputs()
       else if (m_kickstartActive)
       {
 
-         if (P > 0)
+         if (p > 0)
          {
 
-            m_targetMotorPower = P;
+            m_targetMotorPower = p;
          }
          else
          {
@@ -125,7 +125,7 @@ void Motor::UpdateOutputs()
       else
       {
 
-         if (P == 0)
+         if (p == 0)
          {
 
             if (m_alarmHandler != nullptr)
@@ -135,12 +135,12 @@ void Motor::UpdateOutputs()
             m_currentMotorPower = 0;
             output->SetOutput(0);
          }
-         else if (P != m_currentMotorPower)
+         else if (p != m_currentMotorPower)
          {
 
-            m_currentMotorPower = P;
-            m_targetMotorPower = P;
-            output->SetOutput(static_cast<uint8_t>(P));
+            m_currentMotorPower = p;
+            m_targetMotorPower = p;
+            output->SetOutput(static_cast<uint8_t>(p));
          }
       }
    }

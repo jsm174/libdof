@@ -2,6 +2,7 @@
 
 #include "../EffectEffectBase.h"
 #include "../RetriggerBehaviourEnum.h"
+#include "../../table/TableElementData.h"
 
 namespace DOF
 {
@@ -31,7 +32,7 @@ private:
    RetriggerBehaviourEnum m_retriggerBehaviour;
    int m_durationMs;
    bool m_active;
-   TableElementData* m_durationTableElementData;
+   TableElementData m_durationTableElementData;
 };
 
 }

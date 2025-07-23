@@ -12,7 +12,7 @@ class OutputControllerList;
 class CabinetOutputList
 {
 public:
-   CabinetOutputList(Cabinet* pCabinet);
+   CabinetOutputList(Cabinet* cabinet);
    ~CabinetOutputList();
 
    IOutput* GetByName(const std::string& name);
@@ -25,6 +25,7 @@ public:
    const IOutput* operator[](int index) const;
    int GetCount() const;
    void ConnectOutputsToControllers();
+   void SetCabinet(Cabinet* cabinet) { m_cabinet = cabinet; }
 
    class Iterator
    {
@@ -62,7 +63,7 @@ public:
    ConstIterator cend() const;
 
 private:
-   Cabinet* m_pCabinet;
+   Cabinet* m_cabinet;
    OutputControllerList* GetOutputControllers() const;
 };
 
