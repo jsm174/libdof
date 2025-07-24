@@ -352,6 +352,14 @@ void PinscapePico::AllOff()
 
 std::vector<PinscapePico::Device*> PinscapePico::GetAllDevices() { return s_devices; }
 
+void PinscapePico::ClearDevices()
+{
+   for (Device* device : s_devices)
+      delete device;
+
+   s_devices.clear();
+}
+
 void PinscapePico::FindDevices()
 {
    for (auto device : s_devices)

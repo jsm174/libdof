@@ -31,13 +31,14 @@
 #include "../../fx/timmedfx/DelayEffect.h"
 #include "../../fx/timmedfx/FadeEffect.h"
 #include "../../fx/valuefx/ValueInvertEffect.h"
-#include <set>
-
 #include "../../fx/valuefx/ValueMapFullRangeEffect.h"
 #include "../../fx/matrixfx/RGBAMatrixColorEffect.h"
 #include "../../fx/matrixfx/RGBAMatrixFlickerEffect.h"
 #include "../../fx/matrixfx/RGBAMatrixPlasmaEffect.h"
+#include "../../fx/matrixfx/RGBAMatrixShiftEffect.h"
 #include "../../fx/matrixfx/AnalogAlphaMatrixValueEffect.h"
+#include "../../fx/matrixfx/AnalogAlphaMatrixFlickerEffect.h"
+#include "../../fx/matrixfx/AnalogAlphaMatrixShiftEffect.h"
 #include "../../fx/nullfx/NullEffect.h"
 #include "../../fx/FadeModeEnum.h"
 #include "../../fx/RetriggerBehaviourEnum.h"
@@ -50,6 +51,7 @@
 #include "../../table/TableElementList.h"
 #include "../../table/TableElementData.h"
 #include "../../table/TableElementTypeEnum.h"
+#include <set>
 #include <string>
 #include <cctype>
 #include <stdexcept>
@@ -324,11 +326,8 @@ void Configurator::SetupTable(
                   {
                      if (tcs->GetColorConfig() != nullptr)
                      {
-                        Log::Debug(StringExtensions::Build(
-                           "Effect creation: rgbaMatrixToy, IsArea={0}, FlickerDensity={1}", tcs->IsArea() ? "true" : "false", std::to_string(tcs->GetAreaFlickerDensity())));
                         if (tcs->IsArea() && tcs->GetAreaFlickerDensity() > 0)
                         {
-                           Log::Debug(StringExtensions::Build("Creating RGBAMatrixFlickerEffect for effect {0}", effectName));
                            RGBAMatrixFlickerEffect* flickerEffect = new RGBAMatrixFlickerEffect();
                            effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixFlickerEffect", std::to_string(ledWizNr),
                               std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
@@ -340,12 +339,16 @@ void Configurator::SetupTable(
                            ColorConfig* colorConfig = tcs->GetColorConfig();
                            flickerEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
                            flickerEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
-                           flickerEffect->SetDensity(tcs->GetAreaFlickerDensity());
-                           flickerEffect->SetMinFlickerDurationMs(tcs->GetAreaFlickerMinDurationMs());
+                           flickerEffect->SetDensity(MathExtensions::Limit(tcs->GetAreaFlickerDensity(), 1, 99));
+                           if (tcs->GetAreaFlickerMinDurationMs() > 0)
+                              flickerEffect->SetMinFlickerDurationMs(tcs->GetAreaFlickerMinDurationMs());
                            if (tcs->GetAreaFlickerMaxDurationMs() > 0)
                               flickerEffect->SetMaxFlickerDurationMs(tcs->GetAreaFlickerMaxDurationMs());
                            if (tcs->GetAreaFlickerFadeDurationMs() > 0)
-                              flickerEffect->SetFadeDurationMs(tcs->GetAreaFlickerFadeDurationMs());
+                           {
+                              flickerEffect->SetFlickerFadeUpDurationMs(tcs->GetAreaFlickerFadeDurationMs());
+                              flickerEffect->SetFlickerFadeDownDurationMs(tcs->GetAreaFlickerFadeDurationMs());
+                           }
 
                            flickerEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
                            flickerEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
@@ -370,23 +373,15 @@ void Configurator::SetupTable(
                            RGBAColor inactiveColor;
 
                            if (colorConfig != nullptr)
-                           {
                               activeColor1 = RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
-                           }
                            else
-                           {
                               activeColor1 = RGBAColor(0xff, 0, 0, 0xff);
-                           }
 
                            ColorConfig* colorConfig2 = tcs->GetColorConfig2();
                            if (colorConfig2 != nullptr)
-                           {
                               activeColor2 = RGBAColor(colorConfig2->GetRed(), colorConfig2->GetGreen(), colorConfig2->GetBlue(), colorConfig2->GetAlpha());
-                           }
                            else
-                           {
                               activeColor2 = RGBAColor(0, 0xff, 0, 0xff);
-                           }
 
                            inactiveColor = activeColor1;
                            inactiveColor.SetAlpha(0);
@@ -409,31 +404,62 @@ void Configurator::SetupTable(
                         }
                         else if (tcs->HasLayer() || (tcs->IsArea() && tcs->GetAreaFlickerDensity() == 0))
                         {
-                           RGBAMatrixColorEffect* matrixEffect = new RGBAMatrixColorEffect();
-                           effectName = StringExtensions::Build(
-                              "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                           matrixEffect->SetName(effectName);
-                           matrixEffect->SetToyName(toy->GetName());
-                           if (tcs->HasLayer())
-                              matrixEffect->SetLayerNr(tcs->GetLayer());
-
                            ColorConfig* colorConfig = tcs->GetColorConfig();
-                           matrixEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
-                           Log::Debug(StringExtensions::Build("Matrix effect color from config: R={0} G={1} B={2} A={3}", std::to_string(colorConfig->GetRed()),
-                              std::to_string(colorConfig->GetGreen()), std::to_string(colorConfig->GetBlue()), std::to_string(colorConfig->GetAlpha())));
+                           RGBAColor activeColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
+                           RGBAColor inactiveColor = activeColor;
+                           inactiveColor.SetAlpha(0);
 
-                           matrixEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
-                           matrixEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
-
-                           if (tcs->IsArea())
+                           if (tcs->HasAreaDirection())
                            {
-                              matrixEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-                              matrixEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                              matrixEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                              matrixEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-                           }
+                              RGBAMatrixShiftEffect* shiftEffect = new RGBAMatrixShiftEffect();
+                              effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixShiftEffect", std::to_string(ledWizNr),
+                                 std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                              shiftEffect->SetName(effectName);
+                              shiftEffect->SetToyName(toy->GetName());
+                              if (tcs->HasLayer())
+                                 shiftEffect->SetLayerNr(tcs->GetLayer());
+                              shiftEffect->SetShiftDirection(tcs->GetAreaDirection());
+                              shiftEffect->SetShiftAcceleration(tcs->GetAreaAcceleration());
+                              shiftEffect->SetActiveColor(activeColor);
+                              shiftEffect->SetInactiveColor(inactiveColor);
 
-                           effect = static_cast<EffectBase*>(matrixEffect);
+                              if (tcs->GetAreaSpeed() > 0)
+                                 shiftEffect->SetShiftSpeed(tcs->GetAreaSpeed());
+
+                              if (tcs->IsArea())
+                              {
+                                 shiftEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                                 shiftEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                                 shiftEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                                 shiftEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                              }
+
+                              effect = static_cast<EffectBase*>(shiftEffect);
+                           }
+                           else
+                           {
+                              RGBAMatrixColorEffect* matrixEffect = new RGBAMatrixColorEffect();
+                              effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixColorEffect", std::to_string(ledWizNr),
+                                 std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                              matrixEffect->SetName(effectName);
+                              matrixEffect->SetToyName(toy->GetName());
+                              if (tcs->HasLayer())
+                                 matrixEffect->SetLayerNr(tcs->GetLayer());
+
+                              matrixEffect->SetActiveColor(activeColor);
+                              matrixEffect->SetInactiveColor(inactiveColor);
+                              matrixEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
+
+                              if (tcs->IsArea())
+                              {
+                                 matrixEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                                 matrixEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                                 matrixEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                                 matrixEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                              }
+
+                              effect = static_cast<EffectBase*>(matrixEffect);
+                           }
                         }
                         else
                         {
@@ -462,14 +488,69 @@ void Configurator::SetupTable(
                   {
                      if (tcs->HasLayer())
                      {
-                        AnalogAlphaMatrixValueEffect* matrixEffect = new AnalogAlphaMatrixValueEffect();
-                        effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixValueEffect", std::to_string(ledWizNr),
-                           std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                        matrixEffect->SetName(effectName);
-                        matrixEffect->SetToyName(toy->GetName());
-                        matrixEffect->SetLayerNr(tcs->GetLayer());
+                        if (tcs->HasAreaDirection())
+                        {
+                           AnalogAlphaMatrixShiftEffect* shiftEffect = new AnalogAlphaMatrixShiftEffect();
+                           effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixShiftEffect", std::to_string(ledWizNr),
+                              std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                           shiftEffect->SetName(effectName);
+                           shiftEffect->SetToyName(toy->GetName());
+                           shiftEffect->SetLayerNr(tcs->GetLayer());
+                           shiftEffect->SetShiftDirection(tcs->GetAreaDirection());
+                           shiftEffect->SetShiftAcceleration(tcs->GetAreaAcceleration());
 
-                        effect = static_cast<EffectBase*>(matrixEffect);
+                           if (tcs->GetAreaSpeed() > 0)
+                              shiftEffect->SetShiftSpeed(tcs->GetAreaSpeed());
+
+                           effect = static_cast<EffectBase*>(shiftEffect);
+                        }
+                        else if (tcs->GetAreaFlickerDensity() > 0)
+                        {
+                           AnalogAlphaMatrixFlickerEffect* flickerEffect = new AnalogAlphaMatrixFlickerEffect();
+                           effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixFlickerEffect", std::to_string(ledWizNr),
+                              std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                           flickerEffect->SetName(effectName);
+                           flickerEffect->SetToyName(toy->GetName());
+                           flickerEffect->SetLayerNr(tcs->GetLayer());
+                           flickerEffect->SetDensity(MathExtensions::Limit(tcs->GetAreaFlickerDensity(), 1, 99));
+
+                           AnalogAlpha activeValue(MathExtensions::Limit(tcs->GetIntensity(), 0, 255), 255);
+                           AnalogAlpha inactiveValue = activeValue;
+                           inactiveValue.SetAlpha(0);
+                           flickerEffect->SetActiveValue(activeValue);
+                           flickerEffect->SetInactiveValue(inactiveValue);
+
+                           if (tcs->IsArea())
+                           {
+                              flickerEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                              flickerEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                              flickerEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                              flickerEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                           }
+
+                           if (tcs->GetAreaFlickerMinDurationMs() > 0)
+                              flickerEffect->SetMinFlickerDurationMs(tcs->GetAreaFlickerMinDurationMs());
+                           if (tcs->GetAreaFlickerMaxDurationMs() > 0)
+                              flickerEffect->SetMaxFlickerDurationMs(tcs->GetAreaFlickerMaxDurationMs());
+                           if (tcs->GetAreaFlickerFadeDurationMs() > 0)
+                           {
+                              flickerEffect->SetFlickerFadeDownDurationMs(tcs->GetAreaFlickerFadeDurationMs());
+                              flickerEffect->SetFlickerFadeUpDurationMs(tcs->GetAreaFlickerFadeDurationMs());
+                           }
+
+                           effect = static_cast<EffectBase*>(flickerEffect);
+                        }
+                        else
+                        {
+                           AnalogAlphaMatrixValueEffect* matrixEffect = new AnalogAlphaMatrixValueEffect();
+                           effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixValueEffect", std::to_string(ledWizNr),
+                              std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                           matrixEffect->SetName(effectName);
+                           matrixEffect->SetToyName(toy->GetName());
+                           matrixEffect->SetLayerNr(tcs->GetLayer());
+
+                           effect = static_cast<EffectBase*>(matrixEffect);
+                        }
                      }
                      else
                      {
@@ -484,8 +565,6 @@ void Configurator::SetupTable(
                   }
                   else if (rgbaToy != nullptr)
                   {
-                     Log::Debug(
-                        StringExtensions::Build("Effect creation: rgbaToy, IsArea={0}, FlickerDensity={1}", tcs->IsArea() ? "true" : "false", std::to_string(tcs->GetAreaFlickerDensity())));
                      if (tcs->GetColorConfig() != nullptr)
                      {
                         RGBAColorEffect* rgbaEffect = new RGBAColorEffect();
@@ -575,9 +654,7 @@ void Configurator::SetupTable(
                         blinkEffect->SetDurationInactiveMs(inactiveMs);
 
                         if (tcs->GetBlinkIntervalMsNested() == 0)
-                        {
                            blinkEffect->SetLowValue(tcs->GetBlinkLow());
-                        }
 
                         MakeEffectNameUnique(blinkEffect, table);
                         table->GetEffects()->insert(std::make_pair(blinkEffect->GetName(), blinkEffect));
@@ -594,17 +671,11 @@ void Configurator::SetupTable(
 
                         int duration;
                         if (tcs->GetDurationMs() > 0)
-                        {
                            duration = tcs->GetDurationMs();
-                        }
                         else if (tcs->GetBlink() > 0)
-                        {
                            duration = (tcs->GetBlink() * 2 - 1) * tcs->GetBlinkIntervalMs() / 2 + 1;
-                        }
                         else
-                        {
                            duration = (rgbaToy != nullptr) ? m_effectRGBMinDurationMs : m_effectMinDurationMs;
-                        }
                         durationEffect->SetDurationMs(duration);
                         durationEffect->SetRetriggerBehaviour(RetriggerBehaviourEnum::Restart);
 
@@ -686,7 +757,6 @@ void Configurator::SetupTable(
                            "Ledwiz {0:00} Column {1:00} Setting {2:00} FullRangeEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                         fullRangeEffect->SetName(fullRangeName);
                         fullRangeEffect->SetTargetEffectName(finalEffect->GetName());
-                        Log::Debug(StringExtensions::Build("FullRangeEffect {0} -> target {1}", fullRangeName, finalEffect->GetName()));
                         MakeEffectNameUnique(fullRangeEffect, table);
                         table->GetEffects()->insert(std::make_pair(fullRangeEffect->GetName(), fullRangeEffect));
                         finalEffect = fullRangeEffect;
@@ -710,9 +780,7 @@ void Configurator::SetupTable(
                            {
                               std::string trimmed = StringExtensions::Trim(element);
                               if (!trimmed.empty())
-                              {
                                  cleanedElements.push_back(trimmed);
-                              }
                            }
                            AssignEffectToTableElements(table, cleanedElements, finalEffect);
                         }

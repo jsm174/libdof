@@ -93,6 +93,7 @@ public:
    };
 
    static std::vector<Device*> AllDevices();
+   static void ClearDevices();
 
 protected:
    virtual bool VerifySettings() override;

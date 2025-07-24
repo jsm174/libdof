@@ -10,9 +10,7 @@ AnalogAlphaMatrixShiftEffect::AnalogAlphaMatrixShiftEffect()
 {
 }
 
-AnalogAlpha AnalogAlphaMatrixShiftEffect::GetInactiveValue() { return m_inactiveValue; }
-
-AnalogAlpha AnalogAlphaMatrixShiftEffect::GetActiveValue(int triggerValue)
+AnalogAlpha AnalogAlphaMatrixShiftEffect::GetEffectValue(int triggerValue)
 {
    AnalogAlpha d;
 

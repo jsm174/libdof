@@ -51,24 +51,7 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **Logging**: StringExtensions::Build() with all parameters as strings
 - **String Format**: `{0:00}` patterns for zero-padded numbers matching C#
 - **XML**: Always `tinyxml2::` prefix, no `using namespace`
-- **Arrays**: MSVC requires `{{0.0f, 0.0f}}` for std::array initialization
-
-## Build & Test
-
-### Standard Build
-```bash
-cmake -B build -DPLATFORM=macos -DARCH=arm64
-cmake --build build -- -j10
-```
-
-### Memory Leak Detection (LLVM clang required for macOS)
-```bash
-cmake -DPLATFORM=macos -DARCH=arm64 \
-  -DCMAKE_C_COMPILER=/opt/homebrew/opt/llvm/bin/clang \
-  -DCMAKE_CXX_COMPILER=/opt/homebrew/opt/llvm/bin/clang++ \
-  -DENABLE_SANITIZERS=ON -DCMAKE_BUILD_TYPE=Debug -B build-clang
-ASAN_OPTIONS=detect_leaks=1 ./build-clang/dof_test tna
-```
+- **Arrays**: MSVC requires `{{0.0f, 0.0f}}` for std::array initialization`
 
 ### Test ROM Configurations
 - **ij_l7**: Blink + Fade effects (Indiana Jones L7)
@@ -83,7 +66,7 @@ ASAN_OPTIONS=detect_leaks=1 ./build-clang/dof_test tna
 - **Effects System**: All effect types with correct chain ordering and nested blink support
 - **Toys System**: All toy types with correct interface implementations
 - **Output Controllers**: LedWiz, Pinscape, PinscapePico, FTDI, ComPort, DudesCab, DMX, PinOne, LED Strips
-- **Matrix Effects**: Flicker, Plasma effects with exact timing correspondence
+- **Matrix Effects**: Flicker, Plasma, and Shift effects with exact timing correspondence
 - **Configuration**: LedControl loader, GlobalConfig, ScheduledSettings system
 - **Cross-Platform**: Windows/Linux/macOS builds with manual dependency compilation
 
@@ -111,13 +94,22 @@ ASAN_OPTIONS=detect_leaks=1 ./build-clang/dof_test tna
 - **Effects Fix**: All timed effects store copies, preventing heap-use-after-free
 - **Thread Safety**: AlarmHandler uses safe callback execution pattern with owner-based registration
 
+### Matrix Shift Effects Fix (December 2024)
+- **Problem**: E105 showed single LED flash instead of left-to-right sweep on LED strips
+- **Root Cause**: C++ MatrixShiftEffectBase used simple single-LED ping-pong vs C# complex trail algorithm
+- **Solution**: Complete rewrite to match C# BuildStep2ElementTable() and DoStep() exactly
+- **Key Changes**: 1D matrix indexing (y*width+x), proper trail calculations, owner-based AlarmHandler API
+- **Result**: Perfect sweeping behavior matching Windows DirectOutput Framework exactly
+
 ### Effect Chain Verification
 Always verify: Base → Fade → NestedBlink → Blink → Duration → MaxDuration → MinDuration → ExtendDuration → Delay → Invert → FullRange
 
 ### Matrix Effects Behavior
 - **E149=1**: Starts dynamic flicker patterns via FullRangeEffect → MinDurationEffect → MatrixFlickerEffect
 - **E149=0**: Stops effects after MinDurationMs delay via MinDurationEnd() → MatrixFlickerEffect(value=0)
-- **Active State**: MinDurationEffect stays active until explicit E149=0, not timer expiry
+- **E105=1**: Creates sweeping shift effects via FullRangeEffect → MinDurationEffect → MatrixShiftEffect
+- **Active State**: MinDurationEffect stays active until explicit E149=0/E105=0, not timer expiry
+- **Shift Directions**: ADU (Up), ADD (Down), ADL (Left), ADR (Right) create proper sweeping trails
 
 ### Communication Protocols
 - **FTDI**: libftdi1 bitbang at USB level

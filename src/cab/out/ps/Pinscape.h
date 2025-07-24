@@ -38,6 +38,7 @@ public:
    void AllOff();
    void UpdateDelay();
    static void FindDevices();
+   static void ClearDevices();
    static std::vector<void*> GetAllDevices();
    virtual tinyxml2::XMLElement* ToXml(tinyxml2::XMLDocument& doc) const override;
    virtual bool FromXml(const tinyxml2::XMLElement* element) override;

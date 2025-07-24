@@ -185,6 +185,14 @@ std::vector<DudesCab::Device*> DudesCab::AllDevices()
    return s_devices;
 }
 
+void DudesCab::ClearDevices()
+{
+   for (Device* device : s_devices)
+      delete device;
+
+   s_devices.clear();
+}
+
 std::vector<DudesCab::Device*> DudesCab::FindDevices()
 {
    std::vector<Device*> devices;

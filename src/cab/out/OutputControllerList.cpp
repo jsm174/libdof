@@ -55,6 +55,12 @@ void OutputControllerList::Finish()
    for (IOutputController* controller : *this)
       controller->Finish();
 
+#ifdef __HIDAPI__
+   Pinscape::ClearDevices();
+   PinscapePico::ClearDevices();
+   DudesCab::ClearDevices();
+#endif
+
    Log::Write("Output controllers finished");
 }
 
