@@ -12,14 +12,15 @@ public:
    AnalogAlphaMatrixShiftEffect();
    virtual ~AnalogAlphaMatrixShiftEffect() = default;
 
+   virtual std::string GetXmlElementName() const override { return "AnalogAlphaMatrixShiftEffect"; }
+
    const AnalogAlpha& GetActiveValue() const { return m_activeValue; }
    void SetActiveValue(const AnalogAlpha& value) { m_activeValue = value; }
    const AnalogAlpha& GetInactiveValue() const { return m_inactiveValue; }
    void SetInactiveValue(const AnalogAlpha& value) { m_inactiveValue = value; }
 
 protected:
-   virtual AnalogAlpha GetInactiveValue() override;
-   virtual AnalogAlpha GetActiveValue(int triggerValue) override;
+   virtual AnalogAlpha GetEffectValue(int triggerValue) override;
 
 private:
    AnalogAlpha m_activeValue;

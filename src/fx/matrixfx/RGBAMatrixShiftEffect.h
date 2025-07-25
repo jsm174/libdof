@@ -12,14 +12,15 @@ public:
    RGBAMatrixShiftEffect();
    virtual ~RGBAMatrixShiftEffect() = default;
 
+   virtual std::string GetXmlElementName() const override { return "RGBAMatrixShiftEffect"; }
+
    const RGBAColor& GetActiveColor() const { return m_activeColor; }
    void SetActiveColor(const RGBAColor& value) { m_activeColor = value; }
    const RGBAColor& GetInactiveColor() const { return m_inactiveColor; }
    void SetInactiveColor(const RGBAColor& value) { m_inactiveColor = value; }
 
 protected:
-   virtual RGBAColor GetInactiveValue() override;
-   virtual RGBAColor GetActiveValue(int triggerValue) override;
+   virtual RGBAColor GetEffectValue(int triggerValue) override;
 
 private:
    RGBAColor m_activeColor;

@@ -205,6 +205,14 @@ void Pinscape::FindDevices()
    hid_free_enumeration(pDevices);
 }
 
+void Pinscape::ClearDevices()
+{
+   for (Device* device : s_devices)
+      delete device;
+
+   s_devices.clear();
+}
+
 std::string Pinscape::GetDeviceProductName(hid_device_info* dev)
 {
    std::string productName;

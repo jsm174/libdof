@@ -41,6 +41,7 @@ public:
    void AllOff();
 
    static void FindDevices();
+   static void ClearDevices();
    static std::vector<Device*> GetAllDevices();
 
    class Device

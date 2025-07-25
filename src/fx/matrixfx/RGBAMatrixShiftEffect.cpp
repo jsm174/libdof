@@ -10,9 +10,7 @@ RGBAMatrixShiftEffect::RGBAMatrixShiftEffect()
 {
 }
 
-RGBAColor RGBAMatrixShiftEffect::GetInactiveValue() { return m_inactiveColor; }
-
-RGBAColor RGBAMatrixShiftEffect::GetActiveValue(int triggerValue)
+RGBAColor RGBAMatrixShiftEffect::GetEffectValue(int triggerValue)
 {
    RGBAColor d;
 
