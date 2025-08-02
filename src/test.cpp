@@ -5,11 +5,15 @@
 //
 // ij_l7,0,0,0,0,0,0,0,L88 Blink fu500 fd550
 // tna,0,0,0,0,0,0,0,E140 Blink fu500 fd600
+// gw,0,0,0,0,0,0,0,L68 m550 Blink fu500 fd550
 //
 // The following entries should be in ~/.vpinball/directoutputconfig/directoutputconfig30.ini:
 //
 // ij_l7,S10 Red AT0 AH12 L0/S20 Red AT0 AH12 L1/S24 Red AT0 AH12 L2/S52 Orange AT0 AH12 L3/S53 Red AT0 AH12 L4/W17 Orange AT0 AH12 L5/W51 Red AT0 AH12 L6/W52 Red AT0 AH12 L7/W53 Red AT0 AH12 L8/W75 Yellow AT0 AH12 L9/W76 Yellow AT0 AH12 L10/W77 Yellow AT0 AH12 L11/W78 Yellow AT0 AH12 L12/W88 Yellow AT85  AH15 FU250 FD270 BLINK 500,S9 Red AT0 AH12 L0/S51 Green AT0 AH12 L1/S53 Red AT0 AH12 L2/W16 Orange AT0 AH12 L3/W61 Red AT0 AH12 L4/W62 Red AT0 AH12 L5/W63 Red AT0 AH12 L6
 // tna,E144 Yellow AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E146 Blue AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E147 Red F100 AFDEN5 AFMIN200 AFMAX300/E148 Green AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E149 Purple AL0 AT0 AW100 AH100 AFDEN50 AFMIN500 AFMAX1000/E105 Red 50 AH100 ADU AS300/E107 White 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E107 White 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E116 Red 700 AT85 AH15 AFDEN40 AFMIN100 AFMAX160/E125 White 50 AH100 ADU AS300/E111 Red 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E111 Red 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E112 Purple L13 AT0 AFDEN15 AFMIN10 AFMAX20/E179 Red 60 AW100 AH100 ADD AS300/E150|E151|E152|E153 Yellow 40 AT15 AL0 AH10 AW100 AS400 ADU L25/E150|E151|E152|E153 Yellow 40 AT25 AL0 AH10 AW100 AS400 ADD L25,E144 Yellow AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E146 Blue AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E147 Red F100 AFDEN5 AFMIN200 AFMAX300/E148 Green AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E149 Purple AL0 AT0 AW100 AH100 AFDEN50 AFMIN500 AFMAX1000/E103 Red 50 AH100 ADU AS300/E116 Red 700 AT85 AH15 AFDEN40 AFMIN100 AFMAX160/E108 White 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E108 White 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E110 Red 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E110 Red 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E112 Purple L13 AT0 AFDEN15 AFMIN10 AFMAX20/E179 Red 60 AW100 AH100 ADD AS300/E150|E151|E152|E153 Yellow 40 AT15 AL0 AH10 AW100 AS400 ADU L25/E150|E151|E152|E153 Yellow 40 AT25 AL0 AH10 AW100 AS400 ADD L25
+// gw is a combo of PF Right Effects MX and PF Right Flashers MX
+// Note that S46 and S48 won't do anything unless W78 is on
+// gw,S24 Yellow 50 AH100 ADU AS300/(W78=1 and (S46=1 or S48=1)) Red 500 W200 AT0 AH50 ADD AS500 L101/(W78=1 and (S46=1 or S48=1)) Black 500 W550 AT0 AH50 ADU AS500 L102/W78 Red AFDEN50 AFMIN60 AFMAX120 AT80 AH90/S16 Red 700 AT85 AH15 AFDEN40 AFMIN100 AFMAX160/W28 Red 100 AT80 AH20 ADD AS300/W27 Green 100 AT80 AH20 ADD AS300/W44|W45|W46 Orange_Red 40 AT25 AL0 AH25 AW100 AS400 ADU L25/W44|W45|W46 Orange_Red 40 AT50 AL0 AH25 AW100 AS400 ADD L25/W81 Red F150 AH30 AT0 ADD AS500 100 W450/S12 Red AT50 AH50 ADU 100 AS400/S12 Yellow AT0 AH50 ADD 100 AS400 W600 FD220/W36 Red AT20 AH5 150/W41 Yellow AT23 AH5 150/W51 Green AT26 AH5 150/W65 Blue AT0 AH50 ADD AS250 100/W65 Red AT0 AH50 ADD AS250 100 W90/W17 Green f200 AL0 AT0 AW100 AH15 L2
 //
 
 #include "DOF/DOF.h"
@@ -33,7 +37,7 @@ struct TestRom
    std::string description;
 };
 
-std::vector<TestRom> testRoms = { { "ij_l7", "" }, { "tna", "" } };
+std::vector<TestRom> testRoms = { { "ij_l7", "" }, { "tna", "" }, { "gw", "" } };
 
 void LIBDOFCALLBACK LogCallback(DOF_LogLevel logLevel, const char* format, va_list args)
 {
@@ -177,6 +181,125 @@ void RunTNATests(DOF::DOF* pDof)
    pDof->Finish();
 }
 
+void RunGWTests(DOF::DOF* pDof)
+{
+   Log("========================================");
+   Log("Testing ROM: gw - The Getaway High Speed II");
+   Log("========================================");
+   pDof->Init("", "gw");
+
+   Log("=== DOF Protocol Test Scenarios ===");
+
+   Log("1. S12 solenoid test - trigger for 3 seconds");
+   pDof->DataReceive('S', 12, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('S', 12, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("2. S16 solenoid test - trigger for 3 seconds");
+   pDof->DataReceive('S', 16, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('S', 16, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("3. S24 solenoid test - trigger for 3 seconds");
+   pDof->DataReceive('S', 24, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('S', 24, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   // S46 & S48 also require W78 to be on
+   Log("4. S46 solenoid test (with W78 on) - trigger for 3 seconds");
+   pDof->DataReceive('W', 78, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   pDof->DataReceive('S', 46, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('S', 46, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("5. S48 solenoid test (with W78 on) - trigger for 3 seconds");
+   pDof->DataReceive('S', 48, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('S', 48, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   pDof->DataReceive('W', 78, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("6. W17 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 17, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 17, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("7. W27 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 27, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 27, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("8. W28 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 28, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 28, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("9. W36 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 36, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 36, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("10. W41 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 41, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 41, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("11. W44 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 44, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 44, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("12. W45 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 45, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 45, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("13. W46 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 46, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 46, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("14. W51 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 51, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 51, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("15. W65 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 65, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 65, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("16. W78 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 78, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 78, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("17. W81 switch test - press for 3 seconds");
+   pDof->DataReceive('W', 81, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 81, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("=== DOF Protocol Tests Complete ===");
+   pDof->Finish();
+}
 std::string GetDefaultBasePath()
 {
 #ifdef _WIN32
@@ -272,6 +395,8 @@ int main(int argc, const char* argv[])
                RunIJTests(pDof);
             else if (testRom.name == "tna")
                RunTNATests(pDof);
+            else if (testRom.name == "gw")
+               RunGWTests(pDof);
             break;
          }
       }
@@ -295,6 +420,7 @@ int main(int argc, const char* argv[])
    {
       RunIJTests(pDof);
       RunTNATests(pDof);
+      RunGWTests(pDof);
    }
 
    Log("Shutting down...");
