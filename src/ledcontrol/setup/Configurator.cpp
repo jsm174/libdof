@@ -333,8 +333,8 @@ void Configurator::SetupTable(
                               std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                            flickerEffect->SetName(effectName);
                            flickerEffect->SetToyName(toy->GetName());
-                           if (tcs->HasLayer())
-                              flickerEffect->SetLayerNr(tcs->GetLayer());
+                           int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                           flickerEffect->SetLayerNr(layer);
 
                            ColorConfig* colorConfig = tcs->GetColorConfig();
                            flickerEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
@@ -364,8 +364,8 @@ void Configurator::SetupTable(
                               "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixPlasmaEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                            plasmaEffect->SetName(effectName);
                            plasmaEffect->SetToyName(toy->GetName());
-                           if (tcs->HasLayer())
-                              plasmaEffect->SetLayerNr(tcs->GetLayer());
+                           int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                           plasmaEffect->SetLayerNr(layer);
 
                            ColorConfig* colorConfig = tcs->GetColorConfig();
                            RGBAColor activeColor1;
@@ -416,8 +416,8 @@ void Configurator::SetupTable(
                                  std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                               shiftEffect->SetName(effectName);
                               shiftEffect->SetToyName(toy->GetName());
-                              if (tcs->HasLayer())
-                                 shiftEffect->SetLayerNr(tcs->GetLayer());
+                              int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                              shiftEffect->SetLayerNr(layer);
                               shiftEffect->SetShiftDirection(tcs->GetAreaDirection());
                               shiftEffect->SetShiftAcceleration(tcs->GetAreaAcceleration());
                               shiftEffect->SetActiveColor(activeColor);
@@ -443,8 +443,8 @@ void Configurator::SetupTable(
                                  std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                               matrixEffect->SetName(effectName);
                               matrixEffect->SetToyName(toy->GetName());
-                              if (tcs->HasLayer())
-                                 matrixEffect->SetLayerNr(tcs->GetLayer());
+                              int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                              matrixEffect->SetLayerNr(layer);
 
                               matrixEffect->SetActiveColor(activeColor);
                               matrixEffect->SetInactiveColor(inactiveColor);
@@ -495,7 +495,8 @@ void Configurator::SetupTable(
                               std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                            shiftEffect->SetName(effectName);
                            shiftEffect->SetToyName(toy->GetName());
-                           shiftEffect->SetLayerNr(tcs->GetLayer());
+                           int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                           shiftEffect->SetLayerNr(layer);
                            shiftEffect->SetShiftDirection(tcs->GetAreaDirection());
                            shiftEffect->SetShiftAcceleration(tcs->GetAreaAcceleration());
 
@@ -511,7 +512,8 @@ void Configurator::SetupTable(
                               std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                            flickerEffect->SetName(effectName);
                            flickerEffect->SetToyName(toy->GetName());
-                           flickerEffect->SetLayerNr(tcs->GetLayer());
+                           int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                           flickerEffect->SetLayerNr(layer);
                            flickerEffect->SetDensity(MathExtensions::Limit(tcs->GetAreaFlickerDensity(), 1, 99));
 
                            AnalogAlpha activeValue(MathExtensions::Limit(tcs->GetIntensity(), 0, 255), 255);
@@ -547,7 +549,8 @@ void Configurator::SetupTable(
                               std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                            matrixEffect->SetName(effectName);
                            matrixEffect->SetToyName(toy->GetName());
-                           matrixEffect->SetLayerNr(tcs->GetLayer());
+                           int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                           matrixEffect->SetLayerNr(layer);
 
                            effect = static_cast<EffectBase*>(matrixEffect);
                         }

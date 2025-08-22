@@ -103,41 +103,40 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
 
    int lastValue = m_lastDiscardedValue;
 
+   int toNr;
    for (auto& kv : m_triggerValueBuffer)
    {
-      int stepIndex = m_currentStep - kv.first;
-      if (stepIndex >= 0 && stepIndex < (int)m_step2Element.size())
+      toElementNr = m_step2Element[(m_currentStep - kv.first)];
+
+      if ((int)fromElementNr == (int)toElementNr)
+         value[(int)fromElementNr] += (fromElementNr - toElementNr) * (float)lastValue;
+      else
       {
-         toElementNr = m_step2Element[stepIndex];
+         if (fromElementNr != (float)(int)fromElementNr)
+            value[(int)fromElementNr] += (fromElementNr - (float)(int)fromElementNr) * (float)lastValue;
 
-         if ((int)fromElementNr == (int)toElementNr)
-         {
-            value[(int)fromElementNr] += (fromElementNr - toElementNr) * (float)lastValue;
-         }
-         else
-         {
-            if (fromElementNr != (float)(int)fromElementNr)
-            {
-               value[(int)fromElementNr] += (fromElementNr - (float)(int)fromElementNr) * (float)lastValue;
-            }
-
-            int toNr = (int)(toElementNr + 0.999f);
-            for (int i = (int)fromElementNr - 1; i >= toNr; i--)
-            {
-               if (i >= 0 && i < (int)value.size())
-                  value[i] = (float)lastValue;
-            }
-            if (toElementNr != (float)(int)toElementNr)
-            {
-               value[(int)toElementNr] += ((float)(int)toElementNr + 1.0f - toElementNr) * (float)lastValue;
-            }
-         }
-         fromElementNr = toElementNr;
-         lastValue = kv.second;
+         toNr = (int)(toElementNr + 0.999f);
+         for (int i = (int)fromElementNr - 1; i >= toNr; i--)
+            value[i] = (float)lastValue;
+         if (toElementNr != (float)(int)toElementNr)
+            value[(int)toElementNr] += ((float)(int)toElementNr + 1.0f - toElementNr) * (float)lastValue;
       }
+      fromElementNr = toElementNr;
+      lastValue = kv.second;
+   }
+   toElementNr = 0;
+   if (fromElementNr != toElementNr)
+   {
+      if (fromElementNr != (float)(int)fromElementNr && (int)fromElementNr < numberOfElements - 1)
+         value[(int)fromElementNr] += (fromElementNr - (float)(int)fromElementNr) * (float)lastValue;
+
+      toNr = MathExtensions::Limit((int)(toElementNr + 0.999f), 0, 2147483647);
+      for (int i = (int)fromElementNr - 1; i >= toNr; i--)
+         value[i] = (float)lastValue;
+      if (toElementNr != (float)(int)toElementNr)
+         value[(int)toElementNr] += ((float)(int)toElementNr + 1.0f - toElementNr) * (float)lastValue;
    }
 
-   // Data output - matches C# lines 157-213
    switch (m_shiftDirection)
    {
    case MatrixShiftDirectionEnum::Right:
@@ -145,9 +144,7 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
       {
          int v = MathExtensions::Limit((int)value[i], 0, 255);
          if (v > 0 && this->GetFadeMode() == FadeModeEnum::OnOff)
-         {
             v = 255;
-         }
          MatrixElementType d = GetEffectValue(v);
 
          for (int y = this->m_areaTop; y <= this->m_areaBottom; y++)
@@ -162,9 +159,7 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
       {
          int v = MathExtensions::Limit((int)value[i], 0, 255);
          if (v > 0 && this->GetFadeMode() == FadeModeEnum::OnOff)
-         {
             v = 255;
-         }
          MatrixElementType d = GetEffectValue(v);
 
          for (int x = this->m_areaLeft; x <= this->m_areaRight; x++)
@@ -179,9 +174,7 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
       {
          int v = MathExtensions::Limit((int)value[i], 0, 255);
          if (v > 0 && this->GetFadeMode() == FadeModeEnum::OnOff)
-         {
             v = 255;
-         }
          MatrixElementType d = GetEffectValue(v);
 
          for (int x = this->m_areaLeft; x <= this->m_areaRight; x++)
@@ -197,9 +190,7 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
       {
          int v = MathExtensions::Limit((int)value[i], 0, 255);
          if (v > 0 && this->GetFadeMode() == FadeModeEnum::OnOff)
-         {
             v = 255;
-         }
          MatrixElementType d = GetEffectValue(v);
 
          for (int y = this->m_areaTop; y <= this->m_areaBottom; y++)
@@ -221,9 +212,7 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
    }
 
    if (!m_triggerValueBuffer.empty() || m_lastDiscardedValue != 0)
-   {
       m_currentStep++;
-   }
    else
    {
       this->m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(this);
@@ -242,9 +231,7 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
       m_triggerValueBuffer[m_currentStep] = m_lastTriggerValue;
 
       if (!m_active)
-      {
          DoStep();
-      }
    }
 }
 
