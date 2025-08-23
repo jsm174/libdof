@@ -80,6 +80,8 @@ void RunIJTests(DOF::DOF* pDof)
    Log("========================================");
    pDof->Init("", "ij_l7");
 
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
    Log("=== DOF Protocol Test Scenarios ===");
 
    Log("1. L88 lamp test - 5 seconds on");
@@ -112,9 +114,9 @@ void RunTNATests(DOF::DOF* pDof)
    Log("========================================");
    pDof->Init("", "tna");
 
-   Log("=== TNA Matrix Effects Test Scenarios ===");
-
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("=== TNA Matrix Effects Test Scenarios ===");
 
    Log("1. Run E105 for 5 seconds ON");
 
@@ -188,28 +190,36 @@ void RunGWTests(DOF::DOF* pDof)
    Log("========================================");
    pDof->Init("", "gw");
 
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
    Log("=== DOF Protocol Test Scenarios ===");
 
-   Log("1. S12 solenoid test - trigger for 3 seconds");
+   Log("1. W65 switch test - trigger for 3 seconds");
+   pDof->DataReceive('W', 65, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+   pDof->DataReceive('W', 65, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+   Log("2. S12 solenoid test - trigger for 3 seconds");
    pDof->DataReceive('S', 12, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('S', 12, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("2. S16 solenoid test - trigger for 3 seconds");
+   Log("3. S16 solenoid test - trigger for 3 seconds");
    pDof->DataReceive('S', 16, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('S', 16, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("3. S24 solenoid test - trigger for 3 seconds");
+   Log("4. S24 solenoid test - trigger for 3 seconds");
    pDof->DataReceive('S', 24, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('S', 24, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
    // S46 & S48 also require W78 to be on
-   Log("4. S46 solenoid test (with W78 on) - trigger for 3 seconds");
+   Log("5. S46 solenoid test (with W78 on) - trigger for 3 seconds");
    pDof->DataReceive('W', 78, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
    pDof->DataReceive('S', 46, 1);
@@ -217,7 +227,7 @@ void RunGWTests(DOF::DOF* pDof)
    pDof->DataReceive('S', 46, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("5. S48 solenoid test (with W78 on) - trigger for 3 seconds");
+   Log("6. S48 solenoid test (with W78 on) - trigger for 3 seconds");
    pDof->DataReceive('S', 48, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('S', 48, 0);
@@ -225,73 +235,73 @@ void RunGWTests(DOF::DOF* pDof)
    pDof->DataReceive('W', 78, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("6. W17 switch test - press for 3 seconds");
+   Log("7. W17 switch test - press for 3 seconds");
    pDof->DataReceive('W', 17, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('W', 17, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("7. W27 switch test - press for 3 seconds");
+   Log("8. W27 switch test - press for 3 seconds");
    pDof->DataReceive('W', 27, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('W', 27, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("8. W28 switch test - press for 3 seconds");
+   Log("9. W28 switch test - press for 3 seconds");
    pDof->DataReceive('W', 28, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('W', 28, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("9. W36 switch test - press for 3 seconds");
+   Log("10. W36 switch test - press for 3 seconds");
    pDof->DataReceive('W', 36, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('W', 36, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("10. W41 switch test - press for 3 seconds");
+   Log("11. W41 switch test - press for 3 seconds");
    pDof->DataReceive('W', 41, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('W', 41, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("11. W44 switch test - press for 3 seconds");
+   Log("12. W44 switch test - press for 3 seconds");
    pDof->DataReceive('W', 44, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('W', 44, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("12. W45 switch test - press for 3 seconds");
+   Log("13. W45 switch test - press for 3 seconds");
    pDof->DataReceive('W', 45, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('W', 45, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("13. W46 switch test - press for 3 seconds");
+   Log("14. W46 switch test - press for 3 seconds");
    pDof->DataReceive('W', 46, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('W', 46, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("14. W51 switch test - press for 3 seconds");
+   Log("15. W51 switch test - press for 3 seconds");
    pDof->DataReceive('W', 51, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('W', 51, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("15. W65 switch test - press for 3 seconds");
+   Log("16. W65 switch test - press for 3 seconds");
    pDof->DataReceive('W', 65, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('W', 65, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("16. W78 switch test - press for 3 seconds");
+   Log("17. W78 switch test - press for 3 seconds");
    pDof->DataReceive('W', 78, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('W', 78, 0);
    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("17. W81 switch test - press for 3 seconds");
+   Log("18. W81 switch test - press for 3 seconds");
    pDof->DataReceive('W', 81, 1);
    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
    pDof->DataReceive('W', 81, 0);
