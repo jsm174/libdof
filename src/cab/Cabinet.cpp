@@ -18,7 +18,6 @@
 #include <sstream>
 
 #ifdef __HIDAPI__
-#include <hidapi/hidapi.h>
 #include "out/ps/Pinscape.h"
 #include "out/ps/PinscapeAutoConfigurator.h"
 #include "out/pspico/PinscapePico.h"
@@ -48,8 +47,6 @@ Cabinet::Cabinet()
    m_colors = new ColorList();
 
 #ifdef __HIDAPI__
-   hid_init();
-
    Pinscape::Initialize();
    PinscapePico::Initialize();
 #endif
@@ -83,9 +80,6 @@ Cabinet::~Cabinet()
       delete m_outputControllers;
       m_outputControllers = nullptr;
    }
-#ifdef __HIDAPI__
-   hid_exit();
-#endif
 }
 
 void Cabinet::AutoConfig()

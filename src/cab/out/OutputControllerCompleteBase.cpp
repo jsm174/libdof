@@ -233,25 +233,29 @@ void OutputControllerCompleteBase::FinishUpdaterThread()
 {
    if (m_updaterThread && m_updaterThread->joinable())
    {
-      try
+      m_keepUpdaterThreadAlive = false;
+      UpdaterThreadSignal();
+
+      auto start = std::chrono::steady_clock::now();
+      bool joined = false;
+
+      while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 1000)
       {
-         m_keepUpdaterThreadAlive = false;
-         UpdaterThreadSignal();
-
-         auto future = std::async(std::launch::async, [this]() { m_updaterThread->join(); });
-
-         if (future.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout)
+         if (!IsUpdaterThreadActive())
          {
-            Log::Warning("Updater thread did not quit within timeout. Thread termination may be forceful.");
-            m_updaterThread->detach();
+            m_updaterThread->join();
+            joined = true;
+            break;
          }
+         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
 
-         m_updaterThread.reset();
-      }
-      catch (const std::exception& e)
+      if (!joined)
       {
-         Log::Exception(StringExtensions::Build("Error occurred during termination of updater thread: {0}", e.what()));
+         Log::Warning("Updater thread did not quit within timeout. Thread termination may be forceful.");
+         m_updaterThread->detach();
       }
+      m_updaterThread.reset();
    }
 }
 
