@@ -11,15 +11,28 @@
 #include "Pinball.h"
 #include "general/StringExtensions.h"
 
+#ifdef __HIDAPI__
+#include <hidapi/hidapi.h>
+#endif
+
 namespace DOF
 {
 
 DOF::DOF()
-   : m_pinball(new Pinball())
 {
+#ifdef __HIDAPI__
+   hid_init();
+#endif
+   m_pinball = new Pinball();
 }
 
-DOF::~DOF() { delete m_pinball; }
+DOF::~DOF()
+{
+   delete m_pinball;
+#ifdef __HIDAPI__
+   hid_exit();
+#endif
+}
 
 void DOF::Init(const char* tableFilename, const char* romName)
 {
