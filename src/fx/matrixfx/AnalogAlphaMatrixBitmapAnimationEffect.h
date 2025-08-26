@@ -9,18 +9,10 @@ namespace DOF
 class AnalogAlphaMatrixBitmapAnimationEffect : public MatrixBitmapAnimationEffectBase<AnalogAlpha>
 {
 public:
-   AnalogAlphaMatrixBitmapAnimationEffect();
-   virtual ~AnalogAlphaMatrixBitmapAnimationEffect() = default;
-
-   const AnalogAlpha& GetInactiveValue() const { return m_inactiveValue; }
-   void SetInactiveValue(const AnalogAlpha& value) { m_inactiveValue = value; }
+   virtual std::string GetXmlElementName() const override { return "AnalogAlphaMatrixBitmapAnimationEffect"; }
 
 protected:
-   virtual AnalogAlpha GetInactiveValue() override;
-   virtual AnalogAlpha GetPixelValue(const PixelData& pixel, int triggerValue) override;
-
-private:
-   AnalogAlpha m_inactiveValue;
+   virtual AnalogAlpha GetEffectValue(int triggerValue, PixelData pixel) override;
 };
 
 }

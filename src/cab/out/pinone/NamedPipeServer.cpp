@@ -151,7 +151,8 @@ void NamedPipeServer::HandleClientConnection(void* serverStream)
             WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.length()), &bytesWritten, nullptr);
 #else
             int sock = static_cast<int>(reinterpret_cast<intptr_t>(serverStream));
-            write(sock, response.c_str(), response.length());
+            ssize_t bytesWritten = write(sock, response.c_str(), response.length());
+            (void)bytesWritten;
 #endif
          }
          else if (StringExtensions::StartsWith(requestStr, "STOP_SERVER"))
@@ -179,7 +180,8 @@ void NamedPipeServer::HandleClientConnection(void* serverStream)
             WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.length()), &bytesWritten, nullptr);
 #else
             int sock = static_cast<int>(reinterpret_cast<intptr_t>(serverStream));
-            write(sock, response.c_str(), response.length());
+            ssize_t bytesWritten = write(sock, response.c_str(), response.length());
+            (void)bytesWritten;
 #endif
          }
          else if (StringExtensions::StartsWith(requestStr, "READLINE"))
@@ -202,7 +204,8 @@ void NamedPipeServer::HandleClientConnection(void* serverStream)
             WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.length()), &bytesWritten, nullptr);
 #else
             int sock = static_cast<int>(reinterpret_cast<intptr_t>(serverStream));
-            write(sock, response.c_str(), response.length());
+            ssize_t bytesWritten = write(sock, response.c_str(), response.length());
+            (void)bytesWritten;
 #endif
          }
          else if (StringExtensions::StartsWith(requestStr, "CHECK"))
@@ -223,7 +226,8 @@ void NamedPipeServer::HandleClientConnection(void* serverStream)
             WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.length()), &bytesWritten, nullptr);
 #else
             int sock = static_cast<int>(reinterpret_cast<intptr_t>(serverStream));
-            write(sock, response.c_str(), response.length());
+            ssize_t bytesWritten = write(sock, response.c_str(), response.length());
+            (void)bytesWritten;
 #endif
          }
          else if (StringExtensions::StartsWith(requestStr, "COMPORT"))
@@ -234,7 +238,8 @@ void NamedPipeServer::HandleClientConnection(void* serverStream)
             WriteFile(pipe, m_comPort.c_str(), static_cast<DWORD>(m_comPort.length()), &bytesWritten, nullptr);
 #else
             int sock = static_cast<int>(reinterpret_cast<intptr_t>(serverStream));
-            write(sock, m_comPort.c_str(), m_comPort.length());
+            ssize_t bytesWritten = write(sock, m_comPort.c_str(), m_comPort.length());
+            (void)bytesWritten;
 #endif
          }
       }

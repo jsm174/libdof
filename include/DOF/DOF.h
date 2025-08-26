@@ -1,8 +1,8 @@
 #pragma once
 
 #define LIBDOF_VERSION_MAJOR 0 // X Digits
-#define LIBDOF_VERSION_MINOR 2 // Max 2 Digits
-#define LIBDOF_VERSION_PATCH 4 // Max 2 Digits
+#define LIBDOF_VERSION_MINOR 3 // Max 2 Digits
+#define LIBDOF_VERSION_PATCH 0 // Max 2 Digits
 
 #define _LIBDOF_STR(x) #x
 #define LIBDOF_STR(x) _LIBDOF_STR(x)

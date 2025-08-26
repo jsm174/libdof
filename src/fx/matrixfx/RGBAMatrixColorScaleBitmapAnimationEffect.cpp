@@ -5,49 +5,46 @@ namespace DOF
 {
 
 RGBAMatrixColorScaleBitmapAnimationEffect::RGBAMatrixColorScaleBitmapAnimationEffect()
-   : m_inactiveColor(0, 0, 0, 0)
-   , m_colorScale(255, 255, 255, 255)
-   , m_colorScaleMode(ColorScaleMode::Multiply)
-   , m_colorScaleStrength(1.0)
+   : MatrixBitmapAnimationEffectBase<RGBAColor>()
+   , m_activeColor(255, 255, 255, 255)
+   , m_inactiveColor(0, 0, 0, 0)
 {
 }
 
-RGBAColor RGBAMatrixColorScaleBitmapAnimationEffect::GetInactiveValue() { return m_inactiveColor; }
-
-RGBAColor RGBAMatrixColorScaleBitmapAnimationEffect::GetPixelValue(const PixelData& pixel, int triggerValue)
+void RGBAMatrixColorScaleBitmapAnimationEffect::Init(Table* table)
 {
-   RGBAColor scaledColor = ApplyColorScaling(pixel);
+   MatrixBitmapAnimationEffectBase<RGBAColor>::Init(table);
 
-   int v = MathExtensions::Limit(triggerValue, 0, 255);
+   if (!this->m_pixels.empty())
+   {
+      for (int frameIndex = 0; frameIndex < static_cast<int>(this->m_pixels.size()); frameIndex++)
+      {
+         for (int y = 0; y < this->GetAreaHeight(); y++)
+         {
+            for (int x = 0; x < this->GetAreaWidth(); x++)
+            {
+               PixelData p = this->m_pixels[frameIndex][x][y];
 
-   RGBAColor result;
-   result.SetRed(MathExtensions::Limit((int)((float)scaledColor.GetRed() * v / 255), 0, 255));
-   result.SetGreen(MathExtensions::Limit((int)((float)scaledColor.GetGreen() * v / 255), 0, 255));
-   result.SetBlue(MathExtensions::Limit((int)((float)scaledColor.GetBlue() * v / 255), 0, 255));
-   result.SetAlpha(MathExtensions::Limit((int)((float)scaledColor.GetAlpha() * v / 255), 0, 255));
+               double brightness = ((double)(p.red + p.green + p.blue) / 3.0);
+               brightness = MathExtensions::Limit((int)brightness, 0, 255);
 
-   return result;
+               p.red = MathExtensions::Limit((int)(m_inactiveColor.GetRed() + ((float)(m_activeColor.GetRed() - m_inactiveColor.GetRed()) * brightness / 255.0f)), 0, 255);
+               p.green = MathExtensions::Limit((int)(m_inactiveColor.GetGreen() + ((float)(m_activeColor.GetGreen() - m_inactiveColor.GetGreen()) * brightness / 255.0f)), 0, 255);
+               p.blue = MathExtensions::Limit((int)(m_inactiveColor.GetBlue() + ((float)(m_activeColor.GetBlue() - m_inactiveColor.GetBlue()) * brightness / 255.0f)), 0, 255);
+               p.alpha = MathExtensions::Limit((int)(m_inactiveColor.GetAlpha() + ((float)(m_activeColor.GetAlpha() - m_inactiveColor.GetAlpha()) * brightness / 255.0f)), 0, 255);
+
+               this->m_pixels[frameIndex][x][y] = p;
+            }
+         }
+      }
+   }
 }
 
-RGBAColor RGBAMatrixColorScaleBitmapAnimationEffect::ApplyColorScaling(const PixelData& pixel) const
+RGBAColor RGBAMatrixColorScaleBitmapAnimationEffect::GetEffectValue(int triggerValue, PixelData pixel)
 {
-   RGBAColor baseColor(pixel.red, pixel.green, pixel.blue, pixel.alpha);
-
-   switch (m_colorScaleMode)
-   {
-   case ColorScaleMode::Multiply: return m_colorScale.ApplyScale(baseColor);
-
-   case ColorScaleMode::Tint: return ColorScale::TintColor(baseColor, m_colorScale.GetColor(), m_colorScaleStrength);
-
-   case ColorScaleMode::Replace:
-   {
-      double brightness = (pixel.red * 0.299 + pixel.green * 0.587 + pixel.blue * 0.114) / 255.0;
-      RGBAColor scaledColor = ColorScale::ScaleBrightness(m_colorScale.GetColor(), brightness);
-      return ColorScale::BlendColors(baseColor, scaledColor, m_colorScaleStrength);
-   }
-
-   default: return baseColor;
-   }
+   RGBAColor d = pixel.GetRGBAColor();
+   d.SetAlpha((int)((float)pixel.alpha * triggerValue / 255));
+   return d;
 }
 
 }

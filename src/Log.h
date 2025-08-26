@@ -18,6 +18,7 @@ public:
    static void WriteRaw(const char* format, ...);
    static void Write(const std::string& message);
    static void Warning(const std::string& message);
+   static void Error(const std::string& message);
    static void Exception(const std::string& message);
    static void Debug(const std::string& message);
    static void Once(const std::string& key, const std::string& message);

@@ -1,18 +1,22 @@
 #include "RGBAMatrixShapeEffect.h"
+#include "RGBAMatrixBitmapEffect.h"
+#include "RGBAMatrixBitmapAnimationEffect.h"
+#include "IMatrixBitmapEffect.h"
+#include "IMatrixEffect.h"
 #include "bitmapshapes/ShapeAnimated.h"
 #include "bitmapshapes/ShapeDefinitions.h"
 #include "../../table/TableElementData.h"
 #include "../../table/Table.h"
-#include "../../general/MathExtensions.h"
+#include "../../general/StringExtensions.h"
+#include "../../Log.h"
 #include <algorithm>
 
 namespace DOF
 {
 
 RGBAMatrixShapeEffect::RGBAMatrixShapeEffect()
-   : MatrixBitmapEffectBase<RGBAColor>()
-   , m_shapeDefinition(nullptr)
-   , m_shapeDefinitions(nullptr)
+   : MatrixEffectBase<RGBAColor>()
+   , m_targetEffect(nullptr)
 {
 }
 
@@ -24,67 +28,84 @@ void RGBAMatrixShapeEffect::SetShapeName(const std::string& value) { m_shapeName
 
 void RGBAMatrixShapeEffect::Init(Table* table)
 {
-   MatrixBitmapEffectBase<RGBAColor>::Init(table);
+   MatrixEffectBase<RGBAColor>::Init(table);
 
-   if (!table || !table->GetShapeDefinitions())
-      return;
-
-   Shape* shapeDef = nullptr;
+   Shape* def = nullptr;
    ShapeList& shapes = table->GetShapeDefinitions()->GetShapes();
-   for (Shape* shape : shapes)
+   for (Shape* sh : shapes)
    {
-      if (shape && shape->GetName() == m_shapeName)
+      if (sh && StringExtensions::EqualsIgnoreCase(sh->GetName(), m_shapeName))
       {
-         shapeDef = shape;
+         def = sh;
          break;
       }
    }
 
-   if (shapeDef != nullptr)
+   if (def != nullptr)
    {
+      IMatrixBitmapEffect* fx;
+      ShapeAnimated* defAnim = dynamic_cast<ShapeAnimated*>(def);
+      if (defAnim != nullptr)
+      {
+         fx = new RGBAMatrixBitmapAnimationEffect();
 
-      m_shapeDefinition = shapeDef;
-      m_shapeDefinitions = table->GetShapeDefinitions();
+         RGBAMatrixBitmapAnimationEffect* fxa = dynamic_cast<RGBAMatrixBitmapAnimationEffect*>(fx);
 
-      FilePattern* pattern = table->GetShapeDefinitions()->GetBitmapFilePattern();
-      if (pattern)
-         this->SetBitmapFilePattern(pattern->GetPattern());
+         fxa->SetAnimationBehaviour(defAnim->GetAnimationBehaviour());
+         fxa->SetAnimationFrameCount(defAnim->GetAnimationFrameCount());
+         fxa->SetAnimationFrameDurationMs(defAnim->GetAnimationFrameDurationMs());
+         fxa->SetAnimationStepDirection(defAnim->GetAnimationStepDirection());
+         fxa->SetAnimationStepSize(defAnim->GetAnimationStepSize());
+      }
+      else
+      {
+         fx = new RGBAMatrixBitmapEffect();
+      }
 
-      this->SetBitmapFrameNumber(shapeDef->GetBitmapFrameNumber());
-      this->SetBitmapHeight(shapeDef->GetBitmapHeight());
-      this->SetBitmapWidth(shapeDef->GetBitmapWidth());
-      this->SetBitmapTop(shapeDef->GetBitmapTop());
-      this->SetBitmapLeft(shapeDef->GetBitmapLeft());
+      fx->SetBitmapFilePattern(table->GetShapeDefinitions()->GetBitmapFilePattern());
+      fx->SetBitmapFrameNumber(def->GetBitmapFrameNumber());
+      fx->SetBitmapHeight(def->GetBitmapHeight());
+      fx->SetBitmapWidth(def->GetBitmapWidth());
+      fx->SetBitmapTop(def->GetBitmapTop());
+      fx->SetBitmapLeft(def->GetBitmapLeft());
+      fx->SetDataExtractMode(def->GetDataExtractMode());
+      fx->SetToyName(this->GetToyName());
+      fx->SetLayerNr(this->GetLayerNr());
+      fx->SetFadeMode(this->GetFadeMode());
+      fx->SetLeft(this->GetLeft());
+      fx->SetTop(this->GetTop());
+      fx->SetWidth(this->GetWidth());
+      fx->SetHeight(this->GetHeight());
+
+      fx->SetName(this->GetName() + " Target");
+
+      m_targetEffect = fx;
+      m_targetEffect->Init(table);
    }
    else
    {
-
-      m_shapeDefinition = nullptr;
-      m_shapeDefinitions = nullptr;
+      m_targetEffect = nullptr;
    }
 }
 
 void RGBAMatrixShapeEffect::Finish()
 {
-   MatrixBitmapEffectBase<RGBAColor>::Finish();
-   m_shapeDefinition = nullptr;
-   m_shapeDefinitions = nullptr;
+   MatrixEffectBase<RGBAColor>::Finish();
+
+   if (m_targetEffect != nullptr)
+   {
+      m_targetEffect->Finish();
+      delete m_targetEffect;
+      m_targetEffect = nullptr;
+   }
 }
 
-RGBAColor RGBAMatrixShapeEffect::GetInactiveValue() { return RGBAColor(0, 0, 0, 0); }
-
-RGBAColor RGBAMatrixShapeEffect::GetPixelValue(const PixelData& pixel, int triggerValue)
+void RGBAMatrixShapeEffect::Trigger(TableElementData* tableElementData)
 {
-
-   int v = MathExtensions::Limit(triggerValue, 0, 255);
-
-   RGBAColor result;
-   result.SetRed(MathExtensions::Limit((int)((float)pixel.red * v / 255), 0, 255));
-   result.SetGreen(MathExtensions::Limit((int)((float)pixel.green * v / 255), 0, 255));
-   result.SetBlue(MathExtensions::Limit((int)((float)pixel.blue * v / 255), 0, 255));
-   result.SetAlpha(MathExtensions::Limit((int)((float)pixel.alpha * v / 255), 0, 255));
-
-   return result;
+   if (m_targetEffect != nullptr)
+   {
+      m_targetEffect->Trigger(tableElementData);
+   }
 }
 
 }

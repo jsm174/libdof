@@ -1,4 +1,5 @@
 #include "ShapeList.h"
+#include "Shape.h"
 #include "../../../Log.h"
 #include "../../../general/StringExtensions.h"
 
@@ -17,9 +18,9 @@ void ShapeList::WriteXml(std::string& writer)
    tinyxml2::XMLElement* root = doc.NewElement("ShapeList");
    doc.InsertFirstChild(root);
 
-   for (auto* shape : *this)
+   for (Shape* t : *this)
    {
-      tinyxml2::XMLElement* shapeElement = doc.NewElement(typeid(*shape).name());
+      tinyxml2::XMLElement* shapeElement = doc.NewElement(typeid(*t).name());
       root->InsertEndChild(shapeElement);
    }
 
@@ -35,15 +36,51 @@ void ShapeList::ReadXml(const std::string& reader)
    if (result != tinyxml2::XML_SUCCESS)
       return;
 
-   tinyxml2::XMLElement* root = doc.FirstChildElement("ShapeList");
+   tinyxml2::XMLElement* root = doc.FirstChildElement();
    if (!root)
       return;
 
    for (tinyxml2::XMLElement* element = root->FirstChildElement(); element != nullptr; element = element->NextSiblingElement())
    {
-      std::string typeName = element->Name();
+      std::string t = element->Name();
 
-      Log::Warning(StringExtensions::Build("ShapeDefinition type {0} not found during deserialization of cabinet data.", typeName));
+      if (t == "Shape")
+      {
+         Shape* shape = new Shape();
+
+         tinyxml2::XMLElement* nameElement = element->FirstChildElement("Name");
+         if (nameElement)
+            shape->SetName(nameElement->GetText() ? nameElement->GetText() : "");
+
+         tinyxml2::XMLElement* frameElement = element->FirstChildElement("BitmapFrameNumber");
+         if (frameElement)
+            shape->SetBitmapFrameNumber(frameElement->IntText(0));
+
+         tinyxml2::XMLElement* topElement = element->FirstChildElement("BitmapTop");
+         if (topElement)
+            shape->SetBitmapTop(topElement->IntText(0));
+
+         tinyxml2::XMLElement* leftElement = element->FirstChildElement("BitmapLeft");
+         if (leftElement)
+            shape->SetBitmapLeft(leftElement->IntText(0));
+
+         tinyxml2::XMLElement* widthElement = element->FirstChildElement("BitmapWidth");
+         if (widthElement)
+            shape->SetBitmapWidth(widthElement->IntText(0));
+
+         tinyxml2::XMLElement* heightElement = element->FirstChildElement("BitmapHeight");
+         if (heightElement)
+            shape->SetBitmapHeight(heightElement->IntText(0));
+
+         if (!this->Contains(shape->GetName()))
+         {
+            this->Add(shape);
+         }
+      }
+      else
+      {
+         Log::Warning(StringExtensions::Build("ShapeDefinition type {0} not found during deserialization of cabinet data.", t));
+      }
    }
 }
 

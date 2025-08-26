@@ -9,18 +9,10 @@ namespace DOF
 class RGBAMatrixBitmapAnimationEffect : public MatrixBitmapAnimationEffectBase<RGBAColor>
 {
 public:
-   RGBAMatrixBitmapAnimationEffect();
-   virtual ~RGBAMatrixBitmapAnimationEffect() = default;
-
-   const RGBAColor& GetInactiveColor() const { return m_inactiveColor; }
-   void SetInactiveColor(const RGBAColor& value) { m_inactiveColor = value; }
+   virtual std::string GetXmlElementName() const override { return "RGBAMatrixBitmapAnimationEffect"; }
 
 protected:
-   virtual RGBAColor GetInactiveValue() override;
-   virtual RGBAColor GetPixelValue(const PixelData& pixel, int triggerValue) override;
-
-private:
-   RGBAColor m_inactiveColor;
+   virtual RGBAColor GetEffectValue(int triggerValue, PixelData pixel) override;
 };
 
 }

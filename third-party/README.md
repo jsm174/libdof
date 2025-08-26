@@ -25,3 +25,9 @@
 
 - Upstream: http://developer.intra2net.com/git/?p=libftdi
 - License: GNU Library General Public License version 2
+
+## stb_image
+
+- Upstream: https://github.com/nothings/stb
+- License: MIT License
+

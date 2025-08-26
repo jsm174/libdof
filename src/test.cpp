@@ -11,9 +11,8 @@
 //
 // ij_l7,S10 Red AT0 AH12 L0/S20 Red AT0 AH12 L1/S24 Red AT0 AH12 L2/S52 Orange AT0 AH12 L3/S53 Red AT0 AH12 L4/W17 Orange AT0 AH12 L5/W51 Red AT0 AH12 L6/W52 Red AT0 AH12 L7/W53 Red AT0 AH12 L8/W75 Yellow AT0 AH12 L9/W76 Yellow AT0 AH12 L10/W77 Yellow AT0 AH12 L11/W78 Yellow AT0 AH12 L12/W88 Yellow AT85  AH15 FU250 FD270 BLINK 500,S9 Red AT0 AH12 L0/S51 Green AT0 AH12 L1/S53 Red AT0 AH12 L2/W16 Orange AT0 AH12 L3/W61 Red AT0 AH12 L4/W62 Red AT0 AH12 L5/W63 Red AT0 AH12 L6
 // tna,E144 Yellow AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E146 Blue AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E147 Red F100 AFDEN5 AFMIN200 AFMAX300/E148 Green AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E149 Purple AL0 AT0 AW100 AH100 AFDEN50 AFMIN500 AFMAX1000/E105 Red 50 AH100 ADU AS300/E107 White 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E107 White 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E116 Red 700 AT85 AH15 AFDEN40 AFMIN100 AFMAX160/E125 White 50 AH100 ADU AS300/E111 Red 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E111 Red 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E112 Purple L13 AT0 AFDEN15 AFMIN10 AFMAX20/E179 Red 60 AW100 AH100 ADD AS300/E150|E151|E152|E153 Yellow 40 AT15 AL0 AH10 AW100 AS400 ADU L25/E150|E151|E152|E153 Yellow 40 AT25 AL0 AH10 AW100 AS400 ADD L25,E144 Yellow AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E146 Blue AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E147 Red F100 AFDEN5 AFMIN200 AFMAX300/E148 Green AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E149 Purple AL0 AT0 AW100 AH100 AFDEN50 AFMIN500 AFMAX1000/E103 Red 50 AH100 ADU AS300/E116 Red 700 AT85 AH15 AFDEN40 AFMIN100 AFMAX160/E108 White 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E108 White 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E110 Red 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E110 Red 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E112 Purple L13 AT0 AFDEN15 AFMIN10 AFMAX20/E179 Red 60 AW100 AH100 ADD AS300/E150|E151|E152|E153 Yellow 40 AT15 AL0 AH10 AW100 AS400 ADU L25/E150|E151|E152|E153 Yellow 40 AT25 AL0 AH10 AW100 AS400 ADD L25
-// gw is a combo of PF Right Effects MX and PF Right Flashers MX
-// Note that S46 and S48 won't do anything unless W78 is on
 // gw,S24 Yellow 50 AH100 ADU AS300/(W78=1 and (S46=1 or S48=1)) Red 500 W200 AT0 AH50 ADD AS500 L101/(W78=1 and (S46=1 or S48=1)) Black 500 W550 AT0 AH50 ADU AS500 L102/W78 Red AFDEN50 AFMIN60 AFMAX120 AT80 AH90/S16 Red 700 AT85 AH15 AFDEN40 AFMIN100 AFMAX160/W28 Red 100 AT80 AH20 ADD AS300/W27 Green 100 AT80 AH20 ADD AS300/W44|W45|W46 Orange_Red 40 AT25 AL0 AH25 AW100 AS400 ADU L25/W44|W45|W46 Orange_Red 40 AT50 AL0 AH25 AW100 AS400 ADD L25/W81 Red F150 AH30 AT0 ADD AS500 100 W450/S12 Red AT50 AH50 ADU 100 AS400/S12 Yellow AT0 AH50 ADD 100 AS400 W600 FD220/W36 Red AT20 AH5 150/W41 Yellow AT23 AH5 150/W51 Green AT26 AH5 150/W65 Blue AT0 AH50 ADD AS250 100/W65 Red AT0 AH50 ADD AS250 100 W90/W17 Green f200 AL0 AT0 AW100 AH15 L2
+// goldcue,L73 Lime L0 AL0 AW100 AH2 AT87 SHPRound4,L74 Lime L0 AL0 AW100 AH2 AT89 SHPRound4,L75 Lime L0 AL0 AW100 AH2 AT91 SHPRound4,L76 Lime L0 AL0 AW100 AH2 AT93 SHPRound4,L77 Lime L0 AL0 AW100 AH2 AT95 SHPRound4,L78 Lime L0 AL0 AW100 AH2 AT97 SHPRound4,S17 Sky_blue L0 AL0 AW100 AH10 AT2 SHPRound6,S3 Red L0 AL0 AW16 AH16 AT0 SHPLetterLargeA
 //
 
 #include "DOF/DOF.h"
@@ -21,6 +20,9 @@
 #include <iostream>
 #include <iomanip>
 #include <cstring>
+#include <string>
+#include <sstream>
+#include <vector>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -31,13 +33,18 @@
 #include <sys/types.h>
 #endif
 
+const int TIMEOUT_OFF = 650;
+const int TIMEOUT_ON = 650;
+const int TIMEOUT_START_DELAY = 1000;
+
 struct TestRom
 {
    std::string name;
    std::string description;
 };
 
-std::vector<TestRom> testRoms = { { "ij_l7", "" }, { "tna", "" }, { "gw", "" } };
+std::vector<TestRom> testRoms
+   = { { "ij_l7", "Indiana Jones L7" }, { "tna", "Total Nuclear Annihilation" }, { "gw", "The Getaway High Speed II" }, { "goldcue", "Gold Cue" }, { "bourne", "Bourne Identity" } };
 
 void LIBDOFCALLBACK LogCallback(DOF_LogLevel logLevel, const char* format, va_list args)
 {
@@ -73,243 +80,191 @@ void Log(const char* format, ...)
    va_end(args);
 }
 
+void TriggerOutput(DOF::DOF* pDof, char type, int id, int value, int wait_ms = 0)
+{
+   std::stringstream ss;
+   ss << "=== Triggering " << type << id << ": " << (value ? "on" : "off") << " ===";
+   Log(ss.str().c_str());
+   pDof->DataReceive(type, id, value);
+   if (wait_ms > 0)
+   {
+      std::this_thread::sleep_for(std::chrono::milliseconds(wait_ms));
+   }
+}
+
+void TriggerOutputOnOff(DOF::DOF* pDof, char type, int id, int on_duration_ms = TIMEOUT_ON, int off_duration_ms = TIMEOUT_OFF)
+{
+   std::stringstream ss;
+   ss << "=== Triggering " << type << id << ": on for ";
+
+   if (on_duration_ms > 999)
+   {
+      ss << std::fixed << std::setprecision(2) << on_duration_ms / 1000.0 << "s";
+   }
+   else
+   {
+      ss << on_duration_ms << "ms";
+   }
+
+   ss << ", off for ";
+
+   if (off_duration_ms > 999)
+   {
+      ss << std::fixed << std::setprecision(2) << off_duration_ms / 1000.0 << "s";
+   }
+   else
+   {
+      ss << off_duration_ms << "ms";
+   }
+
+   ss << " ===";
+
+   Log(ss.str().c_str());
+
+   pDof->DataReceive(type, id, 1);
+   std::this_thread::sleep_for(std::chrono::milliseconds(on_duration_ms));
+   pDof->DataReceive(type, id, 0);
+   std::this_thread::sleep_for(std::chrono::milliseconds(off_duration_ms));
+}
+
 void RunIJTests(DOF::DOF* pDof)
 {
    Log("========================================");
-   Log("Testing ROM: ij_l7 - Indiana Jones L7");
+   Log("Testing ROM: ij_l7");
    Log("========================================");
    pDof->Init("", "ij_l7");
 
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_START_DELAY));
 
-   Log("=== DOF Protocol Test Scenarios ===");
+   TriggerOutputOnOff(pDof, 'S', 9);
+   TriggerOutputOnOff(pDof, 'S', 12);
+   TriggerOutputOnOff(pDof, 'S', 51);
+   TriggerOutputOnOff(pDof, 'S', 53);
+   TriggerOutputOnOff(pDof, 'W', 15);
+   TriggerOutputOnOff(pDof, 'W', 16);
+   TriggerOutputOnOff(pDof, 'W', 65);
+   TriggerOutputOnOff(pDof, 'W', 66);
+   TriggerOutputOnOff(pDof, 'W', 67);
+   TriggerOutputOnOff(pDof, 'W', 68);
+   TriggerOutputOnOff(pDof, 'L', 88);
+   TriggerOutputOnOff(pDof, 'S', 10);
+   TriggerOutputOnOff(pDof, 'W', 88);
 
-   Log("1. L88 lamp test - 5 seconds on");
-   pDof->DataReceive('L', 88, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-   Log("   L88 off - 2 seconds off");
-   pDof->DataReceive('L', 88, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-
-   Log("2. S10 solenoid test - trigger for 3 seconds");
-   pDof->DataReceive('S', 10, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('S', 10, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("3. W88 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 88, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 88, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("=== DOF Protocol Tests Complete ===");
    pDof->Finish();
 }
 
 void RunTNATests(DOF::DOF* pDof)
 {
-   Log("========================================");
-   Log("Testing ROM: tna - Total Nuclear Annihilation");
-   Log("========================================");
    pDof->Init("", "tna");
 
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   Log("========================================");
+   Log("Testing ROM: tna");
+   Log("========================================");
+   ;
 
-   Log("=== TNA Matrix Effects Test Scenarios ===");
+   std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_START_DELAY));
 
-   Log("1. Run E105 for 5 seconds ON");
+   TriggerOutputOnOff(pDof, 'E', 103);
+   TriggerOutputOnOff(pDof, 'E', 108);
+   TriggerOutputOnOff(pDof, 'E', 110);
+   TriggerOutputOnOff(pDof, 'E', 112);
+   TriggerOutputOnOff(pDof, 'E', 116);
+   TriggerOutputOnOff(pDof, 'E', 144);
+   TriggerOutputOnOff(pDof, 'E', 146);
+   TriggerOutputOnOff(pDof, 'E', 147);
+   TriggerOutputOnOff(pDof, 'E', 148);
+   TriggerOutputOnOff(pDof, 'E', 149);
+   TriggerOutputOnOff(pDof, 'E', 150);
+   TriggerOutputOnOff(pDof, 'E', 151);
+   TriggerOutputOnOff(pDof, 'E', 152);
+   TriggerOutputOnOff(pDof, 'E', 153);
+   TriggerOutputOnOff(pDof, 'E', 179);
 
-   pDof->DataReceive('E', 105, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000 * 5));
-
-   Log("2. Run E105 for 5 seconds OFF");
-
-   pDof->DataReceive('E', 105, 0);
-
-   Log("3. Run E149 for 5 seconds ON");
-
-   pDof->DataReceive('E', 149, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000 * 5));
-
-   Log("4. Run E149 for 5 seconds OFF");
-
-   pDof->DataReceive('E', 149, 0);
-
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000 * 5));
-
-   Log("5. Run sample of events");
-
-   pDof->DataReceive('E', 140, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(2));
-   pDof->DataReceive('E', 146, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(0));
-   pDof->DataReceive('E', 149, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1));
-   pDof->DataReceive('E', 1, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(2351));
-   pDof->DataReceive('E', 140, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(716));
-   pDof->DataReceive('E', 149, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(2));
-   pDof->DataReceive('E', 146, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(0));
-   pDof->DataReceive('C', 1, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3));
-   pDof->DataReceive('E', 196, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(0));
-   pDof->DataReceive('E', 196, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(2));
-   pDof->DataReceive('E', 146, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(0));
-   pDof->DataReceive('E', 1, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(494));
-   pDof->DataReceive('E', 146, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1));
-   pDof->DataReceive('E', 145, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(0));
-   pDof->DataReceive('E', 145, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(29));
-   pDof->DataReceive('E', 112, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(0));
-   pDof->DataReceive('E', 112, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(0));
-   pDof->DataReceive('E', 112, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(0));
-   pDof->DataReceive('E', 112, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(0));
-
-   Log("=== TNA Matrix Effects Tests Complete ===");
    pDof->Finish();
 }
 
 void RunGWTests(DOF::DOF* pDof)
 {
-   Log("========================================");
-   Log("Testing ROM: gw - The Getaway High Speed II");
-   Log("========================================");
    pDof->Init("", "gw");
 
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   Log("========================================");
+   Log("Testing ROM: gw");
+   Log("========================================");
+
+   std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_START_DELAY));
 
    Log("=== DOF Protocol Test Scenarios ===");
 
-   Log("1. W65 switch test - trigger for 3 seconds");
-   pDof->DataReceive('W', 65, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 65, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("2. S12 solenoid test - trigger for 3 seconds");
-   pDof->DataReceive('S', 12, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('S', 12, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("3. S16 solenoid test - trigger for 3 seconds");
-   pDof->DataReceive('S', 16, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('S', 16, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("4. S24 solenoid test - trigger for 3 seconds");
-   pDof->DataReceive('S', 24, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('S', 24, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
    // S46 & S48 also require W78 to be on
-   Log("5. S46 solenoid test (with W78 on) - trigger for 3 seconds");
-   pDof->DataReceive('W', 78, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-   pDof->DataReceive('S', 46, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('S', 46, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-   Log("6. S48 solenoid test (with W78 on) - trigger for 3 seconds");
-   pDof->DataReceive('S', 48, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('S', 48, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-   pDof->DataReceive('W', 78, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   TriggerOutputOnOff(pDof, 'L', 52);
+   TriggerOutputOnOff(pDof, 'S', 8);
+   TriggerOutputOnOff(pDof, 'S', 12);
+   TriggerOutputOnOff(pDof, 'S', 16);
+   TriggerOutputOnOff(pDof, 'S', 19);
+   TriggerOutputOnOff(pDof, 'S', 46);
+   TriggerOutputOnOff(pDof, 'S', 48);
+   TriggerOutputOnOff(pDof, 'W', 15);
+   TriggerOutputOnOff(pDof, 'W', 25);
+   TriggerOutputOnOff(pDof, 'W', 26);
+   TriggerOutputOnOff(pDof, 'W', 37);
+   TriggerOutputOnOff(pDof, 'W', 38);
+   TriggerOutputOnOff(pDof, 'W', 42);
+   TriggerOutputOnOff(pDof, 'W', 43);
+   TriggerOutputOnOff(pDof, 'W', 52);
+   TriggerOutputOnOff(pDof, 'W', 53);
+   TriggerOutputOnOff(pDof, 'W', 67);
+   TriggerOutputOnOff(pDof, 'W', 78);
+   TriggerOutputOnOff(pDof, 'W', 81);
+   TriggerOutputOnOff(pDof, 'W', 86);
+   TriggerOutputOnOff(pDof, 'W', 87);
+   TriggerOutputOnOff(pDof, 'W', 88);
 
-   Log("7. W17 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 17, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 17, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("8. W27 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 27, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 27, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("9. W28 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 28, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 28, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("10. W36 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 36, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 36, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("11. W41 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 41, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 41, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("12. W44 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 44, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 44, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("13. W45 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 45, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 45, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("14. W46 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 46, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 46, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("15. W51 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 51, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 51, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("16. W65 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 65, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 65, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("17. W78 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 78, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 78, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("18. W81 switch test - press for 3 seconds");
-   pDof->DataReceive('W', 81, 1);
-   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-   pDof->DataReceive('W', 81, 0);
-   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-   Log("=== DOF Protocol Tests Complete ===");
    pDof->Finish();
 }
+
+void RunGoldcueTests(DOF::DOF* pDof)
+{
+   pDof->Init("", "goldcue");
+
+   Log("========================================");
+   Log("Testing ROM: goldcue");
+   Log("========================================");
+
+   std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_START_DELAY));
+
+   TriggerOutputOnOff(pDof, 'L', 73);
+   TriggerOutputOnOff(pDof, 'L', 74);
+   TriggerOutputOnOff(pDof, 'L', 75);
+   TriggerOutputOnOff(pDof, 'L', 76);
+   TriggerOutputOnOff(pDof, 'L', 77);
+   TriggerOutputOnOff(pDof, 'L', 78);
+   TriggerOutputOnOff(pDof, 'S', 3);
+   TriggerOutputOnOff(pDof, 'S', 17);
+
+   pDof->Finish();
+}
+
+void RunBourneTests(DOF::DOF* pDof)
+{
+   pDof->Init("", "bourne");
+
+   Log("========================================");
+   Log("Testing ROM: bourne");
+   Log("========================================");
+
+   std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_START_DELAY));
+
+   TriggerOutputOnOff(pDof, 'E', 142, 1000);
+   TriggerOutputOnOff(pDof, 'E', 145, 1000);
+   TriggerOutputOnOff(pDof, 'E', 103);
+   TriggerOutputOnOff(pDof, 'E', 111, 5000);
+   TriggerOutputOnOff(pDof, 'E', 181, 1000);
+   TriggerOutputOnOff(pDof, 'E', 199, 1000);
+
+   pDof->Finish();
+}
+
 std::string GetDefaultBasePath()
 {
 #ifdef _WIN32
@@ -318,7 +273,7 @@ std::string GetDefaultBasePath()
    {
       return std::string(cwd) + "\\";
    }
-   return ".\\";
+   return ".\\\\";
 #else
    const char* homeDir = getenv("HOME");
    if (homeDir == nullptr)
@@ -407,6 +362,10 @@ int main(int argc, const char* argv[])
                RunTNATests(pDof);
             else if (testRom.name == "gw")
                RunGWTests(pDof);
+            else if (testRom.name == "goldcue")
+               RunGoldcueTests(pDof);
+            else if (testRom.name == "bourne")
+               RunBourneTests(pDof);
             break;
          }
       }
@@ -431,6 +390,8 @@ int main(int argc, const char* argv[])
       RunIJTests(pDof);
       RunTNATests(pDof);
       RunGWTests(pDof);
+      RunGoldcueTests(pDof);
+      RunBourneTests(pDof);
    }
 
    Log("Shutting down...");

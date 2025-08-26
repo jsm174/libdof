@@ -7,7 +7,7 @@
 namespace DOF
 {
 
-class IMatrixBitmapEffect : public IMatrixEffect
+class IMatrixBitmapEffect : public virtual IMatrixEffect
 {
 public:
    virtual ~IMatrixBitmapEffect() = default;

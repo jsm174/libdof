@@ -23,7 +23,7 @@ LedControlConfigList::~LedControlConfigList()
    clear();
 }
 
-std::unordered_map<int, TableConfig*> LedControlConfigList::GetTableConfigDictonary(const std::string& romName)
+std::unordered_map<int, TableConfig*> LedControlConfigList::GetTableConfigDictionary(const std::string& romName)
 {
    std::unordered_map<int, TableConfig*> d;
 
@@ -77,7 +77,7 @@ std::unordered_map<int, TableConfig*> LedControlConfigList::GetTableConfigDicton
    return d;
 }
 
-bool LedControlConfigList::ContainsConfig(const std::string& romName) { return GetTableConfigDictonary(romName).size() > 0; }
+bool LedControlConfigList::ContainsConfig(const std::string& romName) { return GetTableConfigDictionary(romName).size() > 0; }
 
 void LedControlConfigList::LoadLedControlFiles(const std::vector<std::string>& ledControlFilenames, bool throwExceptions)
 {

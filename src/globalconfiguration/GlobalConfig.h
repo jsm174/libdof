@@ -28,18 +28,18 @@ public:
    void SetPacLedDefaultMinCommandIntervalMs(int value);
    const std::string& GetIniFilesPath() const { return m_iniFilesPath; }
    void SetIniFilesPath(const std::string& path) { m_iniFilesPath = path; }
-   std::unordered_map<int, FileInfo> GetIniFilesDictionary(const std::string& tableFilename) const;
-   FileInfo* GetTableMappingFile(const std::string& tableFilename) const;
-   const FilePattern& GetShapeDefintionFilePattern() const { return m_shapeDefinitionFilePattern; }
-   void SetShapeDefintionFilePattern(const std::string& pattern) { m_shapeDefinitionFilePattern.SetPattern(pattern); }
-   FileInfo* GetShapeDefintionFile(const std::string& tableFilename = "", const std::string& romName = "") const;
+   std::unordered_map<int, FileInfo> GetIniFilesDictionary(const std::string& tableFilename = "") const;
+   FileInfo* GetTableMappingFile(const std::string& tableFilename = "") const;
+   const FilePattern& GetShapeDefinitionFilePattern() const { return m_shapeDefinitionFilePattern; }
+   void SetShapeDefinitionFilePattern(const std::string& pattern) { m_shapeDefinitionFilePattern.SetPattern(pattern); }
+   FileInfo* GetShapeDefinitionFile(const std::string& tableFilename = "", const std::string& romName = "") const;
    const FilePattern& GetCabinetConfigFilePattern() const { return m_cabinetConfigFilePattern; }
    void SetCabinetConfigFilePattern(const std::string& pattern) { m_cabinetConfigFilePattern.SetPattern(pattern); }
    FileInfo* GetCabinetConfigFile() const;
    DirectoryInfo GetCabinetConfigDirectory() const;
    const FilePatternList& GetTableConfigFilePatterns() const { return m_tableConfigFilePatterns; }
    FilePatternList& GetTableConfigFilePatterns() { return m_tableConfigFilePatterns; }
-   FileInfo* GetTableConfigFile(const std::string& tableFilename) const;
+   FileInfo* GetTableConfigFile(const std::string& fullTableFilename) const;
    bool IsEnableLogging() const { return m_enableLog; }
    void SetEnableLogging(bool enable) { m_enableLog = enable; }
    bool IsClearLogOnSessionStart() const { return m_clearLogOnSessionStart; }
@@ -48,7 +48,7 @@ public:
    void SetLogFilePattern(const std::string& pattern) { m_logFilePattern.SetPattern(pattern); }
    std::string GetLogFilename(const std::string& tableFilename = "", const std::string& romName = "") const;
    std::unordered_map<std::string, std::string> GetReplaceValuesDictionary(const std::string& tableFilename = "", const std::string& romName = "") const;
-   std::string GetGlobalConfigDirectoryName() const;
+   std::string GlobalConfigDirectoryName() const;
    DirectoryInfo GetGlobalConfigDirectory() const;
    const std::string& GetGlobalConfigFilename() const { return m_globalConfigFileName; }
    void SetGlobalConfigFilename(const std::string& filename) { m_globalConfigFileName = filename; }
