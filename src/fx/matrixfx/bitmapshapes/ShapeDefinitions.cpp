@@ -73,14 +73,27 @@ ShapeDefinitions* ShapeDefinitions::GetShapeDefinitionsFromShapeDefinitionsXmlFi
    try
    {
       xml = FileReader::ReadFileToString(fileName);
+      if (xml.empty())
+      {
+         Log::Warning(StringExtensions::Build("ShapeDefinitions file {0} is empty.", fileName));
+         return nullptr;
+      }
    }
    catch (const std::exception& e)
    {
-      Log::Exception(StringExtensions::Build("Could not load ShapeDefinitions from {0}.", fileName));
+      Log::Exception(StringExtensions::Build("Could not load ShapeDefinitions from {0}. Error: {1}", fileName, e.what()));
       throw std::runtime_error(StringExtensions::Build("Could not read ShapeDefinitions file {0}.", fileName));
    }
 
-   return GetShapeDefinitionsFromShapeDefinitionsXml(xml);
+   try
+   {
+      return GetShapeDefinitionsFromShapeDefinitionsXml(xml);
+   }
+   catch (const std::exception& e)
+   {
+      Log::Exception(StringExtensions::Build("Could not parse ShapeDefinitions XML from {0}. Error: {1}", fileName, e.what()));
+      return nullptr;
+   }
 }
 
 bool ShapeDefinitions::TestShapeDefinitionsShapeDefinitionsXmlFile(const std::string& fileName)
@@ -105,13 +118,14 @@ ShapeDefinitions* ShapeDefinitions::GetShapeDefinitionsFromShapeDefinitionsXml(c
    tinyxml2::XMLError result = doc.Parse(shapeDefinitionsXml.c_str());
    if (result != tinyxml2::XML_SUCCESS)
    {
-      Log::Exception("Could not deserialize the ShapeDefinitions from XML data.");
+      Log::Exception(StringExtensions::Build("Could not deserialize the ShapeDefinitions from XML data. Error: {0}", doc.ErrorStr() ? doc.ErrorStr() : "unknown error"));
       throw std::runtime_error("Could not deserialize the ShapeDefinitions from XML data.");
    }
 
    tinyxml2::XMLElement* root = doc.FirstChildElement("ShapeDefinitions");
    if (!root)
    {
+      Log::Exception("Could not find ShapeDefinitions root element in XML");
       throw std::runtime_error("Could not find ShapeDefinitions root element.");
    }
 
@@ -120,10 +134,70 @@ ShapeDefinitions* ShapeDefinitions::GetShapeDefinitionsFromShapeDefinitionsXml(c
    tinyxml2::XMLElement* shapesElement = root->FirstChildElement("Shapes");
    if (shapesElement)
    {
-      tinyxml2::XMLPrinter printer;
-      shapesElement->Accept(&printer);
-      std::string shapesXml = printer.CStr();
-      shapeDefinitions->m_shapes.ReadXml(shapesXml);
+      try
+      {
+         for (tinyxml2::XMLElement* shapeElement = shapesElement->FirstChildElement(); shapeElement != nullptr; shapeElement = shapeElement->NextSiblingElement())
+         {
+            std::string elementName = shapeElement->Name() ? shapeElement->Name() : "";
+
+            if (elementName == "Shape")
+            {
+               Shape* shape = new Shape();
+               bool shapeValid = true;
+
+               try
+               {
+                  tinyxml2::XMLElement* nameElement = shapeElement->FirstChildElement("Name");
+                  if (nameElement && nameElement->GetText())
+                     shape->SetName(nameElement->GetText());
+
+                  tinyxml2::XMLElement* frameElement = shapeElement->FirstChildElement("BitmapFrameNumber");
+                  if (frameElement)
+                     shape->SetBitmapFrameNumber(frameElement->IntText(0));
+
+                  tinyxml2::XMLElement* topElement = shapeElement->FirstChildElement("BitmapTop");
+                  if (topElement)
+                     shape->SetBitmapTop(topElement->IntText(0));
+
+                  tinyxml2::XMLElement* leftElement = shapeElement->FirstChildElement("BitmapLeft");
+                  if (leftElement)
+                     shape->SetBitmapLeft(leftElement->IntText(0));
+
+                  tinyxml2::XMLElement* widthElement = shapeElement->FirstChildElement("BitmapWidth");
+                  if (widthElement)
+                     shape->SetBitmapWidth(widthElement->IntText(0));
+
+                  tinyxml2::XMLElement* heightElement = shapeElement->FirstChildElement("BitmapHeight");
+                  if (heightElement)
+                     shape->SetBitmapHeight(heightElement->IntText(0));
+
+                  if (!shape->GetName().empty() && !shapeDefinitions->m_shapes.Contains(shape->GetName()))
+                  {
+                     shapeDefinitions->m_shapes.Add(shape);
+                  }
+                  else
+                  {
+                     shapeValid = false;
+                  }
+               }
+               catch (const std::exception& e)
+               {
+                  Log::Warning(StringExtensions::Build("Error processing shape: {0}", e.what()));
+                  shapeValid = false;
+               }
+
+               if (!shapeValid)
+               {
+                  delete shape;
+               }
+            }
+         }
+      }
+      catch (const std::exception& e)
+      {
+         Log::Exception(StringExtensions::Build("Exception during shape processing: {0}", e.what()));
+         return shapeDefinitions;
+      }
    }
 
    return shapeDefinitions;
