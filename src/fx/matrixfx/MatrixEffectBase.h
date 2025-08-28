@@ -94,15 +94,12 @@ template <typename MatrixElementType> void MatrixEffectBase<MatrixElementType>::
 
 template <typename MatrixElementType> void MatrixEffectBase<MatrixElementType>::Init(Table* table)
 {
-   Log::Debug(StringExtensions::Build("MatrixEffectBase::Init - Looking for toy '{0}'", m_toyName));
    if (!StringExtensions::IsNullOrWhiteSpace(m_toyName) && table->GetPinball()->GetCabinet()->GetToys()->Contains(m_toyName))
    {
-      Log::Debug(StringExtensions::Build("MatrixEffectBase::Init - Found toy '{0}'", m_toyName));
       IToy* toy = table->GetPinball()->GetCabinet()->GetToys()->FindByName(m_toyName);
       IMatrixToy<MatrixElementType>* matrixToy = dynamic_cast<IMatrixToy<MatrixElementType>*>(toy);
       if (matrixToy != nullptr)
       {
-         Log::Debug(StringExtensions::Build("MatrixEffectBase::Init - Successfully cast toy '{0}' to IMatrixToy, layer {1}", m_toyName, std::to_string(m_layerNr)));
          m_matrix = matrixToy;
          m_matrixLayer = m_matrix->GetLayer(m_layerNr);
 
@@ -111,27 +108,31 @@ template <typename MatrixElementType> void MatrixEffectBase<MatrixElementType>::
          m_areaRight = MathExtensions::Limit((int)std::floor((float)m_matrix->GetWidth() / 100.0f * MathExtensions::Limit(m_left + m_width, 0.0f, 100.0f)), 0, m_matrix->GetWidth() - 1);
          m_areaBottom = MathExtensions::Limit((int)std::floor((float)m_matrix->GetHeight() / 100.0f * MathExtensions::Limit(m_top + m_height, 0.0f, 100.0f)), 0, m_matrix->GetHeight() - 1);
 
+         int tmp;
          if (m_areaLeft > m_areaRight)
          {
-            int tmp = m_areaRight;
+            tmp = m_areaRight;
             m_areaRight = m_areaLeft;
             m_areaLeft = tmp;
          }
          if (m_areaTop > m_areaBottom)
          {
-            int tmp = m_areaBottom;
+            tmp = m_areaBottom;
             m_areaBottom = m_areaTop;
             m_areaTop = tmp;
          }
+
+         std::vector<std::string> args = { std::to_string(m_left), std::to_string(m_top), std::to_string(m_width), std::to_string(m_height), std::to_string(m_matrix->GetHeight()),
+            std::to_string(m_matrix->GetWidth()) };
+         std::vector<std::string> args2 = { std::to_string(m_areaLeft), std::to_string(m_areaTop), std::to_string(m_areaRight), std::to_string(m_areaBottom), std::to_string(GetAreaWidth()),
+            std::to_string(GetAreaHeight()) };
+         args.insert(args.end(), args2.begin(), args2.end());
+         args.push_back(this->GetName());
+         Log::Instrumentation("MX",
+            StringExtensions::Build("MatrixBase for {12}. Calculated area size: AreaDef(L:{0}, T:{1}, W:{2}, H:{3}), Matrix(W:{4}, H:{5}), ResultArea(Left: {6}, Top:{7}, Right:{8}, "
+                                    "Bottom:{9}, Width:{10}, Height:{11})",
+               args));
       }
-      else
-      {
-         Log::Debug(StringExtensions::Build("MatrixEffectBase::Init - Failed to cast toy '{0}' to IMatrixToy", m_toyName));
-      }
-   }
-   else
-   {
-      Log::Debug(StringExtensions::Build("MatrixEffectBase::Init - Toy '{0}' not found in cabinet", m_toyName));
    }
 
    m_table = table;

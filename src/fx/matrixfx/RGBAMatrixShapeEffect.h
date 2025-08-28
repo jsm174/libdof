@@ -1,9 +1,7 @@
 #pragma once
 
-#include "MatrixBitmapEffectBase.h"
+#include "MatrixEffectBase.h"
 #include "../../general/color/RGBAColor.h"
-#include "bitmapshapes/Shape.h"
-#include "bitmapshapes/ShapeDefinitions.h"
 #include <string>
 
 namespace DOF
@@ -11,17 +9,14 @@ namespace DOF
 
 class TableElementData;
 class Table;
+class IMatrixBitmapEffect;
+class RGBAMatrixBitmapEffect;
 
-class RGBAMatrixShapeEffect : public MatrixBitmapEffectBase<RGBAColor>
+class RGBAMatrixShapeEffect : public MatrixEffectBase<RGBAColor>
 {
 private:
    std::string m_shapeName;
-   Shape* m_shapeDefinition;
-   ShapeDefinitions* m_shapeDefinitions;
-
-protected:
-   virtual RGBAColor GetInactiveValue() override;
-   virtual RGBAColor GetPixelValue(const PixelData& pixel, int triggerValue) override;
+   IMatrixBitmapEffect* m_targetEffect;
 
 public:
    RGBAMatrixShapeEffect();
@@ -32,7 +27,7 @@ public:
 
    virtual void Init(Table* table) override;
    virtual void Finish() override;
-
+   virtual void Trigger(TableElementData* tableElementData) override;
 
    virtual std::string GetXmlElementName() const override { return "RGBAMatrixShapeEffect"; }
 };

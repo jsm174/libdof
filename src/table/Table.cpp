@@ -8,8 +8,10 @@
 #include "TableElement.h"
 #include "TableElementData.h"
 #include "../Pinball.h"
+#include "../globalconfiguration/GlobalConfig.h"
 #include "../general/FileReader.h"
 #include "../fx/matrixfx/bitmapshapes/ShapeDefinitions.h"
+#include "../general/FilePattern.h"
 
 #include <tinyxml2/tinyxml2.h>
 #include <filesystem>
@@ -86,6 +88,47 @@ void Table::TriggerStaticEffects()
 void Table::Init(Pinball* pinball)
 {
    m_pinball = pinball;
+
+   FileInfo* shapeDefinitionFile = pinball->GetGlobalConfig()->GetShapeDefinitionFile();
+   if (shapeDefinitionFile && shapeDefinitionFile->Exists())
+   {
+      Log::Write(StringExtensions::Build("Loading shape definition file: {0}", shapeDefinitionFile->FullName()));
+      try
+      {
+         ShapeDefinitions* shapeDefs = ShapeDefinitions::GetShapeDefinitionsFromShapeDefinitionsXmlFile(shapeDefinitionFile->FullName());
+         if (shapeDefs)
+         {
+            delete m_shapeDefinitions;
+            m_shapeDefinitions = shapeDefs;
+
+            std::string pngPath = shapeDefinitionFile->FullName();
+            size_t lastDot = pngPath.find_last_of('.');
+            if (lastDot != std::string::npos)
+            {
+               pngPath = pngPath.substr(0, lastDot) + ".png";
+            }
+            m_shapeDefinitions->SetBitmapFilePattern(new FilePattern(pngPath));
+         }
+      }
+      catch (const std::exception& e)
+      {
+         Log::Exception(StringExtensions::Build("Loading shape definition file {0} failed.", shapeDefinitionFile->FullName()));
+      }
+   }
+   else
+   {
+      if (shapeDefinitionFile == nullptr)
+      {
+         Log::Warning("Could not determine name of shape definition file");
+      }
+      else
+      {
+         Log::Warning(StringExtensions::Build("Shape definition file {0} does not exist", shapeDefinitionFile->FullName()));
+      }
+   }
+
+   delete shapeDefinitionFile;
+
    if (m_effects)
       m_effects->Init(this);
    if (m_tableElements)

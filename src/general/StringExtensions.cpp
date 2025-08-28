@@ -1,5 +1,6 @@
 #include "StringExtensions.h"
 #include <iomanip>
+#include <algorithm>
 
 namespace DOF
 {
@@ -80,6 +81,14 @@ bool StringExtensions::EndsWith(const std::string& s, const std::string& suffix)
    if (suffix.length() > s.length())
       return false;
    return s.substr(s.length() - suffix.length()) == suffix;
+}
+
+bool StringExtensions::EqualsIgnoreCase(const std::string& s1, const std::string& s2)
+{
+   if (s1.length() != s2.length())
+      return false;
+
+   return std::equal(s1.begin(), s1.end(), s2.begin(), [](char c1, char c2) { return std::tolower(c1) == std::tolower(c2); });
 }
 
 std::string StringExtensions::Replace(const std::string& s, const std::string& from, const std::string& to)

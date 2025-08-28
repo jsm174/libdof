@@ -25,6 +25,7 @@ public:
    static std::string Trim(const std::string& s);
    static bool StartsWith(const std::string& s, const std::string& prefix);
    static bool EndsWith(const std::string& s, const std::string& suffix);
+   static bool EqualsIgnoreCase(const std::string& s1, const std::string& s2);
    static std::string Replace(const std::string& s, const std::string& from, const std::string& to);
    static std::vector<std::string> Split(const std::string& s, const std::vector<char>& delimiters);
    static void WriteToFile(const std::string& data, const std::string& filename);

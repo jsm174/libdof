@@ -3,9 +3,9 @@
 ## Project Overview
 libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 correspondence. Cross-platform library for Direct Output Framework tasks, used by Visual Pinball Standalone.
 
-**Current Status**: ~98% complete - Core architecture, effects system, device management, all controller types at 100% 1:1 correspondence.
+**Current Status**: ~99% complete - Core architecture, effects system, device management, all controller types, shape effects with bitmap rendering at 100% 1:1 correspondence.
 
-**Recent Major Fixes**: Matrix flicker effects, E149=0 stopping, TableElementData value semantics, AlarmHandler owner-based registration - all achieving perfect C# correspondence.
+**Recent Major Implementation**: Matrix toy effects configuration completely fixed to achieve perfect 1:1 C# correspondence - corrected conditional logic for RGBAMatrixColorEffect creation, fixed case-insensitive color lookup, resolved E142/E145 effect creation issues, and cross-platform image loading via stb_image.h for bitmap shapes system.
 
 ## Core Coding Principles
 
@@ -42,6 +42,7 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 
 ### Cross-Platform Requirements
 - **Manual Dependencies**: Build libusb, libftdi, libserialport, hidapi from source
+- **Image Loading**: stb_image.h for PNG/GIF/BMP support without external dependencies
 - **Conditional Compilation**: `#ifdef __HIDAPI__`, `#ifdef __LIBSERIALPORT__`, `#ifdef __LIBFTDI__`
 - **Mobile Build**: Exclude controller includes at OutputControllerList.cpp level
 - **Windows Compatibility**: WIN32_LEAN_AND_MEAN, avoid macro conflicts
@@ -54,9 +55,11 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **Arrays**: MSVC requires `{{0.0f, 0.0f}}` for std::array initialization`
 
 ### Test ROM Configurations
-- **ij_l7**: Blink + Fade effects (Indiana Jones L7)
-- **tna**: Matrix effects (Total Nuclear Annihilation)
-- **Custom path**: `./build/dof_test --base-path /path/to/config/ ROM`
+- **ij_l7**: Blink + Fade effects 
+- **gw**: Blink + Fade effects 
+- **tna**: Matrix effects
+- **bourne**: Bitmap effects
+- **goldcue**: Shape effects
 
 ## Implementation Status
 
@@ -67,14 +70,16 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **Toys System**: All toy types with correct interface implementations
 - **Output Controllers**: LedWiz, Pinscape, PinscapePico, FTDI, ComPort, DudesCab, DMX, PinOne, LED Strips
 - **Matrix Effects**: Flicker, Plasma, and Shift effects with exact timing correspondence
-- **Configuration**: LedControl loader, GlobalConfig, ScheduledSettings system
+- **Bitmap Effects System**: Complete bitmap loading, FastImage.Frames, DirectOutputShapes.png support
+- **Shape Effects System**: SHP code parsing, shape resolution, RGBAMatrixShapeEffect implementation
+- **Image Loading System**: Cross-platform image loading via stb_image.h with PNG/GIF/BMP support
+- **Configuration**: LedControl loader, GlobalConfig, ScheduledSettings system with corrected matrix effect logic
 - **Cross-Platform**: Windows/Linux/macOS builds with manual dependency compilation
 
-### ❌ MISSING COMPONENTS (2% remaining)
+### ❌ MISSING COMPONENTS (1% remaining)
 - **PAC Controllers**: PacDrive, PacLed64, PacUIO
-- **SSF Controllers**: 7 variants with feedback systems
+- **SSF Controllers**: 7 variants with feedback systems  
 - **Philips Hue Controllers**: Smart lighting integration
-- **Matrix Shape/Bitmap Effects**: Shape rendering and bitmap animation
 - **Extensions Utilities**: 11 utility classes
 
 ## Critical Notes & Memories
@@ -94,23 +99,6 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **Effects Fix**: All timed effects store copies, preventing heap-use-after-free
 - **Thread Safety**: AlarmHandler uses safe callback execution pattern with owner-based registration
 
-### Matrix Shift Effects Fix (December 2024)
-- **Problem**: E105 showed single LED flash instead of left-to-right sweep on LED strips
-- **Root Cause**: C++ MatrixShiftEffectBase used simple single-LED ping-pong vs C# complex trail algorithm
-- **Solution**: Complete rewrite to match C# BuildStep2ElementTable() and DoStep() exactly
-- **Key Changes**: 1D matrix indexing (y*width+x), proper trail calculations, owner-based AlarmHandler API
-- **Result**: Perfect sweeping behavior matching Windows DirectOutput Framework exactly
-
-### Effect Chain Verification
-Always verify: Base → Fade → NestedBlink → Blink → Duration → MaxDuration → MinDuration → ExtendDuration → Delay → Invert → FullRange
-
-### Matrix Effects Behavior
-- **E149=1**: Starts dynamic flicker patterns via FullRangeEffect → MinDurationEffect → MatrixFlickerEffect
-- **E149=0**: Stops effects after MinDurationMs delay via MinDurationEnd() → MatrixFlickerEffect(value=0)
-- **E105=1**: Creates sweeping shift effects via FullRangeEffect → MinDurationEffect → MatrixShiftEffect
-- **Active State**: MinDurationEffect stays active until explicit E149=0/E105=0, not timer expiry
-- **Shift Directions**: ADU (Up), ADD (Down), ADL (Left), ADR (Right) create proper sweeping trails
-
 ### Communication Protocols
 - **FTDI**: libftdi1 bitbang at USB level
 - **ComPort**: libserialport ASCII `{output},{value}#` format
@@ -118,7 +106,14 @@ Always verify: Base → Fade → NestedBlink → Blink → Duration → MaxDurat
 - **DMX**: UDP ArtNet broadcast port 6454
 - **PinOne**: Named pipes with Base64 encoding over text
 
+### Bitmap Shapes Architecture
+- **Image Loading**: Cross-platform loading via stb_image.h supporting PNG, GIF, BMP formats
+- **Shape Resolution**: SHP codes resolve to named shapes in DirectOutputShapes.xml
+- **Delegation Pattern**: Shape effects delegate to internal bitmap effects (1:1 C# correspondence)
+- **Effect Types**: RGBAMatrixShapeEffect, RGBAMatrixColorScaleShapeEffect with animation variants
+- **Multi-frame Support**: Image class handles animated GIFs and frame sequences
+- **Interface System**: Full IMatrixBitmapEffect hierarchy matching C# exactly
+
 ## References
-- **C# Source**: `/Users/jmillard/libdof/csharp_code/DirectOutput`
-- **Test Path**: `~/.vpinball/directoutputconfig/directoutputconfig51.ini`
+- **C# Source**: `/Users/jmillard/DirectOutput`
 - **Documentation**: See NOTES.md for DirectOutput configuration parsing details

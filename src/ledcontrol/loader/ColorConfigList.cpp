@@ -26,7 +26,7 @@ ColorConfig* ColorConfigList::FindByName(const std::string& name)
 {
    for (ColorConfig* cc : m_configs)
    {
-      if (cc->GetName() == name)
+      if (StringExtensions::ToLower(cc->GetName()) == StringExtensions::ToLower(name))
          return cc;
    }
    return nullptr;

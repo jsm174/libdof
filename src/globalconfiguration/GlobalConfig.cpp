@@ -57,7 +57,7 @@ std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std:
       }
       catch (...)
       {
-         Log::Exception(StringExtensions::Build("The specified IniFilesPath {0} could not be used due to an exception.", m_iniFilesPath));
+         Log::Exception(StringExtensions::Build("The specified IniFilesPath {0} could not be used due to a exception.", m_iniFilesPath));
       }
    }
 
@@ -151,12 +151,16 @@ std::unordered_map<int, FileInfo> GlobalConfig::GetIniFilesDictionary(const std:
 
 FileInfo* GlobalConfig::GetTableMappingFile(const std::string& tableFilename) const
 {
-   std::unordered_map<int, FileInfo> iniFilesDict = GetIniFilesDictionary(tableFilename);
+   std::unordered_map<int, FileInfo> iniFileDict = GetIniFilesDictionary(tableFilename);
 
-   if (iniFilesDict.size() > 0)
+   if (iniFileDict.size() > 0)
    {
-      auto [firstKey, firstValue] = *iniFilesDict.begin();
-      return new FileInfo(firstValue.Directory().GetFiles("tablemappings.*").front().FullName());
+      auto [firstKey, firstValue] = *iniFileDict.begin();
+      DirectoryInfo di = firstValue.Directory();
+      std::vector<FileInfo> files = di.GetFiles("tablemappings.*");
+      if (!files.empty())
+         return new FileInfo(files.front().FullName());
+      return nullptr;
    }
    else
    {
@@ -164,7 +168,7 @@ FileInfo* GlobalConfig::GetTableMappingFile(const std::string& tableFilename) co
    }
 }
 
-FileInfo* GlobalConfig::GetShapeDefintionFile(const std::string& tableFilename, const std::string& romName) const
+FileInfo* GlobalConfig::GetShapeDefinitionFile(const std::string& tableFilename, const std::string& romName) const
 {
    if (!StringExtensions::IsNullOrWhiteSpace(m_shapeDefinitionFilePattern.GetPattern()) && m_shapeDefinitionFilePattern.IsValid())
       return m_shapeDefinitionFilePattern.GetFirstMatchingFile(GetReplaceValuesDictionary(tableFilename, romName));
@@ -321,7 +325,7 @@ std::unordered_map<std::string, std::string> GlobalConfig::GetReplaceValuesDicti
    return d;
 }
 
-std::string GlobalConfig::GetGlobalConfigDirectoryName() const
+std::string GlobalConfig::GlobalConfigDirectoryName() const
 {
    DirectoryInfo di = GetGlobalConfigDirectory();
    if (di.Exists())
@@ -361,7 +365,7 @@ GlobalConfig* GlobalConfig::GetGlobalConfigFromConfigXmlFile(const std::string& 
       }
       else
       {
-         Log::Write(StringExtensions::Build("Global config file \"{0}\" does not exist; no global config loaded", globalConfigFileName));
+         Log::Error(StringExtensions::Build("Global config file \"{0}\" does not exist; no global config loaded", globalConfigFileName));
          return nullptr;
       }
    }
@@ -433,7 +437,7 @@ std::string GlobalConfig::ToXml() const
       element->SetText(m_iniFilesPath.c_str());
    doc.FirstChildElement("GlobalConfig")->InsertEndChild(element);
 
-   element = doc.NewElement("ShapeDefintionFilePattern");
+   element = doc.NewElement("ShapeDefinitionFilePattern");
    if (!m_shapeDefinitionFilePattern.GetPattern().empty())
       element->SetText(m_shapeDefinitionFilePattern.GetPattern().c_str());
    doc.FirstChildElement("GlobalConfig")->InsertEndChild(element);
@@ -523,9 +527,9 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    if (element && element->GetText())
       globalConfig->SetIniFilesPath(element->GetText());
 
-   element = root->FirstChildElement("ShapeDefintionFilePattern");
+   element = root->FirstChildElement("ShapeDefinitionFilePattern");
    if (element && element->GetText())
-      globalConfig->SetShapeDefintionFilePattern(element->GetText());
+      globalConfig->SetShapeDefinitionFilePattern(element->GetText());
 
    element = root->FirstChildElement("CabinetConfigFilePattern");
    if (element && element->GetText())

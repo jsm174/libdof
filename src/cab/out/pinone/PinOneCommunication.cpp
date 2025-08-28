@@ -172,7 +172,8 @@ void PinOneCommunication::SendPipeMessage(const std::string& message)
          WriteFile(pipe, message.c_str(), static_cast<DWORD>(message.length()), &bytesWritten, nullptr);
 #else
          int sockfd = static_cast<int>(reinterpret_cast<intptr_t>(m_pipeClient));
-         write(sockfd, message.c_str(), message.length());
+         ssize_t bytesWritten = write(sockfd, message.c_str(), message.length());
+         (void)bytesWritten;
 #endif
       }
       else

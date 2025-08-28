@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PixelData.h"
+#include "FastBitmapDataExtractModeEnum.h"
 #include <string>
 #include <vector>
 #include <memory>
@@ -13,7 +14,7 @@ class FastBitmap
 public:
    FastBitmap();
    FastBitmap(int width, int height);
-   FastBitmap(const std::string& filename);
+   FastBitmap(int width, int height, unsigned char* pixelData);
    ~FastBitmap();
 
 
@@ -34,15 +35,14 @@ public:
    void Fill(const PixelData& color);
 
 
-   bool LoadFromFile(const std::string& filename);
-   bool SaveToFile(const std::string& filename) const;
-
-
    FastBitmap GetScaled(int newWidth, int newHeight) const;
    FastBitmap GetCropped(int x, int y, int width, int height) const;
 
+   FastBitmap GetClip(int resultWidth, int resultHeight, int sourceLeft = 0, int sourceTop = 0, int sourceWidth = -1, int sourceHeight = -1,
+      FastBitmapDataExtractModeEnum dataExtractMode = FastBitmapDataExtractModeEnum::SinglePixelCenter) const;
 
-   static std::vector<FastBitmap> LoadAnimatedBitmap(const std::string& filename);
+   PixelData** GetPixels() const;
+
    static FastBitmap GetFrameFromAnimated(const std::vector<FastBitmap>& frames, int frameIndex);
 
 private:
@@ -52,11 +52,7 @@ private:
 
    bool IsValidCoordinate(int x, int y) const;
    int GetPixelIndex(int x, int y) const;
-
-
-   bool LoadBMP(const std::string& filename);
-   bool LoadSimpleBitmap(const std::string& filename);
-   bool SaveBMP(const std::string& filename) const;
+   void SetFrameSize(int width, int height);
 };
 
 }

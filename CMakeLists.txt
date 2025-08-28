@@ -101,6 +101,10 @@ set(LIBDOF_SOURCES
    src/general/StringExtensions.cpp
    src/general/analog/AnalogAlpha.cpp
    src/general/bitmap/FastBitmap.cpp
+   src/general/bitmap/FastImage.cpp
+   src/general/bitmap/FastImageList.cpp
+   src/general/bitmap/Image.cpp
+   src/general/bitmap/PixelData.cpp
    src/general/color/ColorList.cpp
    src/general/color/ColorScale.cpp
    src/general/color/RGBAColor.cpp
@@ -140,7 +144,6 @@ set(LIBDOF_SOURCES
    src/fx/matrixfx/AnalogAlphaMatrixValueEffect.cpp
    src/fx/matrixfx/MatrixBitmapAnimationEffectBase.cpp
    src/fx/matrixfx/MatrixBitmapEffectBase.cpp
-   src/fx/matrixfx/MatrixColorScaleEffectBase.cpp
    src/fx/matrixfx/MatrixEffectBase.cpp
    src/fx/matrixfx/MatrixFlickerEffectBase.cpp
    src/fx/matrixfx/MatrixPlasmaEffectBase.cpp

@@ -6,6 +6,7 @@
 #include "../../general/StringExtensions.h"
 #include "../../Log.h"
 #include "../../pinballsupport/AlarmHandler.h"
+#include "../../general/bitmap/PixelData.h"
 #include <chrono>
 #include <vector>
 
@@ -18,10 +19,10 @@ template <typename MatrixElementType> class MatrixBitmapAnimationEffectBase : pu
 {
 public:
    MatrixBitmapAnimationEffectBase();
-   virtual ~MatrixBitmapAnimationEffectBase() = default;
+   virtual ~MatrixBitmapAnimationEffectBase();
 
-   int GetAnimationStepCount() const { return m_animationStepCount; }
-   void SetAnimationStepCount(int value) { m_animationStepCount = MathExtensions::Limit(value, 1, 1000); }
+   int GetAnimationFrameCount() const { return m_animationFrameCount; }
+   void SetAnimationFrameCount(int value) { m_animationFrameCount = MathExtensions::Limit(value, 1, 1000); }
    int GetAnimationStepSize() const { return m_animationStepSize; }
    void SetAnimationStepSize(int value) { m_animationStepSize = MathExtensions::Limit(value, 1, 100); }
    int GetAnimationFrameDurationMs() const { return m_animationFrameDurationMs; }
@@ -31,230 +32,265 @@ public:
    AnimationBehaviourEnum GetAnimationBehaviour() const { return m_animationBehaviour; }
    void SetAnimationBehaviour(AnimationBehaviourEnum value) { m_animationBehaviour = value; }
    virtual void Trigger(TableElementData* tableElementData) override;
+   virtual void Init(Table* table) override;
    virtual void Finish() override;
 
 protected:
-   void StartAnimation(TableElementData* tableElementData);
+   void ControlAnimation(int fadeValue, TableElementData* tableElementData);
+   void Animate();
    void StopAnimation();
-   void AnimationStep();
-   void RenderCurrentFrame(TableElementData* tableElementData);
+   void CleanupPixels();
 
-   std::vector<FastBitmap> m_animationFrames;
    bool m_animationActive;
-   int m_currentFrame;
-   int m_currentStep;
-   TableElementData* m_animationTableElementData;
+   int m_animationStep;
+   int m_animationFadeValue;
+   std::vector<PixelData**> m_pixels;
 
 private:
-   int m_animationStepCount;
+   int m_animationFrameCount;
    int m_animationStepSize;
    int m_animationFrameDurationMs;
    MatrixAnimationStepDirectionEnum m_animationStepDirection;
    AnimationBehaviourEnum m_animationBehaviour;
-
-   void LoadAnimationFrames();
-   int CalculateFrameIndex() const;
 };
 
 
 template <typename MatrixElementType>
 MatrixBitmapAnimationEffectBase<MatrixElementType>::MatrixBitmapAnimationEffectBase()
    : m_animationActive(false)
-   , m_currentFrame(0)
-   , m_currentStep(0)
-   , m_animationTableElementData(nullptr)
-   , m_animationStepCount(1)
+   , m_animationStep(0)
+   , m_animationFadeValue(0)
+   , m_animationFrameCount(1)
    , m_animationStepSize(1)
-   , m_animationFrameDurationMs(100)
+   , m_animationFrameDurationMs(30)
    , m_animationStepDirection(MatrixAnimationStepDirectionEnum::Frame)
    , m_animationBehaviour(AnimationBehaviourEnum::Loop)
 {
 }
 
+template <typename MatrixElementType> MatrixBitmapAnimationEffectBase<MatrixElementType>::~MatrixBitmapAnimationEffectBase() { CleanupPixels(); }
+
 template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::Trigger(TableElementData* tableElementData)
 {
-   if (this->m_matrixLayer != nullptr)
+   if (this->m_initOK)
    {
-      if (tableElementData->m_value != 0)
-      {
-         if (!m_animationActive)
-         {
-            StartAnimation(tableElementData);
-         }
-         else if (this->m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
-         {
-            StartAnimation(tableElementData);
-         }
-      }
-      else
-      {
-         if (m_animationActive)
-         {
-            StopAnimation();
-         }
-      }
+      int fadeValue = tableElementData->m_value;
+      if (this->GetFadeMode() == FadeModeEnum::OnOff)
+         fadeValue = (fadeValue < 1 ? 0 : 255);
+      ControlAnimation(fadeValue, tableElementData);
    }
 }
 
-template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::StartAnimation(TableElementData* tableElementData)
+template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::ControlAnimation(int fadeValue, TableElementData* tableElementData)
 {
-   LoadAnimationFrames();
-
-   if (m_animationFrames.empty())
+   if (fadeValue > 0)
    {
+      m_animationFadeValue = fadeValue;
 
-      MatrixBitmapEffectBase<MatrixElementType>::Trigger(tableElementData);
-      return;
+      if (!m_animationActive)
+      {
+         m_animationActive = true;
+
+         if (m_animationBehaviour != AnimationBehaviourEnum::Continue)
+         {
+            m_animationStep = 0;
+         }
+         this->m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(m_animationFrameDurationMs, this, [this]() { this->Animate(); });
+
+         Animate();
+      }
    }
-
-   m_animationTableElementData = tableElementData;
-   m_animationActive = true;
-   m_currentFrame = 0;
-   m_currentStep = 0;
-
-   RenderCurrentFrame(tableElementData);
-   AnimationStep();
+   else
+   {
+      StopAnimation();
+   }
 }
 
 template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::StopAnimation()
 {
-   m_animationActive = false;
-   m_animationTableElementData = nullptr;
-
-
-   MatrixElementType inactiveValue = this->GetInactiveValue();
-   for (int x = this->m_areaLeft; x <= this->m_areaRight; x++)
+   if (m_animationActive)
    {
+      try
+      {
+         this->m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(this);
+      }
+      catch (...)
+      {
+      }
+
+      m_animationActive = false;
+
       for (int y = this->m_areaTop; y <= this->m_areaBottom; y++)
       {
-         this->m_matrix->SetElement(this->GetLayerNr(), x, y, inactiveValue);
+         for (int x = this->m_areaLeft; x <= this->m_areaRight; x++)
+         {
+            this->m_matrix->SetElement(this->GetLayerNr(), x, y, this->GetEffectValue(0, PixelData()));
+         }
       }
    }
 }
 
-template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::AnimationStep()
+template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::Animate()
 {
-   if (!m_animationActive || m_animationTableElementData == nullptr)
-      return;
-
-
-   m_currentStep++;
-
-
-   int frameIndex = CalculateFrameIndex();
-
-
-   bool shouldStop = false;
-   if (m_animationBehaviour == AnimationBehaviourEnum::Once)
+   if (m_animationStep < static_cast<int>(m_pixels.size()))
    {
-      if (m_currentStep >= m_animationStepCount)
-         shouldStop = true;
-   }
-
-   if (shouldStop)
-   {
-      StopAnimation();
-      return;
-   }
-
-
-   if (frameIndex != m_currentFrame)
-   {
-      m_currentFrame = frameIndex;
-      RenderCurrentFrame(m_animationTableElementData);
-   }
-
-
-   this->m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_animationFrameDurationMs, [this]() { this->AnimationStep(); }, false);
-}
-
-template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::RenderCurrentFrame(TableElementData* tableElementData)
-{
-   if (m_animationFrames.empty() || m_currentFrame >= static_cast<int>(m_animationFrames.size()))
-      return;
-
-
-   FastBitmap originalBitmap = this->m_bitmap;
-   this->m_bitmap = m_animationFrames[m_currentFrame];
-   this->m_bitmapLoaded = true;
-
-
-   this->RenderBitmap(tableElementData);
-
-
-   this->m_bitmap = originalBitmap;
-}
-
-template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::LoadAnimationFrames()
-{
-   if (!m_animationFrames.empty())
-      return;
-
-   if (this->m_bitmapFilePattern.empty())
-      return;
-
-
-   for (int i = 0; i < m_animationStepCount; i++)
-   {
-      std::string filename = this->m_bitmapFilePattern;
-      if (filename.find("{0}") != std::string::npos)
+      for (int y = 0; y < this->GetAreaHeight(); y++)
       {
-         filename = StringExtensions::Replace(filename, "{0}", std::to_string(i));
+         int yd = y + this->m_areaTop;
+         for (int x = 0; x < this->GetAreaWidth(); x++)
+         {
+            int xd = x + this->m_areaLeft;
+            this->m_matrix->SetElement(this->GetLayerNr(), xd, yd, this->GetEffectValue(m_animationFadeValue, m_pixels[m_animationStep][x][y]));
+         }
       }
-
-      FastBitmap frame(filename);
-      if (frame.IsValid())
+      m_animationStep++;
+      if (m_animationBehaviour != AnimationBehaviourEnum::Once)
       {
-         m_animationFrames.push_back(frame);
+         m_animationStep = m_animationStep % static_cast<int>(m_pixels.size());
+      }
+   }
+   else
+   {
+      m_animationStep = 0;
+      if (m_animationBehaviour == AnimationBehaviourEnum::Once)
+      {
+         StopAnimation();
+      }
+   }
+}
+
+template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::Init(Table* table)
+{
+   this->m_initOK = false;
+   CleanupPixels();
+   MatrixEffectBase<MatrixElementType>::Init(table);
+
+   if (this->GetBitmapFilePattern() != nullptr && this->GetBitmapFilePattern()->IsValid())
+   {
+      FileInfo* fi = this->GetBitmapFilePattern()->GetFirstMatchingFile(table->GetPinball()->GetGlobalConfig()->GetReplaceValuesDictionary());
+      if (fi != nullptr && fi->Exists())
+      {
+         FastImage* bm = nullptr;
+         try
+         {
+            auto& bitmaps = table->GetBitmaps();
+            bm = &bitmaps[fi->FullName()];
+         }
+         catch (...)
+         {
+            Log::Exception(StringExtensions::Build("MatrixBitmapAnimationEffectBase {0} cant initialize.  Could not load file {1}.", this->GetName(), fi->FullName()));
+            delete fi;
+            return;
+         }
+
+         const auto& frames = bm->GetFrames();
+         auto frameIt = frames.find(this->GetBitmapFrameNumber());
+         if (frameIt != frames.end())
+         {
+            int stepCount = m_animationFrameCount;
+            switch (m_animationStepDirection)
+            {
+            case MatrixAnimationStepDirectionEnum::Frame:
+            {
+               if ((this->GetBitmapFrameNumber() + (stepCount * m_animationStepSize)) > static_cast<int>(frames.size()))
+               {
+                  stepCount = (static_cast<int>(frames.size()) - this->GetBitmapFrameNumber()) / m_animationStepSize;
+               }
+
+               m_pixels.resize(stepCount);
+               for (int s = 0; s < stepCount; s++)
+               {
+                  auto stepFrameIt = frames.find(this->GetBitmapFrameNumber() + s * m_animationStepSize);
+                  if (stepFrameIt != frames.end())
+                  {
+                     FastBitmap clippedBitmap = stepFrameIt->second.GetClip(this->GetAreaWidth(), this->GetAreaHeight(), this->GetBitmapLeft(), this->GetBitmapTop(), this->GetBitmapWidth(),
+                        this->GetBitmapHeight(), this->GetDataExtractMode());
+                     m_pixels[s] = clippedBitmap.GetPixels();
+                  }
+               }
+               break;
+            }
+            case MatrixAnimationStepDirectionEnum::Right:
+            {
+               m_pixels.resize(stepCount);
+               for (int s = 0; s < stepCount; s++)
+               {
+                  FastBitmap clippedBitmap = frameIt->second.GetClip(this->GetAreaWidth(), this->GetAreaHeight(), this->GetBitmapLeft() + s * m_animationStepSize, this->GetBitmapTop(),
+                     this->GetBitmapWidth(), this->GetBitmapHeight(), this->GetDataExtractMode());
+                  m_pixels[s] = clippedBitmap.GetPixels();
+               }
+               break;
+            }
+            case MatrixAnimationStepDirectionEnum::Down:
+            {
+               m_pixels.resize(stepCount);
+               for (int s = 0; s < stepCount; s++)
+               {
+                  FastBitmap clippedBitmap = frameIt->second.GetClip(this->GetAreaWidth(), this->GetAreaHeight(), this->GetBitmapLeft(), this->GetBitmapTop() + s * m_animationStepSize,
+                     this->GetBitmapWidth(), this->GetBitmapHeight(), this->GetDataExtractMode());
+                  m_pixels[s] = clippedBitmap.GetPixels();
+               }
+               break;
+            }
+            default:
+            {
+               stepCount = 1;
+               m_pixels.resize(stepCount);
+               FastBitmap clippedBitmap = frameIt->second.GetClip(
+                  this->GetAreaWidth(), this->GetAreaHeight(), this->GetBitmapLeft(), this->GetBitmapTop(), this->GetBitmapWidth(), this->GetBitmapHeight(), this->GetDataExtractMode());
+               m_pixels[0] = clippedBitmap.GetPixels();
+               break;
+            }
+            }
+
+            std::vector<std::string> args = { std::to_string(this->GetAreaWidth()), std::to_string(this->GetAreaHeight()), std::to_string(this->GetBitmapLeft()),
+               std::to_string(this->GetBitmapTop()), std::to_string(this->GetBitmapWidth()), std::to_string(this->GetBitmapHeight()), std::to_string(stepCount) };
+            Log::Instrumentation("MX", StringExtensions::Build("BitmapAnimationEffectBase. Grabbed image clips: W: {0}, H:{1}, BML: {2}, BMT: {3}, BMW: {4}, BMH: {5}, Steps: {6}", args));
+         }
+         else
+         {
+            Log::Warning(StringExtensions::Build("MatrixBitmapAnimationEffectBase {0} cant initialize. Frame {1} does not exist in source image {2}.", this->GetName(),
+               std::to_string(this->GetBitmapFrameNumber()), fi->FullName()));
+         }
+         delete fi;
       }
       else
       {
-
-         break;
+         Log::Warning(StringExtensions::Build(
+            "MatrixBitmapAnimationEffectBase {0} cant initialize. No file matches the BitmapFilePattern {1} is invalid", this->GetName(), this->GetBitmapFilePattern()->GetPattern()));
+         delete fi;
       }
    }
-
-   if (m_animationFrames.empty())
+   else
    {
-      Log::Warning(StringExtensions::Build("Could not load any animation frames for pattern: {0}", this->m_bitmapFilePattern));
+      Log::Warning(StringExtensions::Build("MatrixBitmapAnimationEffectBase {0} cant initialize. The BitmapFilePattern {1} is invalid", this->GetName(),
+         this->GetBitmapFilePattern() ? this->GetBitmapFilePattern()->GetPattern() : "(null)"));
    }
+
+   this->m_initOK = (!m_pixels.empty() && this->m_matrixLayer != nullptr);
 }
 
-template <typename MatrixElementType> int MatrixBitmapAnimationEffectBase<MatrixElementType>::CalculateFrameIndex() const
+template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::CleanupPixels()
 {
-   if (m_animationFrames.empty())
-      return 0;
-
-   int frameCount = static_cast<int>(m_animationFrames.size());
-
-   switch (m_animationStepDirection)
+   for (auto pixels : m_pixels)
    {
-   case MatrixAnimationStepDirectionEnum::Frame:
-
-      if (m_animationBehaviour == AnimationBehaviourEnum::Loop)
+      if (pixels != nullptr)
       {
-         return (m_currentStep / m_animationStepSize) % frameCount;
+         for (int x = 0; x < this->GetAreaWidth(); x++)
+         {
+            delete[] pixels[x];
+         }
+         delete[] pixels;
       }
-      else
-      {
-         return std::min(m_currentStep / m_animationStepSize, frameCount - 1);
-      }
-
-   default: return 0;
    }
+   m_pixels.clear();
 }
 
 template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::Finish()
 {
-   try
-   {
-   }
-   catch (...)
-   {
-   }
-   m_animationActive = false;
-   m_animationTableElementData = nullptr;
-   MatrixBitmapEffectBase<MatrixElementType>::Finish();
+   StopAnimation();
+   CleanupPixels();
+   MatrixEffectBase<MatrixElementType>::Finish();
 }
 
 }

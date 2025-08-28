@@ -4,6 +4,7 @@
 
 namespace DOF
 {
+class RGBAColor;
 
 struct PixelData
 {
@@ -30,6 +31,8 @@ struct PixelData
    bool operator==(const PixelData& other) const { return red == other.red && green == other.green && blue == other.blue && alpha == other.alpha; }
 
    bool operator!=(const PixelData& other) const { return !(*this == other); }
+
+   RGBAColor GetRGBAColor() const;
 };
 
 }

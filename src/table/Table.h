@@ -5,6 +5,8 @@
 #include "DOF/DOF.h"
 #include "TableConfigSourceEnum.h"
 #include "TableElementTypeEnum.h"
+#include "../general/bitmap/FastImage.h"
+#include "../general/bitmap/FastImageList.h"
 
 namespace DOF
 {
@@ -47,6 +49,7 @@ public:
    void SetAssignedStaticEffects(AssignedEffectList* assignedStaticEffects) { m_assignedStaticEffects = assignedStaticEffects; }
    ShapeDefinitions* GetShapeDefinitions() { return m_shapeDefinitions; }
    void SetShapeDefinitions(ShapeDefinitions* shapeDefinitions) { m_shapeDefinitions = shapeDefinitions; }
+   FastImageList& GetBitmaps() { return m_bitmaps; }
    void UpdateTableElement(TableElementData* data);
    void UpdateTableElement(const std::string& elementName, int value);
    void UpdateTableElement(TableElementTypeEnum elementType, int number, int value);
@@ -73,6 +76,7 @@ private:
    EffectList* m_effects;
    AssignedEffectList* m_assignedStaticEffects;
    ShapeDefinitions* m_shapeDefinitions;
+   FastImageList m_bitmaps;
 };
 
 }

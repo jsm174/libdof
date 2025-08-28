@@ -1,13 +1,18 @@
 #pragma once
 
 #include "MatrixEffectBase.h"
-#include "../RetriggerBehaviourEnum.h"
+#include "IMatrixBitmapEffect.h"
 #include "../../general/bitmap/FastBitmap.h"
+#include "../../general/bitmap/FastBitmapDataExtractModeEnum.h"
+#include "../../general/bitmap/FastImage.h"
+#include "../../general/FilePattern.h"
+#include "../../general/FileInfo.h"
 #include "../../general/MathExtensions.h"
 #include "../../general/StringExtensions.h"
 #include "../../table/TableElementData.h"
 #include "../../table/Table.h"
 #include "../../Pinball.h"
+#include "../../globalconfiguration/GlobalConfig.h"
 #include "../../Log.h"
 
 namespace DOF
@@ -15,40 +20,42 @@ namespace DOF
 
 class TableElementData;
 
-template <typename MatrixElementType> class MatrixBitmapEffectBase : public MatrixEffectBase<MatrixElementType>
+template <typename MatrixElementType> class MatrixBitmapEffectBase : public MatrixEffectBase<MatrixElementType>, public virtual IMatrixBitmapEffect
 {
 public:
    MatrixBitmapEffectBase();
-   virtual ~MatrixBitmapEffectBase() = default;
+   virtual ~MatrixBitmapEffectBase();
 
-   const std::string& GetBitmapFilePattern() const { return m_bitmapFilePattern; }
-   void SetBitmapFilePattern(const std::string& value);
-   int GetBitmapFrameNumber() const { return m_bitmapFrameNumber; }
-   void SetBitmapFrameNumber(int value) { m_bitmapFrameNumber = MathExtensions::Limit(value, 0, 1000); }
-   int GetBitmapLeft() const { return m_bitmapLeft; }
-   void SetBitmapLeft(int value) { m_bitmapLeft = MathExtensions::Limit(value, 0, 1000); }
-   int GetBitmapTop() const { return m_bitmapTop; }
-   void SetBitmapTop(int value) { m_bitmapTop = MathExtensions::Limit(value, 0, 1000); }
-   int GetBitmapWidth() const { return m_bitmapWidth; }
-   void SetBitmapWidth(int value) { m_bitmapWidth = MathExtensions::Limit(value, -1, 1000); }
-   int GetBitmapHeight() const { return m_bitmapHeight; }
-   void SetBitmapHeight(int value) { m_bitmapHeight = MathExtensions::Limit(value, -1, 1000); }
-   RetriggerBehaviourEnum GetRetriggerBehaviour() const { return m_retriggerBehaviour; }
-   void SetRetriggerBehaviour(RetriggerBehaviourEnum value) { m_retriggerBehaviour = value; }
+   virtual FilePattern* GetBitmapFilePattern() const override { return m_bitmapFilePattern; }
+   virtual void SetBitmapFilePattern(FilePattern* value) override;
+   virtual int GetBitmapFrameNumber() const override { return m_bitmapFrameNumber; }
+   virtual void SetBitmapFrameNumber(int value) override { m_bitmapFrameNumber = MathExtensions::Limit(value, 0, 1000); }
+   virtual int GetBitmapLeft() const override { return m_bitmapLeft; }
+   virtual void SetBitmapLeft(int value) override { m_bitmapLeft = MathExtensions::Limit(value, 0, 1000); }
+   virtual int GetBitmapTop() const override { return m_bitmapTop; }
+   virtual void SetBitmapTop(int value) override { m_bitmapTop = MathExtensions::Limit(value, 0, 1000); }
+   virtual int GetBitmapWidth() const override { return m_bitmapWidth; }
+   virtual void SetBitmapWidth(int value) override { m_bitmapWidth = MathExtensions::Limit(value, -1, 1000); }
+   virtual int GetBitmapHeight() const override { return m_bitmapHeight; }
+   virtual void SetBitmapHeight(int value) override { m_bitmapHeight = MathExtensions::Limit(value, -1, 1000); }
+   virtual FastBitmapDataExtractModeEnum GetDataExtractMode() const override { return m_dataExtractMode; }
+   virtual void SetDataExtractMode(FastBitmapDataExtractModeEnum value) override { m_dataExtractMode = value; }
    virtual void Trigger(TableElementData* tableElementData) override;
    virtual void Init(Table* table) override;
    virtual void Finish() override;
 
-protected:
-   virtual MatrixElementType GetInactiveValue() = 0;
-   virtual MatrixElementType GetPixelValue(const PixelData& pixel, int triggerValue) = 0;
-   void RenderBitmap(TableElementData* tableElementData);
-   void LoadBitmap();
-   PixelData GetScaledPixel(int x, int y) const;
+   virtual MatrixElementType GetEffectValue(int triggerValue, PixelData pixel) = 0;
 
-   FastBitmap m_bitmap;
-   bool m_bitmapLoaded;
-   std::string m_bitmapFilePattern;
+protected:
+   void OutputBitmap(int fadeValue);
+   void CleanupPixels();
+   PixelData** m_pixels;
+
+protected:
+   bool m_initOK;
+
+private:
+   FilePattern* m_bitmapFilePattern;
 
 private:
    int m_bitmapFrameNumber;
@@ -56,147 +63,128 @@ private:
    int m_bitmapTop;
    int m_bitmapWidth;
    int m_bitmapHeight;
-
-protected:
-   RetriggerBehaviourEnum m_retriggerBehaviour;
-   bool m_active;
+   FastBitmapDataExtractModeEnum m_dataExtractMode;
 };
 
 
 template <typename MatrixElementType>
 MatrixBitmapEffectBase<MatrixElementType>::MatrixBitmapEffectBase()
-   : m_bitmapLoaded(false)
+   : m_initOK(false)
+   , m_bitmapFilePattern(nullptr)
+   , m_pixels(nullptr)
    , m_bitmapFrameNumber(0)
    , m_bitmapLeft(0)
    , m_bitmapTop(0)
    , m_bitmapWidth(-1)
    , m_bitmapHeight(-1)
-   , m_retriggerBehaviour(RetriggerBehaviourEnum::Restart)
-   , m_active(false)
+   , m_dataExtractMode(FastBitmapDataExtractModeEnum::BlendPixels)
 {
 }
 
-template <typename MatrixElementType> void MatrixBitmapEffectBase<MatrixElementType>::SetBitmapFilePattern(const std::string& value)
-{
-   if (m_bitmapFilePattern != value)
-   {
-      m_bitmapFilePattern = value;
-      m_bitmapLoaded = false;
-   }
-}
+template <typename MatrixElementType> MatrixBitmapEffectBase<MatrixElementType>::~MatrixBitmapEffectBase() { CleanupPixels(); }
+
+template <typename MatrixElementType> void MatrixBitmapEffectBase<MatrixElementType>::SetBitmapFilePattern(FilePattern* value) { m_bitmapFilePattern = value; }
 
 template <typename MatrixElementType> void MatrixBitmapEffectBase<MatrixElementType>::Trigger(TableElementData* tableElementData)
 {
-   if (this->m_matrixLayer != nullptr)
+   if (m_initOK)
    {
-      if (tableElementData->m_value != 0)
-      {
-         if (!m_active)
-         {
-            RenderBitmap(tableElementData);
-            m_active = true;
-         }
-         else if (m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
-         {
-            RenderBitmap(tableElementData);
-         }
-      }
-      else
-      {
-         if (m_active)
-         {
-
-            MatrixElementType inactiveValue = GetInactiveValue();
-            for (int x = this->m_areaLeft; x <= this->m_areaRight; x++)
-            {
-               for (int y = this->m_areaTop; y <= this->m_areaBottom; y++)
-               {
-                  this->m_matrix->SetElement(this->GetLayerNr(), x, y, inactiveValue);
-               }
-            }
-            m_active = false;
-         }
-      }
+      OutputBitmap(tableElementData->m_value);
    }
 }
 
 template <typename MatrixElementType> void MatrixBitmapEffectBase<MatrixElementType>::Init(Table* table)
 {
+   m_initOK = false;
+   CleanupPixels();
    MatrixEffectBase<MatrixElementType>::Init(table);
-   LoadBitmap();
+
+   if (m_bitmapFilePattern != nullptr && m_bitmapFilePattern->IsValid())
+   {
+      FileInfo* fi = m_bitmapFilePattern->GetFirstMatchingFile(table->GetPinball()->GetGlobalConfig()->GetReplaceValuesDictionary());
+      if (fi != nullptr && fi->Exists())
+      {
+         FastImage* bm = nullptr;
+         try
+         {
+            auto& bitmaps = table->GetBitmaps();
+            bm = &bitmaps[fi->FullName()];
+         }
+         catch (...)
+         {
+            Log::Exception(StringExtensions::Build("MatrixBitmapEffectBase {0} cant initialize.  Could not load file {1}.", EffectBase::GetName(), fi->FullName()));
+            delete fi;
+            return;
+         }
+
+         const auto& frames = bm->GetFrames();
+         auto frameIt = frames.find(m_bitmapFrameNumber);
+         if (frameIt != frames.end())
+         {
+            std::vector<std::string> args = { std::to_string(this->GetAreaWidth()), std::to_string(this->GetAreaHeight()), std::to_string(m_bitmapLeft), std::to_string(m_bitmapTop),
+               std::to_string(m_bitmapWidth), std::to_string(m_bitmapHeight) };
+            Log::Instrumentation("MX", StringExtensions::Build("BitmapEffectBase. Grabbing image clip: W: {0}, H:{1}, BML: {2}, BMT: {3}, BMW: {4}, BMH: {5}", args));
+            FastBitmap clippedBitmap = frameIt->second.GetClip(this->GetAreaWidth(), this->GetAreaHeight(), m_bitmapLeft, m_bitmapTop, m_bitmapWidth, m_bitmapHeight, m_dataExtractMode);
+            m_pixels = clippedBitmap.GetPixels();
+         }
+         else
+         {
+            Log::Warning(StringExtensions::Build(
+               "MatrixBitmapEffectBase {0} cant initialize. Frame {1} does not exist in source image {2}.", EffectBase::GetName(), std::to_string(m_bitmapFrameNumber), fi->FullName()));
+         }
+         delete fi;
+      }
+      else
+      {
+         Log::Warning(StringExtensions::Build(
+            "MatrixBitmapEffectBase {0} cant initialize. No file matches the BitmapFilePattern {1} is invalid", EffectBase::GetName(), m_bitmapFilePattern->GetPattern()));
+         delete fi;
+      }
+   }
+   else
+   {
+      Log::Warning(StringExtensions::Build(
+         "MatrixBitmapEffectBase {0} cant initialize. The BitmapFilePattern {1} is invalid", EffectBase::GetName(), m_bitmapFilePattern ? m_bitmapFilePattern->GetPattern() : "(null)"));
+   }
+
+   m_initOK = (m_pixels != nullptr && this->m_matrixLayer != nullptr);
+}
+
+template <typename MatrixElementType> void MatrixBitmapEffectBase<MatrixElementType>::CleanupPixels()
+{
+   if (m_pixels != nullptr)
+   {
+      for (int x = 0; x < this->GetAreaWidth(); x++)
+      {
+         delete[] m_pixels[x];
+      }
+      delete[] m_pixels;
+      m_pixels = nullptr;
+   }
 }
 
 template <typename MatrixElementType> void MatrixBitmapEffectBase<MatrixElementType>::Finish()
 {
-   m_active = false;
+   CleanupPixels();
    MatrixEffectBase<MatrixElementType>::Finish();
 }
 
-template <typename MatrixElementType> void MatrixBitmapEffectBase<MatrixElementType>::LoadBitmap()
+
+template <typename MatrixElementType> void MatrixBitmapEffectBase<MatrixElementType>::OutputBitmap(int fadeValue)
 {
-   if (!m_bitmapFilePattern.empty() && !m_bitmapLoaded)
+   if (this->GetFadeMode() == FadeModeEnum::OnOff)
+      fadeValue = (fadeValue < 1 ? 0 : 255);
+
+   for (int y = 0; y < this->GetAreaHeight(); y++)
    {
-
-      std::string filename = m_bitmapFilePattern;
-
-      if (filename.find("{0}") != std::string::npos)
+      int yd = y + this->m_areaTop;
+      for (int x = 0; x < this->GetAreaWidth(); x++)
       {
-         filename = StringExtensions::Replace(filename, "{0}", std::to_string(m_bitmapFrameNumber));
-      }
-
-      m_bitmap = FastBitmap(filename);
-      m_bitmapLoaded = m_bitmap.IsValid();
-
-      if (!m_bitmapLoaded)
-      {
-         Log::Warning(StringExtensions::Build("Could not load bitmap: {0}", filename));
+         int xd = x + this->m_areaLeft;
+         this->m_matrix->SetElement(this->GetLayerNr(), xd, yd, GetEffectValue(fadeValue, m_pixels[x][y]));
       }
    }
 }
 
-template <typename MatrixElementType> void MatrixBitmapEffectBase<MatrixElementType>::RenderBitmap(TableElementData* tableElementData)
-{
-   if (!m_bitmapLoaded || !m_bitmap.IsValid())
-      return;
-
-
-   int renderWidth = (m_bitmapWidth == -1) ? m_bitmap.GetWidth() : m_bitmapWidth;
-   int renderHeight = (m_bitmapHeight == -1) ? m_bitmap.GetHeight() : m_bitmapHeight;
-
-
-   int maxWidth = this->GetAreaWidth();
-   int maxHeight = this->GetAreaHeight();
-   renderWidth = std::min(renderWidth, maxWidth);
-   renderHeight = std::min(renderHeight, maxHeight);
-
-
-   for (int y = 0; y < renderHeight; y++)
-   {
-      for (int x = 0; x < renderWidth; x++)
-      {
-         int matrixX = this->m_areaLeft + x;
-         int matrixY = this->m_areaTop + y;
-
-         if (matrixX <= this->m_areaRight && matrixY <= this->m_areaBottom)
-         {
-            PixelData pixel = GetScaledPixel(x, y);
-            MatrixElementType value = GetPixelValue(pixel, tableElementData->m_value);
-            this->m_matrix->SetElement(this->GetLayerNr(), matrixX, matrixY, value);
-         }
-      }
-   }
-}
-
-template <typename MatrixElementType> PixelData MatrixBitmapEffectBase<MatrixElementType>::GetScaledPixel(int x, int y) const
-{
-   if (!m_bitmap.IsValid())
-      return PixelData(0, 0, 0, 0);
-
-
-   int srcX = m_bitmapLeft + ((x * m_bitmap.GetWidth()) / ((m_bitmapWidth == -1) ? m_bitmap.GetWidth() : m_bitmapWidth));
-   int srcY = m_bitmapTop + ((y * m_bitmap.GetHeight()) / ((m_bitmapHeight == -1) ? m_bitmap.GetHeight() : m_bitmapHeight));
-
-   return m_bitmap.GetPixel(srcX, srcY);
-}
 
 }
