@@ -43,8 +43,8 @@ struct TestRom
    std::string description;
 };
 
-std::vector<TestRom> testRoms
-   = { { "ij_l7", "Indiana Jones L7" }, { "tna", "Total Nuclear Annihilation" }, { "gw", "The Getaway High Speed II" }, { "goldcue", "Gold Cue" }, { "bourne", "Bourne Identity" } };
+std::vector<TestRom> testRoms = { { "ij_l7", "Indiana Jones L7" }, { "tna", "Total Nuclear Annihilation" }, { "gw", "The Getaway High Speed II" }, { "goldcue", "Gold Cue" },
+   { "bourne", "Bourne Identity" }, { "twenty4", "Twenty4" } };
 
 void LIBDOFCALLBACK LogCallback(DOF_LogLevel logLevel, const char* format, va_list args)
 {
@@ -265,6 +265,58 @@ void RunBourneTests(DOF::DOF* pDof)
    pDof->Finish();
 }
 
+void RunTwenty4Tests(DOF::DOF* pDof)
+{
+   pDof->Init("", "twenty4");
+
+   Log("========================================");
+   Log("Testing ROM: twenty4");
+   Log("========================================");
+
+   std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_START_DELAY));
+
+   // 5 Flasher Outside Left
+   TriggerOutputOnOff(pDof, 'S', 9); // Orange
+   TriggerOutputOnOff(pDof, 'S', 19); // White
+   TriggerOutputOnOff(pDof, 'S', 31); // Yellow
+   TriggerOutputOnOff(pDof, 'S', 32); // Red
+   TriggerOutputOnOff(pDof, 'W', 3); // Yellow Blink f500
+   TriggerOutputOnOff(pDof, 'W', 10); // Red f200
+   TriggerOutputOnOff(pDof, 'W', 46); // Blue f200
+
+   // 5 Flasher Left
+   TriggerOutputOnOff(pDof, 'S', 17); // Blue
+   TriggerOutputOnOff(pDof, 'S', 26); // White
+
+   // 5 Flasher Center
+   TriggerOutputOnOff(pDof, 'S', 11); // Orange
+   TriggerOutputOnOff(pDof, 'W', 43); // White Blink f500
+   TriggerOutputOnOff(pDof, 'W', 55); // Yellow f200
+
+   // 5 Flasher Right
+   TriggerOutputOnOff(pDof, 'S', 18); // Blue
+   TriggerOutputOnOff(pDof, 'S', 26); // White
+   TriggerOutputOnOff(pDof, 'W', 62); // Blue 600 4
+   TriggerOutputOnOff(pDof, 'W', 56); // Yellow f200
+
+   // 5 Flasher Outside Right
+   TriggerOutputOnOff(pDof, 'S', 10); // Orange
+   TriggerOutputOnOff(pDof, 'S', 20); // White
+   TriggerOutputOnOff(pDof, 'S', 27); // Red
+   TriggerOutputOnOff(pDof, 'S', 31); // Yellow
+   TriggerOutputOnOff(pDof, 'W', 54); // Blue f200
+   TriggerOutputOnOff(pDof, 'W', 57); // Yellow f200
+
+   // Shaker
+   TriggerOutputOnOff(pDof, 'S', 8, 1500); // m600 I32 (longer test for shaker)
+   TriggerOutputOnOff(pDof, 'W', 62, 1500); // 600 I32
+
+   // Knocker
+   TriggerOutputOnOff(pDof, 'S', 24, 200, 800); // I60 (short pulse for knocker)
+
+   pDof->Finish();
+}
+
 std::string GetDefaultBasePath()
 {
 #ifdef _WIN32
@@ -366,6 +418,8 @@ int main(int argc, const char* argv[])
                RunGoldcueTests(pDof);
             else if (testRom.name == "bourne")
                RunBourneTests(pDof);
+            else if (testRom.name == "twenty4")
+               RunTwenty4Tests(pDof);
             break;
          }
       }
@@ -392,6 +446,7 @@ int main(int argc, const char* argv[])
       RunGWTests(pDof);
       RunGoldcueTests(pDof);
       RunBourneTests(pDof);
+      RunTwenty4Tests(pDof);
    }
 
    Log("Shutting down...");

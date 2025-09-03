@@ -35,7 +35,8 @@ cp ../../platforms/win/x86/libusb/libusb_dll.vcxproj msvc
 msbuild.exe msvc/libusb_dll.vcxproj \
    -p:Platform=x86 \
    -p:Configuration=Release
-cp libusb/libusb.h ../../third-party/include/
+mkdir -p ../../third-party/include/libusb-1.0
+cp libusb/libusb.h ../../third-party/include/libusb-1.0
 cp build/v143/Win32/Release/libusb_dll/../dll/libusb-1.0.lib ../../third-party/build-libs/win/x86
 cp build/v143/Win32/Release/libusb_dll/../dll/libusb-1.0.dll ../../third-party/runtime-libs/win/x86
 cd ..

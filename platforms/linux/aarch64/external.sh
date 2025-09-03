@@ -29,7 +29,8 @@ cd libusb
 ./configure \
    --enable-shared
 make -j${NUM_PROCS}
-cp libusb/libusb.h ../../third-party/include/
+mkdir -p ../../third-party/include/libusb-1.0
+cp libusb/libusb.h ../../third-party/include/libusb-1.0
 cp -a libusb/.libs/libusb-1.0.{so,so.*} ../../third-party/runtime-libs/linux/aarch64/
 cd ..
 

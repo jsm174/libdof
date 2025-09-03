@@ -291,10 +291,6 @@ void LedControlConfig::ResolveRGBColors()
                   break;
                }
             }
-            if (s->GetColorConfig() == nullptr && !s->GetColorName().empty())
-            {
-               Log::Warning(StringExtensions::Build("Color '{0}' not found in color configuration", s->GetColorName()));
-            }
          }
       }
    }

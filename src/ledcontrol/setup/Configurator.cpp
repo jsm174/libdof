@@ -166,10 +166,15 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
                {
                case 3:
                {
+                  std::vector<std::string> debugArgs1 = {std::to_string(tcc->GetNumber()), std::to_string(tcc->GetFirstOutputNumber())};
+                  Log::Write(StringExtensions::Build("DEBUG: Processing RGB Column {0}, FirstOutputNumber={1}", debugArgs1));
+                  
                   auto* lweOutput = lwe->GetOutputs().FindByNumber(tcc->GetFirstOutputNumber());
                   if (lweOutput != nullptr)
                   {
                      std::string outputName = lweOutput->GetOutputName();
+                     std::vector<std::string> debugArgs2 = {outputName};
+                     Log::Write(StringExtensions::Build("DEBUG: Found lweOutput with name '{0}'", debugArgs2));
 
                      for (IToy* toy : *cabinet->GetToys())
                      {
@@ -177,19 +182,29 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
                         if (rgbaToy != nullptr && toy->GetName() == outputName)
                         {
                            targetToy = toy;
+                           Log::Write("DEBUG: Found existing IRGBAToy match");
                            break;
                         }
                      }
                   }
+                  else
+                  {
+                     std::vector<std::string> debugArgs3 = {std::to_string(tcc->GetFirstOutputNumber())};
+                     Log::Write(StringExtensions::Build("DEBUG: No lweOutput found for FirstOutputNumber={0}", debugArgs3));
+                  }
 
                   if (targetToy == nullptr)
                   {
+                     Log::Write("DEBUG: targetToy is null, checking for individual outputs");
                      auto* lweOutput1 = lwe->GetOutputs().FindByNumber(tcc->GetFirstOutputNumber());
                      auto* lweOutput2 = lwe->GetOutputs().FindByNumber(tcc->GetFirstOutputNumber() + 1);
                      auto* lweOutput3 = lwe->GetOutputs().FindByNumber(tcc->GetFirstOutputNumber() + 2);
 
                      if (lweOutput1 != nullptr && lweOutput2 != nullptr && lweOutput3 != nullptr)
                      {
+                        std::vector<std::string> debugArgs4 = {lweOutput1->GetOutputName(), lweOutput2->GetOutputName(), lweOutput3->GetOutputName()};
+                        Log::Write(StringExtensions::Build("DEBUG: Found all three outputs: R='{0}', G='{1}', B='{2}'", debugArgs4));
+                        
                         for (IToy* toy : *cabinet->GetToys())
                         {
                            IRGBOutputToy* rgbOutputToy = dynamic_cast<IRGBOutputToy*>(toy);
@@ -197,6 +212,7 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
                               && rgbOutputToy->GetOutputNameBlue() == lweOutput3->GetOutputName())
                            {
                               targetToy = toy;
+                              Log::Write("DEBUG: Found existing IRGBOutputToy match");
                               break;
                            }
                         }
@@ -220,7 +236,18 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
 
                            targetToy = rgbaToy;
                            cabinet->GetToys()->AddToy(targetToy);
+                           std::vector<std::string> debugArgs5 = {toyName};
+                           Log::Write(StringExtensions::Build("DEBUG: Created new RGBAToy '{0}'", debugArgs5));
                         }
+                     }
+                     else
+                     {
+                        std::vector<std::string> debugArgs6 = {
+                           (lweOutput1 ? "found" : "null"), 
+                           (lweOutput2 ? "found" : "null"), 
+                           (lweOutput3 ? "found" : "null")
+                        };
+                        Log::Write(StringExtensions::Build("DEBUG: Missing outputs - Output1: {0}, Output2: {1}, Output3: {2}", debugArgs6));
                      }
                   }
                   break;
@@ -287,7 +314,16 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
             }
 
             if (targetToy != nullptr)
+            {
                toyAssignments[ledWizNr][tcc->GetNumber()] = targetToy;
+               std::vector<std::string> debugArgs7 = {std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), targetToy->GetName()};
+               Log::Write(StringExtensions::Build("DEBUG: Added toyAssignment - LedWiz:{0}, Column:{1}, Toy:'{2}'", debugArgs7));
+            }
+            else
+            {
+               std::vector<std::string> debugArgs8 = {std::to_string(ledWizNr), std::to_string(tcc->GetNumber())};
+               Log::Write(StringExtensions::Build("DEBUG: No targetToy created for LedWiz:{0}, Column:{1}", debugArgs8));
+            }
          }
       }
    }
@@ -317,9 +353,13 @@ void Configurator::SetupTable(
                Log::Write(StringExtensions::Build("Found toy for column {0}: {1}", std::to_string(tcc->GetNumber()), toy->GetName()));
 
                int settingNumber = 0;
+               std::vector<std::string> debugArgs9 = {std::to_string(tcc->GetNumber())};
+               Log::Write(StringExtensions::Build("DEBUG: Starting settings loop for Column {0}", debugArgs9));
                for (TableConfigSetting* tcs : *tcc)
                {
                   settingNumber++;
+                  std::vector<std::string> debugArgs10 = {std::to_string(tcc->GetNumber()), std::to_string(settingNumber)};
+                  Log::Write(StringExtensions::Build("DEBUG: Processing setting {1} in Column {0}", debugArgs10));
 
                   IEffect* effect = nullptr;
                   std::string effectName;
@@ -328,6 +368,17 @@ void Configurator::SetupTable(
                   IMatrixToy<AnalogAlpha>* analogMatrixToy = dynamic_cast<IMatrixToy<AnalogAlpha>*>(toy);
                   IRGBAToy* rgbaToy = dynamic_cast<IRGBAToy*>(toy);
                   IAnalogAlphaToy* analogToy = dynamic_cast<IAnalogAlphaToy*>(toy);
+                  
+                  std::vector<std::string> debugArgs11 = {
+                     std::to_string(tcc->GetNumber()), 
+                     std::to_string(settingNumber), 
+                     toy->GetName(), 
+                     (rgbaMatrixToy ? "rgbaMatrixToy" : "null"),
+                     (analogMatrixToy ? "analogMatrixToy" : "null"), 
+                     (rgbaToy ? "rgbaToy" : "null"),
+                     (analogToy ? "analogToy" : "null")
+                  };
+                  Log::Write(StringExtensions::Build("DEBUG: Toy types - Column={0}, Setting={1}, ToyName='{2}', RGBAMatrix={3}, AnalogMatrix={4}, RGBA={5}, Analog={6}", debugArgs11));
 
                   if (rgbaMatrixToy != nullptr)
                   {
@@ -910,16 +961,20 @@ void Configurator::SetupTable(
                         finalEffect = fullRangeEffect;
                      }
 
+                     std::vector<std::string> args = {tcs->GetTableElement(), tcs->GetColorName(), std::to_string((int)tcs->GetOutputControl()), std::to_string(tcc->GetNumber()), std::to_string(settingNumber)};
+                     Log::Write(StringExtensions::Build("DEBUG: All settings - TableElement='{0}', ColorName='{1}', OutputControl={2}, Column={3}, Setting={4}", args));
                      switch (tcs->GetOutputControl())
                      {
                      case OutputControlEnum::FixedOn:
                      {
+                        Log::Write("DEBUG: FixedOn case");
                         std::vector<std::string> tableElementDescriptors;
                         tableElementDescriptors.push_back(StringExtensions::Build("{0}.{1}.{2}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber)));
                         AssignEffectToTableElements(table, tableElementDescriptors, finalEffect);
                      }
                      break;
                      case OutputControlEnum::Controlled:
+                        Log::Write("DEBUG: Controlled case");
                         if (!StringExtensions::IsNullOrWhiteSpace(tcs->GetTableElement()))
                         {
                            std::vector<std::string> tableElements = StringExtensions::Split(tcs->GetTableElement(), { '|' });
@@ -942,13 +997,18 @@ void Configurator::SetupTable(
                         break;
                      case OutputControlEnum::Condition:
                      {
+                        Log::Write("DEBUG: Condition case");
                         std::vector<std::string> tableElementDescriptors;
                         tableElementDescriptors.push_back(StringExtensions::Build("{0}.{1}.{2}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber)));
                         AssignEffectToTableElements(table, tableElementDescriptors, finalEffect);
                      }
                      break;
                      case OutputControlEnum::FixedOff:
-                     default: break;
+                        Log::Write("DEBUG: FixedOff case");
+                        break;
+                     default: 
+                        Log::Write("DEBUG: Default/Unknown case");
+                        break;
                      }
                   }
                }

@@ -31,7 +31,8 @@ cd libusb
    CFLAGS="-arch arm64" \
    LDFLAGS="-Wl,-install_name,@rpath/libusb-1.0.dylib"
 make -j${NUM_PROCS}
-cp libusb/libusb.h ../../third-party/include/
+mkdir -p ../../third-party/include/libusb-1.0
+cp libusb/libusb.h ../../third-party/include/libusb-1.0
 cp -a libusb/.libs/libusb*.dylib ../../third-party/runtime-libs/macos/arm64/
 cd ..
 

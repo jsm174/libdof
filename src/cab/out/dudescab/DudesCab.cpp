@@ -7,9 +7,7 @@
 #include <cstring>
 #include <thread>
 
-#ifdef __HIDAPI__
 #include <hidapi/hidapi.h>
-#endif
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -197,7 +195,6 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
 {
    std::vector<Device*> devices;
 
-#ifdef __HIDAPI__
    struct hid_device_info* devs = hid_enumerate(VendorID, ProductID);
    struct hid_device_info* cur_dev = devs;
 
@@ -265,7 +262,8 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
    }
 
    hid_free_enumeration(devs);
-#endif
+
+   Log::Write(StringExtensions::Build("DudesCab device scan found {0} devices", std::to_string(devices.size())));
 
    return devices;
 }
@@ -284,7 +282,6 @@ DudesCab::Device::Device(const std::string& path, const std::string& name, const
    , PwmExtensionsMask(0)
    , m_hidDevice(nullptr)
 {
-#ifdef __HIDAPI__
    m_hidDevice = hid_open_path(path.c_str());
    if (m_hidDevice)
    {
@@ -353,17 +350,14 @@ DudesCab::Device::Device(const std::string& path, const std::string& name, const
          }
       }
    }
-#endif
 }
 
 DudesCab::Device::~Device()
 {
-#ifdef __HIDAPI__
    if (m_hidDevice)
    {
       hid_close(m_hidDevice);
    }
-#endif
 }
 
 std::string DudesCab::Device::ToString() const { return StringExtensions::Build("{0} (unit {1})", m_name, std::to_string(m_unitNo)); }
@@ -372,7 +366,6 @@ std::vector<uint8_t> DudesCab::Device::ReadUSB()
 {
    std::vector<uint8_t> result;
 
-#ifdef __HIDAPI__
    if (m_hidDevice)
    {
       uint8_t buffer[65];
@@ -382,20 +375,17 @@ std::vector<uint8_t> DudesCab::Device::ReadUSB()
          result.assign(buffer, buffer + bytes_read);
       }
    }
-#endif
 
    return result;
 }
 
 bool DudesCab::Device::WriteUSB(const std::vector<uint8_t>& data)
 {
-#ifdef __HIDAPI__
    if (m_hidDevice && !data.empty())
    {
       int result = hid_write(m_hidDevice, data.data(), data.size());
       return result >= 0;
    }
-#endif
    return false;
 }
 
@@ -403,7 +393,6 @@ void DudesCab::Device::AllOff() { SendCommand(RT_PWM_ALLOFF); }
 
 void DudesCab::Device::SendCommand(HIDReportType command, const std::vector<uint8_t>& parameters)
 {
-#ifdef __HIDAPI__
    if (!m_hidDevice)
       return;
 
@@ -433,7 +422,6 @@ void DudesCab::Device::SendCommand(HIDReportType command, const std::vector<uint
 
       WriteUSB(sendData);
    }
-#endif
 }
 
 bool DudesCab::FromXml(const tinyxml2::XMLElement* element)

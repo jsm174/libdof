@@ -12,6 +12,8 @@ namespace DOF
 
 void DudesCabAutoConfigurator::AutoConfig(Cabinet* cabinet)
 {
+   Log::Write("DudesCab auto-configuration starting");
+
    std::vector<DudesCab::Device*> devices = DudesCab::AllDevices();
 
    for (DudesCab::Device* device : devices)

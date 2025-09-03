@@ -5,6 +5,7 @@
 #include "../../general/MathExtensions.h"
 #include "../../table/TableElementTypeEnum.h"
 #include <algorithm>
+#include <regex>
 
 namespace DOF
 {
@@ -562,9 +563,9 @@ void TableConfigSetting::ParseSettingData(const std::string& settingData)
          }
          integerCnt++;
       }
-      else if (partNr == 0)
+      else if (part.length() > 2 && std::regex_match(part, std::regex("^[A-Za-z_]+$")))
       {
-         m_colorName = part;
+         m_colorName = StringExtensions::ToUpper(part);
       }
       else
       {

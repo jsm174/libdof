@@ -7,12 +7,13 @@ namespace DOF
 
 class Cabinet;
 
-class PinOneAutoConfigurator : public IAutoConfigOutputController
+class PacLed64AutoConfigurator : public IAutoConfigOutputController
 {
 public:
+   PacLed64AutoConfigurator() = default;
+   virtual ~PacLed64AutoConfigurator() = default;
+
    virtual void AutoConfig(Cabinet* cabinet) override;
-   static std::string GetDevice();
-   static std::string TestSerialPort(const char* portName);
 };
 
 }

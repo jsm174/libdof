@@ -37,7 +37,8 @@ msbuild.exe msvc/libusb_dll.vcxproj \
    -p:TargetName=libusb64-1.0 \
    -p:Platform=x64 \
    -p:Configuration=Release
-cp libusb/libusb.h ../../third-party/include/
+mkdir -p ../../third-party/include/libusb-1.0
+cp libusb/libusb.h ../../third-party/include/libusb-1.0
 cp build/v143/x64/Release/libusb_dll/../dll/libusb64-1.0.lib ../../third-party/build-libs/win/x64
 cp build/v143/x64/Release/libusb_dll/../dll/libusb64-1.0.dll ../../third-party/runtime-libs/win/x64
 cd ..

@@ -1,5 +1,6 @@
 #include "RGBAToy.h"
 #include "../../Cabinet.h"
+#include "../../CabinetOutputList.h"
 #include "../../out/IOutput.h"
 #include "../../../Log.h"
 #include "../../../general/StringExtensions.h"
@@ -27,6 +28,12 @@ void RGBAToy::Init(Cabinet* cabinet)
    }
 
    Log::Write(StringExtensions::Build("Initializing RGBAToy: {0}", GetName()));
+   
+   // Resolve outputs from names
+   m_redOutput = cabinet->GetOutputs()->GetByName(m_outputNameRed);
+   m_greenOutput = cabinet->GetOutputs()->GetByName(m_outputNameGreen);
+   m_blueOutput = cabinet->GetOutputs()->GetByName(m_outputNameBlue);
+   
 
    Reset();
 }
@@ -53,14 +60,19 @@ void RGBAToy::UpdateToy()
 
 void RGBAToy::UpdateOutputs()
 {
+   uint8_t red = static_cast<uint8_t>(m_currentColor.GetRed());
+   uint8_t green = static_cast<uint8_t>(m_currentColor.GetGreen());
+   uint8_t blue = static_cast<uint8_t>(m_currentColor.GetBlue());
+   
+
    if (m_redOutput != nullptr)
-      m_redOutput->SetOutput(static_cast<uint8_t>(m_currentColor.GetRed()));
+      m_redOutput->SetOutput(red);
 
    if (m_greenOutput != nullptr)
-      m_greenOutput->SetOutput(static_cast<uint8_t>(m_currentColor.GetGreen()));
+      m_greenOutput->SetOutput(green);
 
    if (m_blueOutput != nullptr)
-      m_blueOutput->SetOutput(static_cast<uint8_t>(m_currentColor.GetBlue()));
+      m_blueOutput->SetOutput(blue);
 }
 
 void RGBAToy::MergeLayers()

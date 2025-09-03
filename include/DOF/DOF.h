@@ -35,8 +35,9 @@
 
 #if !((defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || defined(__ANDROID__))
 #define __HIDAPI__
-#define __LIBSERIALPORT__
+#define __LIBUSB__
 #define __LIBFTDI__
+#define __LIBSERIALPORT__
 #endif
 
 #ifdef min

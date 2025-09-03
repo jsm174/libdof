@@ -13,6 +13,8 @@ namespace DOF
 
 void PinscapeAutoConfigurator::AutoConfig(Cabinet* cabinet)
 {
+   Log::Write("Pinscape auto-configuration starting");
+
    const int unitBias = 50;
 
    std::vector<int> preconfigured;

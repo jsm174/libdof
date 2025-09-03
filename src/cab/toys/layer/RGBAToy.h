@@ -12,7 +12,7 @@ namespace DOF
 
 class IOutput;
 
-class RGBAToy : public ToyBaseUpdatable, public IRGBOutputToy, public ILayerToy<RGBAColor>
+class RGBAToy : public ToyBaseUpdatable, public IRGBOutputToy, public IRGBAToy
 {
 public:
    RGBAToy();

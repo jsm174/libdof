@@ -1,5 +1,38 @@
 # NOTES.md
 
+## USB Device Access Setup
+
+To use libusb devices (PAC Controllers) without sudo privileges:
+
+### Add user to plugdev group:
+```bash
+sudo usermod -a -G plugdev $USER
+```
+
+### Create udev rules for PAC devices:
+```bash
+sudo nano /etc/udev/rules.d/99-pacled64.rules
+```
+
+Add the following content:
+```
+# PacLed64 devices (VID:0xD209, PID:0x1401-0x1404)
+SUBSYSTEM=="usb", ATTRS{idVendor}=="d209", ATTRS{idProduct}=="1401", MODE="0664", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="d209", ATTRS{idProduct}=="1402", MODE="0664", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="d209", ATTRS{idProduct}=="1403", MODE="0664", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="d209", ATTRS{idProduct}=="1404", MODE="0664", GROUP="plugdev"
+
+# PacDrive devices (VID:0xD209, PID:0x1500)
+SUBSYSTEM=="usb", ATTRS{idVendor}=="d209", ATTRS{idProduct}=="1500", MODE="0664", GROUP="plugdev"
+```
+
+### Reload udev rules and logout/login:
+```bash
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+# Then logout and login to apply group membership
+```
+
 ## DirectOutput Framework Configuration & Debugging
 
 ### Official DirectOutput Documentation
