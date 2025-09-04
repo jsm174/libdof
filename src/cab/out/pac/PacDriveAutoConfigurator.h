@@ -7,12 +7,13 @@ namespace DOF
 
 class Cabinet;
 
-class PinOneAutoConfigurator : public IAutoConfigOutputController
+class PacDriveAutoConfigurator : public IAutoConfigOutputController
 {
 public:
+   PacDriveAutoConfigurator() = default;
+   virtual ~PacDriveAutoConfigurator() = default;
+
    virtual void AutoConfig(Cabinet* cabinet) override;
-   static std::string GetDevice();
-   static std::string TestSerialPort(const char* portName);
 };
 
 }

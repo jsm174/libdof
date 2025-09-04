@@ -1,19 +1,6 @@
 //
 // libdof test app
 //
-// The following entries should be in ~/.vpinball/directoutputconfig/directoutputconfig51.ini:
-//
-// ij_l7,0,0,0,0,0,0,0,L88 Blink fu500 fd550
-// tna,0,0,0,0,0,0,0,E140 Blink fu500 fd600
-// gw,0,0,0,0,0,0,0,L68 m550 Blink fu500 fd550
-//
-// The following entries should be in ~/.vpinball/directoutputconfig/directoutputconfig30.ini:
-//
-// ij_l7,S10 Red AT0 AH12 L0/S20 Red AT0 AH12 L1/S24 Red AT0 AH12 L2/S52 Orange AT0 AH12 L3/S53 Red AT0 AH12 L4/W17 Orange AT0 AH12 L5/W51 Red AT0 AH12 L6/W52 Red AT0 AH12 L7/W53 Red AT0 AH12 L8/W75 Yellow AT0 AH12 L9/W76 Yellow AT0 AH12 L10/W77 Yellow AT0 AH12 L11/W78 Yellow AT0 AH12 L12/W88 Yellow AT85  AH15 FU250 FD270 BLINK 500,S9 Red AT0 AH12 L0/S51 Green AT0 AH12 L1/S53 Red AT0 AH12 L2/W16 Orange AT0 AH12 L3/W61 Red AT0 AH12 L4/W62 Red AT0 AH12 L5/W63 Red AT0 AH12 L6
-// tna,E144 Yellow AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E146 Blue AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E147 Red F100 AFDEN5 AFMIN200 AFMAX300/E148 Green AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E149 Purple AL0 AT0 AW100 AH100 AFDEN50 AFMIN500 AFMAX1000/E105 Red 50 AH100 ADU AS300/E107 White 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E107 White 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E116 Red 700 AT85 AH15 AFDEN40 AFMIN100 AFMAX160/E125 White 50 AH100 ADU AS300/E111 Red 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E111 Red 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E112 Purple L13 AT0 AFDEN15 AFMIN10 AFMAX20/E179 Red 60 AW100 AH100 ADD AS300/E150|E151|E152|E153 Yellow 40 AT15 AL0 AH10 AW100 AS400 ADU L25/E150|E151|E152|E153 Yellow 40 AT25 AL0 AH10 AW100 AS400 ADD L25,E144 Yellow AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E146 Blue AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E147 Red F100 AFDEN5 AFMIN200 AFMAX300/E148 Green AL0 AT0 F100 AFDEN5 AFMIN200 AFMAX300/E149 Purple AL0 AT0 AW100 AH100 AFDEN50 AFMIN500 AFMAX1000/E103 Red 50 AH100 ADU AS300/E116 Red 700 AT85 AH15 AFDEN40 AFMIN100 AFMAX160/E108 White 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E108 White 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E110 Red 40 AT40 AL0 AH10 AW100 AS400 ADU L25/E110 Red 40 AT50 AL0 AH10 AW100 AS400 ADD L25/E112 Purple L13 AT0 AFDEN15 AFMIN10 AFMAX20/E179 Red 60 AW100 AH100 ADD AS300/E150|E151|E152|E153 Yellow 40 AT15 AL0 AH10 AW100 AS400 ADU L25/E150|E151|E152|E153 Yellow 40 AT25 AL0 AH10 AW100 AS400 ADD L25
-// gw,S24 Yellow 50 AH100 ADU AS300/(W78=1 and (S46=1 or S48=1)) Red 500 W200 AT0 AH50 ADD AS500 L101/(W78=1 and (S46=1 or S48=1)) Black 500 W550 AT0 AH50 ADU AS500 L102/W78 Red AFDEN50 AFMIN60 AFMAX120 AT80 AH90/S16 Red 700 AT85 AH15 AFDEN40 AFMIN100 AFMAX160/W28 Red 100 AT80 AH20 ADD AS300/W27 Green 100 AT80 AH20 ADD AS300/W44|W45|W46 Orange_Red 40 AT25 AL0 AH25 AW100 AS400 ADU L25/W44|W45|W46 Orange_Red 40 AT50 AL0 AH25 AW100 AS400 ADD L25/W81 Red F150 AH30 AT0 ADD AS500 100 W450/S12 Red AT50 AH50 ADU 100 AS400/S12 Yellow AT0 AH50 ADD 100 AS400 W600 FD220/W36 Red AT20 AH5 150/W41 Yellow AT23 AH5 150/W51 Green AT26 AH5 150/W65 Blue AT0 AH50 ADD AS250 100/W65 Red AT0 AH50 ADD AS250 100 W90/W17 Green f200 AL0 AT0 AW100 AH15 L2
-// goldcue,L73 Lime L0 AL0 AW100 AH2 AT87 SHPRound4,L74 Lime L0 AL0 AW100 AH2 AT89 SHPRound4,L75 Lime L0 AL0 AW100 AH2 AT91 SHPRound4,L76 Lime L0 AL0 AW100 AH2 AT93 SHPRound4,L77 Lime L0 AL0 AW100 AH2 AT95 SHPRound4,L78 Lime L0 AL0 AW100 AH2 AT97 SHPRound4,S17 Sky_blue L0 AL0 AW100 AH10 AT2 SHPRound6,S3 Red L0 AL0 AW16 AH16 AT0 SHPLetterLargeA
-//
 
 #include "DOF/DOF.h"
 #include <cstdlib>
@@ -43,8 +30,8 @@ struct TestRom
    std::string description;
 };
 
-std::vector<TestRom> testRoms
-   = { { "ij_l7", "Indiana Jones L7" }, { "tna", "Total Nuclear Annihilation" }, { "gw", "The Getaway High Speed II" }, { "goldcue", "Gold Cue" }, { "bourne", "Bourne Identity" } };
+std::vector<TestRom> testRoms = { { "ij_l7", "Indiana Jones L7" }, { "tna", "Total Nuclear Annihilation" }, { "gw", "The Getaway High Speed II" }, { "goldcue", "Gold Cue" },
+   { "bourne", "Bourne Identity" }, { "twenty4", "24" } };
 
 void LIBDOFCALLBACK LogCallback(DOF_LogLevel logLevel, const char* format, va_list args)
 {
@@ -265,6 +252,51 @@ void RunBourneTests(DOF::DOF* pDof)
    pDof->Finish();
 }
 
+void RunTwenty4Tests(DOF::DOF* pDof)
+{
+   pDof->Init("", "twenty4");
+
+   Log("========================================");
+   Log("Testing ROM: twenty4");
+   Log("========================================");
+
+   std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_START_DELAY));
+
+   TriggerOutputOnOff(pDof, 'S', 9);
+   TriggerOutputOnOff(pDof, 'S', 19);
+   TriggerOutputOnOff(pDof, 'S', 31);
+   TriggerOutputOnOff(pDof, 'S', 32);
+   TriggerOutputOnOff(pDof, 'W', 3);
+   TriggerOutputOnOff(pDof, 'W', 10);
+   TriggerOutputOnOff(pDof, 'W', 46);
+
+   TriggerOutputOnOff(pDof, 'S', 17);
+   TriggerOutputOnOff(pDof, 'S', 26);
+
+   TriggerOutputOnOff(pDof, 'S', 11);
+   TriggerOutputOnOff(pDof, 'W', 43);
+   TriggerOutputOnOff(pDof, 'W', 55);
+
+   TriggerOutputOnOff(pDof, 'S', 18);
+   TriggerOutputOnOff(pDof, 'S', 26);
+   TriggerOutputOnOff(pDof, 'W', 62);
+   TriggerOutputOnOff(pDof, 'W', 56);
+
+   TriggerOutputOnOff(pDof, 'S', 10);
+   TriggerOutputOnOff(pDof, 'S', 20);
+   TriggerOutputOnOff(pDof, 'S', 27);
+   TriggerOutputOnOff(pDof, 'S', 31);
+   TriggerOutputOnOff(pDof, 'W', 54);
+   TriggerOutputOnOff(pDof, 'W', 57);
+
+   TriggerOutputOnOff(pDof, 'S', 8, 1500);
+   TriggerOutputOnOff(pDof, 'W', 62, 1500);
+
+   TriggerOutputOnOff(pDof, 'S', 24, 200, 800);
+
+   pDof->Finish();
+}
+
 std::string GetDefaultBasePath()
 {
 #ifdef _WIN32
@@ -366,6 +398,8 @@ int main(int argc, const char* argv[])
                RunGoldcueTests(pDof);
             else if (testRom.name == "bourne")
                RunBourneTests(pDof);
+            else if (testRom.name == "twenty4")
+               RunTwenty4Tests(pDof);
             break;
          }
       }
@@ -392,6 +426,7 @@ int main(int argc, const char* argv[])
       RunGWTests(pDof);
       RunGoldcueTests(pDof);
       RunBourneTests(pDof);
+      RunTwenty4Tests(pDof);
    }
 
    Log("Shutting down...");

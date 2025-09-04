@@ -1,5 +1,38 @@
 # NOTES.md
 
+## USB Device Access Setup
+
+To use libusb devices (PAC Controllers) without sudo privileges:
+
+### Add user to plugdev group:
+```bash
+sudo usermod -a -G plugdev $USER
+```
+
+### Create udev rules for PAC devices:
+```bash
+sudo nano /etc/udev/rules.d/99-pacled64.rules
+```
+
+Add the following content:
+```
+# PacLed64 devices (VID:0xD209, PID:0x1401-0x1404)
+SUBSYSTEM=="usb", ATTRS{idVendor}=="d209", ATTRS{idProduct}=="1401", MODE="0664", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="d209", ATTRS{idProduct}=="1402", MODE="0664", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="d209", ATTRS{idProduct}=="1403", MODE="0664", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="d209", ATTRS{idProduct}=="1404", MODE="0664", GROUP="plugdev"
+
+# PacDrive devices (VID:0xD209, PID:0x1500)
+SUBSYSTEM=="usb", ATTRS{idVendor}=="d209", ATTRS{idProduct}=="1500", MODE="0664", GROUP="plugdev"
+```
+
+### Reload udev rules and logout/login:
+```bash
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+# Then logout and login to apply group membership
+```
+
 ## DirectOutput Framework Configuration & Debugging
 
 ### Official DirectOutput Documentation
@@ -62,3 +95,44 @@ sleep 2
 leaks $PID
 kill $PID
 ```
+
+## Debug Iteration on Batocera
+
+For testing libdof on Batocera (ARM-based retro gaming distribution), use this cross-compilation and deployment workflow:
+
+### 1. Build on Ubuntu Host
+```bash
+# Cross-compile for Linux x64 (Batocera target architecture)
+cmake -DPLATFORM=linux -DARCH=x64 -B build
+cmake --build build -- -j10
+```
+
+### 2. Deploy to Batocera Box
+```bash
+# Sync built libraries and test executable to Batocera
+rsync -avz --delete \
+  --exclude='libdof.a' \
+  --include='lib*' \
+  --include='dof_test' \
+  --exclude='*' \
+  build/ root@192.168.1.160:/userdata/dof
+```
+
+### 3. Test on Batocera Target
+```bash
+# SSH into Batocera box and run tests
+ssh root@192.168.1.160
+cd /userdata/dof
+
+# Test with twenty4 ROM configuration
+./dof_test twenty4 --base-path /userdata/system/configs/vpinball
+
+# Deploy library to VPinballX installation
+cp libdof.so.0.3.0 ~/configs/vpinball/VPinballX_GL-10.8.0-2070-c87ffe5-Release-linux-x64/
+```
+
+### Notes:
+- **Target IP**: `192.168.1.160` - Update to match your Batocera box IP
+- **VPinball Path**: Adjust version string (`10.8.0-2070-c87ffe5`) to match your VPinballX build
+- **Config Path**: `/userdata/system/configs/vpinball` contains DOF configuration files
+- **Architecture**: Batocera typically runs x64 architecture on PC hardware

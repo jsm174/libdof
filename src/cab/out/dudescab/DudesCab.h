@@ -6,9 +6,7 @@
 #include <mutex>
 #include <chrono>
 
-#ifdef __HIDAPI__
 #include <hidapi/hidapi.h>
-#endif
 
 namespace DOF
 {
@@ -79,11 +77,7 @@ public:
       int m_numOutputs;
       int m_maxExtensions;
 
-#ifdef __HIDAPI__
       hid_device* m_hidDevice;
-#else
-      void* m_hidDevice;
-#endif
 
       std::vector<uint8_t> ReadUSB();
       bool WriteUSB(const std::vector<uint8_t>& data);

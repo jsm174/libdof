@@ -45,6 +45,11 @@ void DurationEffect::Finish()
 {
    try
    {
+      if (m_table && m_table->GetPinball() && m_table->GetPinball()->GetAlarms())
+      {
+         // Note: UnregisterAlarm with lambdas doesn't work reliably, but this matches C# behavior
+         // The alarm will naturally expire or be cleaned up by AlarmHandler
+      }
    }
    catch (...)
    {

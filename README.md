@@ -22,6 +22,7 @@ This library is currently used by [Visual Pinball Standalone](https://github.com
 - **[Pinscape Pico](https://github.com/mjrgh/PinscapePico)** - RP2040-based version with enhanced features  
 - **[TeensyStripController](https://github.com/DirectOutput/TeensyStripController)** - Teensy based WS2812 LED strip controller
 - **[WemosD1MPStripController](https://github.com/aetios50/PincabLedStrip)** - Wemos D1 Mini Pro based WS2812 LED strip controller
+- **[PacLED64](https://www.ultimarc.com/output/led-and-output-controllers/pacled64/)** - Ultimarc's 64-output LED controller with PWM support
 
 ### **Implemented & Ready To Test**
 - **LedWiz** - Classic 32-output controller
@@ -31,9 +32,9 @@ This library is currently used by [Visual Pinball Standalone](https://github.com
 - **PinOne** - Cleveland Software Design controller with 63 outputs
 - **FTDI Controllers** - FT245R bitbang controllers  
 - **WS2811/WS2812 LED Strips** - Addressable LED strip support
+- **PAC Controllers** (PacDrive, PacUIO) - Cross-platform libusb implementation
 
 ### **Not Implemented**
-- **PAC Controllers** (PacDrive, PacLed64, PacUIO) - *Windows DLL dependencies*
 - **SSF Controllers** - *Audio-based feedback systems*  
 - **Philips Hue** - *Smart lighting integration*
 
@@ -153,6 +154,10 @@ platforms/android/arm64-v8a/external.sh
 cmake -DPLATFORM=android -DARCH=arm64-v8a -DCMAKE_BUILD_TYPE=Release -B build
 cmake --build build
 ```
+
+## Acknowledgments:
+
+PAC controller USB communication protocols were figured out with significant help from the [Ultimarc-linux](https://github.com/katie-snow/Ultimarc-linux) repository by @katie-snow. This project provided essential insights into the libusb control transfer implementation for PacLed64, PacDrive, and PacUIO devices.
 
 ## Configuration:
 

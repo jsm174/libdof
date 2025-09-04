@@ -12,12 +12,15 @@
 #include <algorithm>
 #include <thread>
 #include <chrono>
+#include <fstream>
 
 namespace DOF
 {
 
 void PinOneAutoConfigurator::AutoConfig(Cabinet* cabinet)
 {
+   Log::Write("PinOne auto-configuration starting");
+
    const int UnitBias = 10;
 
    std::vector<std::string> preconfigured;
@@ -74,70 +77,119 @@ void PinOneAutoConfigurator::AutoConfig(Cabinet* cabinet)
    }
 }
 
+std::string PinOneAutoConfigurator::TestSerialPort(const char* portName)
+{
+   struct sp_port* port = nullptr;
+
+   try
+   {
+      if (sp_get_port_by_name(portName, &port) != SP_OK)
+         return "";
+
+      // Check if port file actually exists before trying to open it
+      std::string portPath(portName);
+      std::ifstream portFile(portPath);
+      if (!portFile.good())
+      {
+         sp_free_port(port);
+         return "";
+      }
+      portFile.close();
+
+      if (sp_open(port, SP_MODE_READ_WRITE) != SP_OK)
+      {
+         sp_free_port(port);
+         return "";
+      }
+
+      // Set very short timeouts to prevent hanging
+      sp_set_baudrate(port, 2000000);
+      sp_set_bits(port, 8);
+      sp_set_parity(port, SP_PARITY_NONE);
+      sp_set_stopbits(port, 1);
+      sp_set_dtr(port, SP_DTR_ON);
+      sp_set_rts(port, SP_RTS_OFF);
+      sp_set_cts(port, SP_CTS_IGNORE);
+      sp_set_dsr(port, SP_DSR_IGNORE);
+      sp_set_xon_xoff(port, SP_XONXOFF_DISABLED);
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+      sp_flush(port, SP_BUF_BOTH);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+      uint8_t command[] = { 0, 251, 0, 0, 0, 0, 0, 0, 0 };
+      sp_blocking_write(port, command, 9, 100);
+
+      char buffer[256];
+      int bytesRead = sp_blocking_read(port, buffer, sizeof(buffer) - 1, 100);
+
+      if (bytesRead > 0)
+      {
+         buffer[bytesRead] = '\0';
+         std::string result(buffer);
+         if (result == "DEBUG,CSD Board Connected")
+         {
+            sp_close(port);
+            sp_free_port(port);
+            return std::string(portName);
+         }
+      }
+
+      // Force flush and set non-blocking mode before closing to prevent hang
+      sp_flush(port, SP_BUF_BOTH);
+      sp_set_rts(port, SP_RTS_OFF);
+      sp_set_dtr(port, SP_DTR_OFF);
+
+      sp_close(port);
+      sp_free_port(port);
+   }
+   catch (...)
+   {
+      if (port)
+      {
+         try
+         {
+            sp_flush(port, SP_BUF_BOTH);
+            sp_set_rts(port, SP_RTS_OFF);
+            sp_set_dtr(port, SP_DTR_OFF);
+         }
+         catch (...)
+         { /* Ignore errors in cleanup */
+         }
+
+         sp_close(port);
+         sp_free_port(port);
+      }
+   }
+
+   // Small delay to ensure port cleanup completes
+   std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+   return "";
+}
+
 std::string PinOneAutoConfigurator::GetDevice()
 {
    struct sp_port** portList;
    if (sp_list_ports(&portList) != SP_OK)
       return "";
 
+   int portCount = 0;
+   while (portList[portCount] != nullptr)
+      portCount++;
+
    for (int i = 0; portList[i] != nullptr; i++)
    {
-      struct sp_port* port = nullptr;
       char* portName = sp_get_port_name(portList[i]);
-
       if (!portName)
          continue;
 
-      try
+      // Test each port synchronously with timeouts matching C# version (100ms)
+      std::string result = TestSerialPort(portName);
+      if (!result.empty())
       {
-         if (sp_get_port_by_name(portName, &port) != SP_OK)
-            continue;
-
-         if (sp_open(port, SP_MODE_READ_WRITE) != SP_OK)
-         {
-            sp_free_port(port);
-            continue;
-         }
-
-         sp_set_baudrate(port, 2000000);
-         sp_set_bits(port, 8);
-         sp_set_parity(port, SP_PARITY_NONE);
-         sp_set_stopbits(port, 1);
-         sp_set_dtr(port, SP_DTR_ON);
-
-         std::this_thread::sleep_for(std::chrono::milliseconds(50));
-         sp_flush(port, SP_BUF_BOTH);
-         std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-         uint8_t command[] = { 0, 251, 0, 0, 0, 0, 0, 0, 0 };
-         sp_blocking_write(port, command, 9, 100);
-
-         char buffer[256];
-         int bytesRead = sp_blocking_read(port, buffer, sizeof(buffer) - 1, 100);
-
-         if (bytesRead > 0)
-         {
-            buffer[bytesRead] = '\0';
-            std::string result(buffer);
-            if (result == "DEBUG,CSD Board Connected")
-            {
-               sp_close(port);
-               sp_free_port(port);
-               sp_free_port_list(portList);
-               return std::string(portName);
-            }
-         }
-
-         sp_close(port);
-         sp_free_port(port);
-      }
-      catch (...)
-      {
-         if (port)
-         {
-            sp_close(port);
-            sp_free_port(port);
-         }
+         sp_free_port_list(portList);
+         return result;
       }
    }
 

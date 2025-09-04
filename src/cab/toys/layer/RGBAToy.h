@@ -12,7 +12,7 @@ namespace DOF
 
 class IOutput;
 
-class RGBAToy : public ToyBaseUpdatable, public IRGBOutputToy, public ILayerToy<RGBAColor>
+class RGBAToy : public ToyBaseUpdatable, public IRGBOutputToy, public IRGBAToy
 {
 public:
    RGBAToy();
@@ -22,7 +22,7 @@ public:
    virtual void Reset() override;
    virtual void Finish() override;
    virtual void UpdateToy() override;
-   virtual int GetOutputCount() const { return 3; }
+   virtual int GetOutputCount() const override { return 3; }
    virtual void UpdateOutputs() override;
    virtual LayerDictionary<RGBAColor>& GetLayers() override { return m_layers; }
    virtual const LayerDictionary<RGBAColor>& GetLayers() const override { return m_layers; }

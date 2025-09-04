@@ -77,9 +77,7 @@ Configurator::~Configurator() { }
 
 void Configurator::Setup(LedControlConfigList* ledControlConfigList, Table* table, Cabinet* cabinet, const std::string& romName)
 {
-   Log::Write(StringExtensions::Build("Configurator::Setup called for ROM '{0}'", romName));
    std::unordered_map<int, TableConfig*> tableConfigDict = ledControlConfigList->GetTableConfigDictionary(romName);
-   Log::Write(StringExtensions::Build("Found {0} table configs for ROM '{1}'", std::to_string(tableConfigDict.size()), romName));
 
    std::string iniFilePath = "";
    if (ledControlConfigList->size() > 0)
@@ -287,7 +285,9 @@ std::unordered_map<int, std::unordered_map<int, IToy*>> Configurator::SetupCabin
             }
 
             if (targetToy != nullptr)
+            {
                toyAssignments[ledWizNr][tcc->GetNumber()] = targetToy;
+            }
          }
       }
    }
@@ -300,21 +300,16 @@ void Configurator::SetupTable(
    for (const auto& kv : tableConfigDict)
    {
       int ledWizNr = kv.first;
-      Log::Write(StringExtensions::Build("Processing ledWizNr {0}", std::to_string(ledWizNr)));
       if (toyAssignments.find(ledWizNr) != toyAssignments.end())
       {
          TableConfig* tc = kv.second;
-         Log::Write(StringExtensions::Build("Found TableConfig with {0} columns", std::to_string(tc->GetColumns()->size())));
 
          for (TableConfigColumn* tcc : *tc->GetColumns())
          {
-            Log::Write(StringExtensions::Build("Processing column {0}", std::to_string(tcc->GetNumber())));
-            Log::Write(StringExtensions::Build("Column {0} has {1} settings", std::to_string(tcc->GetNumber()), std::to_string(tcc->size())));
 
             if (toyAssignments.at(ledWizNr).find(tcc->GetNumber()) != toyAssignments.at(ledWizNr).end())
             {
                IToy* toy = toyAssignments.at(ledWizNr).at(tcc->GetNumber());
-               Log::Write(StringExtensions::Build("Found toy for column {0}: {1}", std::to_string(tcc->GetNumber()), toy->GetName()));
 
                int settingNumber = 0;
                for (TableConfigSetting* tcs : *tcc)
@@ -993,11 +988,9 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
    if (tableElements == nullptr)
       return;
 
-   Log::Write(StringExtensions::Build("AssignEffectToTableElements: Processing {0} descriptors for effect '{1}'", std::to_string(tableElementDescriptors.size()), effect->GetName()));
 
    for (const std::string& descriptor : tableElementDescriptors)
    {
-      Log::Write(StringExtensions::Build("Processing table element descriptor: '{0}'", descriptor));
       if (descriptor.empty())
          continue;
 
@@ -1113,7 +1106,6 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
                   int number = std::stoi(numberStr);
 
                   TableElementData elementData(elementType, number, 0);
-                  Log::Write(StringExtensions::Build("Configuration: Creating table element type={0}, number={1}", std::string(1, (char)elementType), std::to_string(number)));
                   tableElements->UpdateState(&elementData);
 
                   for (TableElement* te : *tableElements)
@@ -1138,8 +1130,6 @@ void Configurator::AssignEffectToTableElements(Table* table, const std::vector<s
          AssignedEffectList* assignedEffects = tableElement->GetAssignedEffects();
          if (assignedEffects != nullptr)
          {
-            Log::Write(StringExtensions::Build("Configuration: Adding effect {0} to table element type={1}, number={2}", effect->GetName(),
-               std::string(1, (char)tableElement->GetTableElementType()), std::to_string(tableElement->GetNumber())));
             assignedEffects->Add(effect->GetName());
          }
       }

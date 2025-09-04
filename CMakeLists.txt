@@ -257,6 +257,13 @@ if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "li
       src/cab/out/ftdichip/FTDI.cpp
       src/cab/out/lw/LedWiz.cpp
       src/cab/out/lw/LedWizAutoConfigurator.cpp
+      src/cab/out/pac/PacLed64.cpp
+      src/cab/out/pac/PacLed64AutoConfigurator.cpp
+      src/cab/out/pac/PacDrive.cpp
+      src/cab/out/pac/PacDriveAutoConfigurator.cpp
+      src/cab/out/pac/PacUIO.cpp
+      src/cab/out/pac/PacUIOAutoConfigurator.cpp
+      src/cab/out/pac/PacDriveSingleton.cpp
       src/cab/out/pinone/NamedPipeServer.cpp
       src/cab/out/pinone/PinOne.cpp
       src/cab/out/pinone/PinOneAutoConfigurator.cpp

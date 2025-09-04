@@ -1,5 +1,6 @@
 #include "RGBAToy.h"
 #include "../../Cabinet.h"
+#include "../../CabinetOutputList.h"
 #include "../../out/IOutput.h"
 #include "../../../Log.h"
 #include "../../../general/StringExtensions.h"
@@ -27,6 +28,11 @@ void RGBAToy::Init(Cabinet* cabinet)
    }
 
    Log::Write(StringExtensions::Build("Initializing RGBAToy: {0}", GetName()));
+
+   m_redOutput = cabinet->GetOutputs()->GetByName(m_outputNameRed);
+   m_greenOutput = cabinet->GetOutputs()->GetByName(m_outputNameGreen);
+   m_blueOutput = cabinet->GetOutputs()->GetByName(m_outputNameBlue);
+
 
    Reset();
 }
