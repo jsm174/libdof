@@ -3,9 +3,9 @@
 ## Project Overview
 libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 correspondence. Cross-platform library for Direct Output Framework tasks, used by Visual Pinball Standalone.
 
-**Current Status**: ~99% complete - Core architecture, effects system, device management, all controller types, shape effects with bitmap rendering at 100% 1:1 correspondence.
+**Current Status**: ~99.5% complete - Core architecture, effects system, device management, all controller types, shape effects with bitmap rendering at 100% 1:1 correspondence.
 
-**Recent Major Implementation**: Matrix toy effects configuration completely fixed to achieve perfect 1:1 C# correspondence - corrected conditional logic for RGBAMatrixColorEffect creation, fixed case-insensitive color lookup, resolved E142/E145 effect creation issues, and cross-platform image loading via stb_image.h for bitmap shapes system.
+**Recent Major Implementation**: Complete PAC controllers libusb migration - PacLed64, PacDrive, PacUIO migrated from HIDAPI to libusb via PacDriveSingleton for unified USB device management. Fixed PacLed64 individual LED protocol with 0-based numbering to match Ultimarc specification. All PAC controllers now use libusb control transfers with proper device permissions. Serial port handling improved with Linux-specific fixes for USB CDC device cleanup to prevent hanging on close operations.
 
 ## Core Coding Principles
 
@@ -68,7 +68,7 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **Memory Safety**: All heap corruption issues resolved via proper value semantics
 - **Effects System**: All effect types with correct chain ordering and nested blink support
 - **Toys System**: All toy types with correct interface implementations
-- **Output Controllers**: LedWiz, Pinscape, PinscapePico, FTDI, ComPort, DudesCab, DMX, PinOne, LED Strips
+- **Output Controllers**: LedWiz, Pinscape, PinscapePico, FTDI, ComPort, DudesCab, DMX, PinOne, LED Strips, PAC Controllers (PacLed64, PacDrive, PacUIO)
 - **Matrix Effects**: Flicker, Plasma, and Shift effects with exact timing correspondence
 - **Bitmap Effects System**: Complete bitmap loading, FastImage.Frames, DirectOutputShapes.png support
 - **Shape Effects System**: SHP code parsing, shape resolution, RGBAMatrixShapeEffect implementation
@@ -76,8 +76,7 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **Configuration**: LedControl loader, GlobalConfig, ScheduledSettings system with corrected matrix effect logic
 - **Cross-Platform**: Windows/Linux/macOS builds with manual dependency compilation
 
-### ❌ MISSING COMPONENTS (1% remaining)
-- **PAC Controllers**: PacDrive, PacLed64, PacUIO
+### ❌ MISSING COMPONENTS (0.5% remaining)
 - **SSF Controllers**: 7 variants with feedback systems  
 - **Philips Hue Controllers**: Smart lighting integration
 - **Extensions Utilities**: 11 utility classes
@@ -86,7 +85,8 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 
 ### Hardware Requirements
 - **PinscapePico**: Requires sudo access for HID enumeration
-- **Unit Bias**: LedWiz(0), Pinscape(50), PinscapePico(119), DudesCab(90-94), PinOne(1-16)
+- **PAC Controllers**: Use libusb with udev rules for device access without sudo
+- **Unit Bias**: LedWiz(0), Pinscape(50), PinscapePico(119), DudesCab(90-94), PinOne(1-16), PAC(19-27)
 
 ### Windows API Conflicts
 - Use `SendPipeMessage()` not `SendMessage()` 
@@ -105,6 +105,18 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **DudesCab**: hidapi HID multi-part messages
 - **DMX**: UDP ArtNet broadcast port 6454
 - **PinOne**: Named pipes with Base64 encoding over text
+- **PAC Controllers**: libusb control transfers (PacLed64: individual LED intensity with 0-based numbering, PacDrive: 16-bit LED bitmask, PacUIO: via PacDriveSingleton)
+
+### Linux Serial Port Handling (Critical)
+- **USB CDC Devices**: Can hang on `sp_close()` - requires RTS/DTR reset before closing
+- **Device Existence Check**: Always verify device files exist before opening (prevents stale libserialport cache issues)
+- **Cleanup Sequence**: `sp_flush(SP_BUF_BOTH)` → `sp_set_rts(SP_RTS_OFF)` → `sp_set_dtr(SP_DTR_OFF)` → `sp_close()`
+- **Timeout Values**: Must match C# exactly (PinOne: 100ms, PinOneCommunication: 100ms server connection)
+
+### Auto-Configuration Logging Philosophy
+- **C# Pattern**: Auto-configurators are mostly silent - only log when devices are actually found/configured
+- **No Scan Messages**: C# never logs "device scan found X devices" - remove all such logging
+- **Debug vs Production**: Never leave debug logging in production code - maintain 1:1 C# correspondence for all output
 
 ### Bitmap Shapes Architecture
 - **Image Loading**: Cross-platform loading via stb_image.h supporting PNG, GIF, BMP formats
@@ -117,3 +129,4 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 ## References
 - **C# Source**: `/Users/jmillard/DirectOutput`
 - **Documentation**: See NOTES.md for DirectOutput configuration parsing details
+- **PAC Protocol Reference**: [Ultimarc-linux](https://github.com/katie-snow/Ultimarc-linux) - Essential for libusb PAC controller implementation

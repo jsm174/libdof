@@ -1,7 +1,7 @@
 #pragma once
 
 #define LIBDOF_VERSION_MAJOR 0 // X Digits
-#define LIBDOF_VERSION_MINOR 3 // Max 2 Digits
+#define LIBDOF_VERSION_MINOR 4 // Max 2 Digits
 #define LIBDOF_VERSION_PATCH 0 // Max 2 Digits
 
 #define _LIBDOF_STR(x) #x
@@ -35,8 +35,9 @@
 
 #if !((defined(__APPLE__) && ((defined(TARGET_OS_IOS) && TARGET_OS_IOS) || (defined(TARGET_OS_TV) && TARGET_OS_TV))) || defined(__ANDROID__))
 #define __HIDAPI__
-#define __LIBSERIALPORT__
+#define __LIBUSB__
 #define __LIBFTDI__
+#define __LIBSERIALPORT__
 #endif
 
 #ifdef min

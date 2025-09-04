@@ -203,6 +203,8 @@ void Pinscape::FindDevices()
    }
 
    hid_free_enumeration(pDevices);
+
+   Log::Write(StringExtensions::Build("Pinscape device scan found {0} devices", std::to_string(s_devices.size())));
 }
 
 void Pinscape::ClearDevices()

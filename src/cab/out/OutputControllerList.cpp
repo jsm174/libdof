@@ -11,15 +11,21 @@
 #include "dudescab/DudesCab.h"
 #endif
 
+#ifdef __LIBUSB__
+#include "pac/PacLed64.h"
+#include "pac/PacDrive.h"
+#include "pac/PacUIO.h"
+#endif
+
+#ifdef __LIBFTDI__
+#include "ftdichip/FT245RBitbangController.h"
+#endif
+
 #ifdef __LIBSERIALPORT__
 #include "adressableledstrip/TeensyStripController.h"
 #include "adressableledstrip/WemosD1StripController.h"
 #include "comport/PinControl.h"
 #include "pinone/PinOne.h"
-#endif
-
-#ifdef __LIBFTDI__
-#include "ftdichip/FT245RBitbangController.h"
 #endif
 
 #include "dmx/ArtNet.h"
@@ -110,6 +116,18 @@ IOutputController* OutputControllerList::CreateController(const std::string& typ
    else if (typeName == "DudesCab")
       return new DudesCab();
 #endif
+#ifdef __LIBUSB__
+   else if (typeName == "PacLed64")
+      return new PacLed64();
+   else if (typeName == "PacDrive")
+      return new PacDrive();
+   else if (typeName == "PacUIO")
+      return new PacUIO();
+#endif
+#ifdef __LIBFTDI__
+   else if (typeName == "FT245RBitbangController")
+      return new FT245RBitbangController();
+#endif
 #ifdef __LIBSERIALPORT__
    else if (typeName == "TeensyStripController")
       return new TeensyStripController();
@@ -119,10 +137,6 @@ IOutputController* OutputControllerList::CreateController(const std::string& typ
       return new PinControl();
    else if (typeName == "PinOne")
       return new PinOne();
-#endif
-#ifdef __LIBFTDI__
-   else if (typeName == "FT245RBitbangController")
-      return new FT245RBitbangController();
 #endif
    else if (typeName == "ArtNet")
       return new ArtNet();

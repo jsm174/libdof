@@ -410,8 +410,6 @@ void PinscapePico::FindDevices()
    }
 
    hid_free_enumeration(devs);
-
-   Log::Write(StringExtensions::Build("PinscapePico device scan found {0} devices", { std::to_string(s_devices.size()) }));
 }
 
 std::string PinscapePico::GetDeviceProductName(hid_device_info* dev)

@@ -22,21 +22,12 @@ void MinDurationEffect::Trigger(TableElementData* tableElementData)
    {
       if (tableElementData->m_value != 0)
       {
-         if (!m_active)
+         if (!m_active || m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
          {
             m_durationStart = std::chrono::steady_clock::now();
-            TriggerTargetEffect(tableElementData);
             m_durationTimerTableElementData = *tableElementData;
-            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_minDurationMs, [this]() { this->MinDurationReached(&m_durationTimerTableElementData); }, true);
+            TriggerTargetEffect(tableElementData);
             m_active = true;
-            m_untriggered = false;
-         }
-         else if (m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
-         {
-            m_durationStart = std::chrono::steady_clock::now();
-            TriggerTargetEffect(tableElementData);
-            m_durationTimerTableElementData = *tableElementData;
-            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_minDurationMs, [this]() { this->MinDurationReached(&m_durationTimerTableElementData); }, true);
          }
       }
       else
@@ -53,7 +44,6 @@ void MinDurationEffect::Trigger(TableElementData* tableElementData)
             else
             {
                int remainingMs = m_minDurationMs - static_cast<int>(elapsed);
-               m_untriggered = true;
                m_table->GetPinball()->GetAlarms()->RegisterAlarm(remainingMs, [this]() { this->MinDurationEnd(); }, true);
             }
          }
@@ -61,13 +51,6 @@ void MinDurationEffect::Trigger(TableElementData* tableElementData)
    }
 }
 
-void MinDurationEffect::MinDurationReached(TableElementData* tableElementData)
-{
-   if (m_untriggered)
-   {
-      MinDurationEnd();
-   }
-}
 
 void MinDurationEffect::MinDurationEnd()
 {
@@ -86,6 +69,11 @@ void MinDurationEffect::Finish()
 {
    try
    {
+      if (m_table && m_table->GetPinball() && m_table->GetPinball()->GetAlarms())
+      {
+         // Note: UnregisterAlarm with lambdas doesn't work reliably, but this matches C# behavior
+         // The alarm will naturally expire or be cleaned up by AlarmHandler
+      }
    }
    catch (...)
    {

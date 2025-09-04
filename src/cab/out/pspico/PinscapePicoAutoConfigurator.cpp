@@ -27,7 +27,6 @@ void PinscapePicoAutoConfigurator::AutoConfig(Cabinet* cabinet)
 
    if (allDevices.empty())
    {
-      Log::Write("No PinscapePico devices found");
       return;
    }
 

@@ -26,6 +26,12 @@
 #include "out/dudescab/DudesCabAutoConfigurator.h"
 #endif
 
+#ifdef __LIBUSB__
+#include "out/pac/PacLed64AutoConfigurator.h"
+#include "out/pac/PacDriveAutoConfigurator.h"
+#include "out/pac/PacUIOAutoConfigurator.h"
+#endif
+
 #ifdef __LIBFTDI__
 #include "out/ftdichip/FT245RBitbangControllerAutoConfigurator.h"
 #endif
@@ -93,6 +99,12 @@ void Cabinet::AutoConfig()
    items.push_back(new PinscapePicoAutoConfigurator());
    items.push_back(new LedWizAutoConfigurator());
    items.push_back(new DudesCabAutoConfigurator());
+#endif
+
+#ifdef __LIBUSB__
+   items.push_back(new PacLed64AutoConfigurator());
+   items.push_back(new PacDriveAutoConfigurator());
+   items.push_back(new PacUIOAutoConfigurator());
 #endif
 
 #ifdef __LIBFTDI__

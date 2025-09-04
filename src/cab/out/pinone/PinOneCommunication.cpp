@@ -13,6 +13,8 @@
 #include <sys/un.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/select.h>
+#include <errno.h>
 #endif
 
 namespace DOF
@@ -63,6 +65,10 @@ bool PinOneCommunication::ConnectToServer()
       if (sockfd < 0)
          return false;
 
+      // Set socket to non-blocking for timeout
+      int flags = fcntl(sockfd, F_GETFL, 0);
+      fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
       struct sockaddr_un addr;
       memset(&addr, 0, sizeof(addr));
       addr.sun_family = AF_UNIX;
@@ -70,9 +76,34 @@ bool PinOneCommunication::ConnectToServer()
 
       if (connect(sockfd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
       {
-         close(sockfd);
-         return false;
+         if (errno == EINPROGRESS)
+         {
+            // Wait for connection with timeout
+            fd_set writefds;
+            FD_ZERO(&writefds);
+            FD_SET(sockfd, &writefds);
+
+            struct timeval timeout;
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 100000; // 100ms timeout to match C# version
+
+            int result = select(sockfd + 1, NULL, &writefds, NULL, &timeout);
+            if (result <= 0)
+            {
+               close(sockfd);
+               return false;
+            }
+         }
+         else
+         {
+            // Connection failed immediately (socket doesn't exist)
+            close(sockfd);
+            return false;
+         }
       }
+
+      // Restore blocking mode
+      fcntl(sockfd, F_SETFL, flags);
 
       m_pipeClient = reinterpret_cast<void*>(static_cast<intptr_t>(sockfd));
 #endif

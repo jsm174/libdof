@@ -14,12 +14,16 @@ namespace DOF
 
 void FT245RBitbangControllerAutoConfigurator::AutoConfig(Cabinet* cabinet)
 {
+   Log::Write("FTDI auto-configuration starting");
+
    FTDI* dummyFTDI = new FTDI();
    uint32_t amountDevices = 0;
    std::vector<DeviceInfo> deviceList;
 
    FTDI::FT_STATUS status = dummyFTDI->GetNumberOfDevices(amountDevices);
    delete dummyFTDI;
+
+   Log::Write(StringExtensions::Build("FTDI device scan found {0} devices", std::to_string(amountDevices)));
 
    if (status != FTDI::FT_OK || amountDevices == 0)
    {
