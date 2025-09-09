@@ -118,7 +118,7 @@ ShapeDefinitions* ShapeDefinitions::GetShapeDefinitionsFromShapeDefinitionsXml(c
    tinyxml2::XMLError result = doc.Parse(shapeDefinitionsXml.c_str());
    if (result != tinyxml2::XML_SUCCESS)
    {
-      Log::Exception(StringExtensions::Build("Could not deserialize the ShapeDefinitions from XML data. Error: {0}", doc.ErrorStr() ? doc.ErrorStr() : "unknown error"));
+      Log::Exception("Could not load ShapeDefinitions from XML data.");
       throw std::runtime_error("Could not deserialize the ShapeDefinitions from XML data.");
    }
 

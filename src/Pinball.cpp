@@ -82,9 +82,12 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
       throw std::runtime_error("DirectOutput framework could not initialize global config.");
    }
 
-   if (m_globalConfig->IsEnableLogging())
+   try
    {
-      if (m_globalConfig->IsClearLogOnSessionStart())
+      Log::SetFilename(m_globalConfig->GetLogFilename(!StringExtensions::IsNullOrWhiteSpace(tableFilename) ? FileInfo(tableFilename).FullName() : "", romName));
+      Log::SetInstrumentations(m_globalConfig->GetInstrumentation());
+
+      if (m_globalConfig->IsEnableLogging() && m_globalConfig->IsClearLogOnSessionStart())
       {
          try
          {
@@ -97,15 +100,12 @@ void Pinball::Setup(const std::string& globalConfigFileName, const std::string& 
          {
          }
       }
-      try
-      {
-         Log::SetFilename(m_globalConfig->GetLogFilename(!StringExtensions::IsNullOrWhiteSpace(tableFilename) ? FileInfo(tableFilename).FullName() : "", romName));
-         Log::Init();
-      }
-      catch (const std::exception& e)
-      {
-         throw std::runtime_error("DirectOutput framework could initialize the log file.");
-      }
+
+      Log::Init(m_globalConfig->IsEnableLogging());
+   }
+   catch (const std::exception& e)
+   {
+      throw std::runtime_error("DirectOutput framework could initialize the log file.");
    }
 
    Log::AfterInit();

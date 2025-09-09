@@ -29,11 +29,9 @@ void EffectEffectBase::TriggerTargetEffect(TableElementData* triggerData)
 {
    if (m_targetEffect != nullptr)
    {
-      Log::Debug(StringExtensions::Build("EffectEffectBase::TriggerTargetEffect: Calling target effect '{0}'", m_targetEffect->GetName()));
       try
       {
          m_targetEffect->Trigger(triggerData);
-         Log::Debug(StringExtensions::Build("EffectEffectBase::TriggerTargetEffect: Target effect '{0}' completed", m_targetEffect->GetName()));
       }
       catch (const std::exception& e)
       {

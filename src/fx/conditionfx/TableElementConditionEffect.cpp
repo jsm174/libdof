@@ -110,12 +110,12 @@ void TableElementConditionEffect::InitCondition()
    if (m_parser->compile(transformedCondition, *m_expression))
    {
       m_conditionExpressionValid = true;
-      Log::Write(StringExtensions::Build("Successfully compiled expression: {0}", m_condition));
    }
    else
    {
       m_conditionExpressionValid = false;
-      Log::Exception(StringExtensions::Build("Failed to compile expression {0}: {1}", m_condition, m_parser->error()));
+      Log::Exception(StringExtensions::Build(
+         "A exception has occurred while compiling the condition {0} (internally translated to {1}) of effect {2}.", m_condition, transformedCondition, NamedItemBase::GetName()));
    }
 }
 
@@ -219,7 +219,7 @@ void TableElementConditionEffect::Trigger(TableElementData* tableElementData)
       }
       catch (const std::exception& e)
       {
-         Log::Exception(StringExtensions::Build("A exception occured when evaluating the expression {0} of effect {1}. Effect will be deactivated.", m_condition, NamedItemBase::GetName()));
+         Log::Exception(StringExtensions::Build("A exception occurred when evaluating the expression {0} of effect {1}. Effect will be deactivated.", m_condition, NamedItemBase::GetName()));
          m_conditionExpressionValid = false;
       }
    }

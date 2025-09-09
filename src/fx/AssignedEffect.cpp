@@ -48,19 +48,10 @@ void AssignedEffect::ResolveEffectName(Table* table)
       return;
    }
 
-   Log::Debug(StringExtensions::Build("AssignedEffect: Looking for effect '{0}' in list of {1} effects", m_effectName, std::to_string(static_cast<int>(effects->size()))));
-   if (effects->size() <= 10)
-   {
-      for (const auto& pair : *effects)
-      {
-         Log::Debug(StringExtensions::Build("AssignedEffect: Available effect: '{0}'", pair.first));
-      }
-   }
    auto it = effects->find(m_effectName);
    if (it != effects->end())
    {
       m_effect = it->second;
-      Log::Debug(StringExtensions::Build("AssignedEffect: Resolved effect '{0}' successfully", m_effectName));
    }
    else
    {
@@ -72,12 +63,9 @@ void AssignedEffect::Trigger(TableElementData tableElementData)
 {
    if (m_effect != nullptr)
    {
-      Log::Debug(StringExtensions::Build("AssignedEffect::Trigger: Triggering effect '{0}' for element {1}{2} with value {3}", m_effect->GetName(),
-         std::string(1, (char)tableElementData.m_tableElementType), std::to_string(tableElementData.m_number), std::to_string(tableElementData.m_value)));
       try
       {
          m_effect->Trigger(&tableElementData);
-         Log::Debug(StringExtensions::Build("AssignedEffect::Trigger: Effect '{0}' completed", m_effect->GetName()));
       }
       catch (const std::exception& ex)
       {
