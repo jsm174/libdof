@@ -908,12 +908,8 @@ void Configurator::SetupTable(
                      switch (tcs->GetOutputControl())
                      {
                      case OutputControlEnum::FixedOn:
-                     {
-                        std::vector<std::string> tableElementDescriptors;
-                        tableElementDescriptors.push_back(StringExtensions::Build("{0}.{1}.{2}", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber)));
-                        AssignEffectToTableElements(table, tableElementDescriptors, finalEffect);
-                     }
-                     break;
+                        table->GetAssignedStaticEffects()->Add(finalEffect->GetName());
+                        break;
                      case OutputControlEnum::Controlled:
                         if (!StringExtensions::IsNullOrWhiteSpace(tcs->GetTableElement()))
                         {

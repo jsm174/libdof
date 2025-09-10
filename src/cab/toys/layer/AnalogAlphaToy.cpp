@@ -89,20 +89,16 @@ int AnalogAlphaToy::GetResultingValue()
       for (int layerNumber : layerNumbers)
       {
          AnalogAlpha* layer = m_layers.GetLayer(layerNumber, 1);
-         Log::Debug(StringExtensions::Build("Layer {0}: layer={1}", std::to_string(layerNumber), StringExtensions::ToAddressString(layer)));
          if (layer != nullptr)
          {
             const AnalogAlpha& layerValue = layer[0];
             int alpha = layerValue.GetAlpha();
             int val = layerValue.GetValue();
-            Log::Debug(StringExtensions::Build("Layer {0}: alpha={1}, value={2}", std::to_string(layerNumber), std::to_string(alpha), std::to_string(val)));
             if (alpha != 0)
             {
                float oldValue = AlphaMappingTable::AlphaMapping[255 - alpha][static_cast<int>(value)];
                float newValue = AlphaMappingTable::AlphaMapping[alpha][layerValue.GetValue()];
                value = oldValue + newValue;
-               Log::Debug(StringExtensions::Build(
-                  "Alpha blend: alpha={0}, oldVal={1}, newVal={2}, result={3}", std::to_string(alpha), std::to_string(oldValue), std::to_string(newValue), std::to_string(value)));
             }
          }
       }
