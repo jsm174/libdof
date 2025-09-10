@@ -56,9 +56,6 @@ void TableElementList::UpdateState(TableElementData* data)
          if (element && element->GetTableElementType() == data->m_tableElementType && element->GetNumber() == data->m_number)
          {
             targetElement = element;
-            Log::Debug(StringExtensions::Build("Found matching element: type={0}, number={1}", std::string(1, (char)element->GetTableElementType()), std::to_string(element->GetNumber())));
-            Log::Debug(StringExtensions::Build("TableElement - type: {0}, number: {1}, name: {2}, value: {3}", std::string(1, (char)element->GetTableElementType()),
-               std::to_string(element->GetNumber()), element->GetName(), std::to_string(data->m_value)));
             break;
          }
       }

@@ -47,6 +47,8 @@ public:
    const FilePattern& GetLogFilePattern() const { return m_logFilePattern; }
    void SetLogFilePattern(const std::string& pattern) { m_logFilePattern.SetPattern(pattern); }
    std::string GetLogFilename(const std::string& tableFilename = "", const std::string& romName = "") const;
+   const std::string& GetInstrumentation() const { return m_instrumentation; }
+   void SetInstrumentation(const std::string& instrumentation) { m_instrumentation = instrumentation; }
    std::unordered_map<std::string, std::string> GetReplaceValuesDictionary(const std::string& tableFilename = "", const std::string& romName = "") const;
    std::string GlobalConfigDirectoryName() const;
    DirectoryInfo GetGlobalConfigDirectory() const;
@@ -73,6 +75,7 @@ private:
    bool m_enableLog;
    bool m_clearLogOnSessionStart;
    FilePattern m_logFilePattern;
+   std::string m_instrumentation;
    std::string m_globalConfigFileName;
 };
 

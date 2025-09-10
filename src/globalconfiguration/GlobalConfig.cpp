@@ -34,6 +34,7 @@ GlobalConfig::GlobalConfig()
    , m_pacLedDefaultMinCommandIntervalMs(10)
    , m_enableLog(true)
    , m_clearLogOnSessionStart(true)
+   , m_instrumentation("")
 {
    m_tableConfigFilePatterns.clear();
    m_logFilePattern.SetPattern("./DirectOutput.log");
@@ -468,6 +469,10 @@ std::string GlobalConfig::ToXml() const
    element->SetText(m_logFilePattern.GetPattern().c_str());
    doc.FirstChildElement("GlobalConfig")->InsertEndChild(element);
 
+   element = doc.NewElement("Instrumentation");
+   element->SetText(m_instrumentation.c_str());
+   doc.FirstChildElement("GlobalConfig")->InsertEndChild(element);
+
    tinyxml2::XMLPrinter printer;
    doc.Print(&printer);
    return std::string(printer.CStr());
@@ -567,6 +572,10 @@ GlobalConfig* GlobalConfig::FromXml(const std::string& configXml)
    element = root->FirstChildElement("LogFilePattern");
    if (element && element->GetText())
       globalConfig->SetLogFilePattern(element->GetText());
+
+   element = root->FirstChildElement("Instrumentation");
+   if (element && element->GetText())
+      globalConfig->SetInstrumentation(element->GetText());
 
    return globalConfig;
 }

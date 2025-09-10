@@ -26,13 +26,8 @@ void AlarmHandler::RegisterAlarm(int durationMs, AlarmCallback alarmHandler, boo
 {
    std::lock_guard<std::recursive_mutex> lock(m_alarmMutex);
 
-   Log::Debug(StringExtensions::Build("AlarmHandler::RegisterAlarm: duration={0}ms, dontUnregister={1}, currentAlarms={2}", std::to_string(durationMs), dontUnregister ? "true" : "false",
-      std::to_string(static_cast<int>(m_alarmList.size()))));
-
    TimePoint alarmTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(durationMs);
    m_alarmList.emplace_back(alarmTime, alarmHandler, dontUnregister);
-
-   Log::Debug(StringExtensions::Build("AlarmHandler::RegisterAlarm: alarm registered, totalAlarms={0}", std::to_string(static_cast<int>(m_alarmList.size()))));
 }
 
 void AlarmHandler::UnregisterAlarm(AlarmCallback alarmHandler)
@@ -44,7 +39,6 @@ void AlarmHandler::UnregisterAlarm(AlarmCallback alarmHandler)
    {
       if (it->alarmHandler.target<void (*)()>() == alarmHandler.target<void (*)()>())
       {
-         Log::Debug(StringExtensions::Build("AlarmHandler::UnregisterAlarm: removing alarm, remaining={0}", std::to_string(static_cast<int>(m_alarmList.size() - 1))));
          it = m_alarmList.erase(it);
       }
       else
@@ -65,10 +59,6 @@ bool AlarmHandler::ExecuteAlarms(TimePoint alarmTime)
 {
    bool result = ProcessAlarms(alarmTime);
    bool intervalResult = ProcessIntervalAlarms(alarmTime);
-   if (result || intervalResult)
-   {
-      Log::Debug("AlarmHandler::ExecuteAlarms: Processed alarms");
-   }
    return result || intervalResult;
 }
 
@@ -101,23 +91,14 @@ bool AlarmHandler::ProcessAlarms(TimePoint alarmTime)
 
    bool alarmsExecuted = !toExecute.empty();
 
-   if (alarmsExecuted)
-   {
-      Log::Debug(StringExtensions::Build(
-         "AlarmHandler::ProcessAlarms: executing {0} alarms, {1} remaining", std::to_string(static_cast<int>(toExecute.size())), std::to_string(static_cast<int>(m_alarmList.size()))));
-   }
-
    for (const auto& alarm : toExecute)
    {
       try
       {
-         Log::Debug("AlarmHandler::ProcessAlarms: calling alarm function");
          alarm.alarmHandler();
-         Log::Debug("AlarmHandler::ProcessAlarms: alarm function completed");
       }
       catch (...)
       {
-         Log::Debug("AlarmHandler::ProcessAlarms: alarm function threw exception");
       }
    }
 
@@ -130,9 +111,6 @@ void AlarmHandler::RegisterIntervalAlarm(int intervalMs, void* owner, AlarmCallb
 
    UnregisterIntervalAlarm(owner);
    m_intervalAlarmList.emplace_back(intervalMs, intervalAlarmHandler, owner);
-
-   Log::Debug(StringExtensions::Build("AlarmHandler::RegisterIntervalAlarm: interval={0}ms, owner={1}, totalIntervalAlarms={2}", std::to_string(intervalMs), std::to_string((uintptr_t)owner),
-      std::to_string(static_cast<int>(m_intervalAlarmList.size()))));
 }
 
 void AlarmHandler::UnregisterIntervalAlarm(void* owner)
@@ -144,8 +122,6 @@ void AlarmHandler::UnregisterIntervalAlarm(void* owner)
    {
       if (it->owner == owner)
       {
-         Log::Debug(StringExtensions::Build("AlarmHandler::UnregisterIntervalAlarm: removing alarm for owner={0}, remaining={1}", std::to_string((uintptr_t)owner),
-            std::to_string(static_cast<int>(m_intervalAlarmList.size() - 1))));
          it = m_intervalAlarmList.erase(it);
       }
       else
@@ -190,22 +166,14 @@ bool AlarmHandler::ProcessIntervalAlarms(TimePoint alarmTime)
 
    bool alarmsExecuted = !toExecute.empty();
 
-   if (alarmsExecuted)
-   {
-      Log::Debug(StringExtensions::Build("AlarmHandler::ProcessIntervalAlarms: executing {0} interval alarms", std::to_string(static_cast<int>(toExecute.size()))));
-   }
-
    for (const auto& alarmHandler : toExecute)
    {
       try
       {
-         Log::Debug("AlarmHandler::ProcessIntervalAlarms: calling interval alarm function");
          alarmHandler();
-         Log::Debug("AlarmHandler::ProcessIntervalAlarms: interval alarm function completed");
       }
       catch (...)
       {
-         Log::Debug("AlarmHandler::ProcessIntervalAlarms: interval alarm function threw exception");
       }
    }
 
