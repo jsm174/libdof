@@ -3,6 +3,7 @@
 #include "../EffectEffectBase.h"
 #include "../RetriggerBehaviourEnum.h"
 #include "../../table/TableElementData.h"
+#include "../../pinballsupport/Action.h"
 
 namespace DOF
 {
@@ -33,6 +34,7 @@ private:
    int m_durationMs;
    bool m_active;
    TableElementData m_durationTableElementData;
+   Action m_durationEndCallback;
 };
 
 }

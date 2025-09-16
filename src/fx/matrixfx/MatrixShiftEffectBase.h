@@ -8,6 +8,7 @@
 #include "../../table/Table.h"
 #include "../../Pinball.h"
 #include "../../pinballsupport/AlarmHandler.h"
+#include "../../pinballsupport/Action.h"
 #include <vector>
 #include <map>
 
@@ -51,6 +52,7 @@ private:
    int m_lastDiscardedValue;
    int m_currentStep;
    bool m_active;
+   Action m_stepCallback;
 };
 
 
@@ -63,6 +65,7 @@ MatrixShiftEffectBase<MatrixElementType>::MatrixShiftEffectBase()
    , m_lastDiscardedValue(0)
    , m_currentStep(0)
    , m_active(false)
+   , m_stepCallback(this, &MatrixShiftEffectBase<MatrixElementType>::DoStep)
 {
 }
 
@@ -91,7 +94,7 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
 {
    if (!m_active)
    {
-      this->m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(RefreshIntervalMs, this, [this]() { this->DoStep(); });
+      this->m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(RefreshIntervalMs, m_stepCallback);
       m_active = true;
    }
 
@@ -215,7 +218,7 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
       m_currentStep++;
    else
    {
-      this->m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(this);
+      this->m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(m_stepCallback);
       m_lastDiscardedValue = 0;
       m_currentStep = 0;
       m_active = false;
@@ -245,7 +248,7 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
 {
    try
    {
-      this->m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(this);
+      this->m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(m_stepCallback);
    }
    catch (...)
    {

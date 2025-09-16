@@ -78,7 +78,13 @@ void Log::Init(bool enableLogging)
          auto now = std::chrono::system_clock::now();
          auto time_t = std::chrono::system_clock::to_time_t(now);
          std::stringstream ss;
-         ss << std::put_time(std::localtime(&time_t), "%Y.%m.%d %H:%M");
+         struct tm localTime1;
+#ifdef _WIN32
+         localtime_s(&localTime1, &time_t);
+         ss << std::put_time(&localTime1, "%Y.%m.%d %H:%M");
+#else
+         ss << std::put_time(localtime_r(&time_t, &localTime1), "%Y.%m.%d %H:%M");
+#endif
 
          m_logger << StringExtensions::Build("libdof (DirectOutput Framework) - Version {0}, built {1}", LIBDOF_VERSION, ss.str()) << std::endl;
          m_logger << "DOF created by SwissLizard / MIT License" << std::endl;
@@ -89,7 +95,13 @@ void Log::Init(bool enableLogging)
          auto timeT = std::chrono::system_clock::to_time_t(nowMs);
          auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(nowMs.time_since_epoch()) % 1000;
          std::stringstream timestamp;
-         timestamp << std::put_time(std::localtime(&timeT), "%Y.%m.%d %H:%M:%S");
+         struct tm localTime2;
+#ifdef _WIN32
+         localtime_s(&localTime2, &timeT);
+         timestamp << std::put_time(&localTime2, "%Y.%m.%d %H:%M:%S");
+#else
+         timestamp << std::put_time(localtime_r(&timeT, &localTime2), "%Y.%m.%d %H:%M:%S");
+#endif
          timestamp << "." << std::setfill('0') << std::setw(3) << ms.count();
 
          m_logger << timestamp.str() << "\t" << StringExtensions::Build("DirectOutput logger initialized{0}", instrumentationsEnabledNote) << std::endl;
@@ -173,7 +185,13 @@ void Log::WriteToFile(const std::string& message)
       auto timeT = std::chrono::system_clock::to_time_t(nowMs);
       auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(nowMs.time_since_epoch()) % 1000;
       std::stringstream timestamp;
-      timestamp << std::put_time(std::localtime(&timeT), "%Y.%m.%d %H:%M:%S");
+      struct tm localTime3;
+#ifdef _WIN32
+      localtime_s(&localTime3, &timeT);
+      timestamp << std::put_time(&localTime3, "%Y.%m.%d %H:%M:%S");
+#else
+      timestamp << std::put_time(localtime_r(&timeT, &localTime3), "%Y.%m.%d %H:%M:%S");
+#endif
       timestamp << "." << std::setfill('0') << std::setw(3) << ms.count();
       WriteRaw(timestamp.str() + "\t");
    }
@@ -190,7 +208,13 @@ void Log::WriteToFile(const std::string& message)
          auto timeT = std::chrono::system_clock::to_time_t(nowMs);
          auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(nowMs.time_since_epoch()) % 1000;
          std::stringstream timestamp;
-         timestamp << std::put_time(std::localtime(&timeT), "%Y.%m.%d %H:%M:%S");
+         struct tm localTime4;
+#ifdef _WIN32
+         localtime_s(&localTime4, &timeT);
+         timestamp << std::put_time(&localTime4, "%Y.%m.%d %H:%M:%S");
+#else
+         timestamp << std::put_time(localtime_r(&timeT, &localTime4), "%Y.%m.%d %H:%M:%S");
+#endif
          timestamp << "." << std::setfill('0') << std::setw(3) << ms.count();
          WriteRaw(timestamp.str() + "\t" + line);
       }

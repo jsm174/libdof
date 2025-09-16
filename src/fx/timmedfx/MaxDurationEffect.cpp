@@ -3,53 +3,50 @@
 #include "../../table/Table.h"
 #include "../../Pinball.h"
 #include "../../pinballsupport/AlarmHandler.h"
+#include "../../general/MathExtensions.h"
+#include <climits>
 
 namespace DOF
 {
 
 MaxDurationEffect::MaxDurationEffect()
    : m_retriggerBehaviour(RetriggerBehaviourEnum::Restart)
-   , m_maxDurationMs(5000)
+   , m_maxDurationMs(500)
    , m_active(false)
-   , m_durationTimerTableElementData()
+   , m_untriggerData()
+   , m_durationEndCallback(this, &MaxDurationEffect::DurationEnd)
 {
 }
 
+void MaxDurationEffect::SetMaxDurationMs(int value) { m_maxDurationMs = MathExtensions::Limit(value, 1, INT_MAX); }
+
 void MaxDurationEffect::Trigger(TableElementData* tableElementData)
 {
-   if (m_targetEffect != nullptr)
+   if (tableElementData->m_value != 0)
    {
-      if (tableElementData->m_value != 0)
+      if (!m_active || m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
       {
-         if (!m_active)
-         {
-            TriggerTargetEffect(tableElementData);
-            m_durationTimerTableElementData = *tableElementData;
-            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_maxDurationMs, [this]() { this->MaxDurationReached(&m_durationTimerTableElementData); }, true);
-            m_active = true;
-         }
-         else if (m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
-         {
-            TriggerTargetEffect(tableElementData);
-            m_durationTimerTableElementData = *tableElementData;
-            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_maxDurationMs, [this]() { this->MaxDurationReached(&m_durationTimerTableElementData); }, true);
-         }
+         TriggerTargetEffect(tableElementData);
+         m_untriggerData = *tableElementData;
+         m_untriggerData.m_value = 0;
+         m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_maxDurationMs, m_durationEndCallback);
+         m_active = true;
       }
-      else
+   }
+   else
+   {
+      if (m_active && m_untriggerData.m_tableElementType == tableElementData->m_tableElementType && m_untriggerData.m_number == tableElementData->m_number)
       {
-         if (m_active)
-         {
-            TriggerTargetEffect(tableElementData);
-            m_active = false;
-         }
+         TriggerTargetEffect(tableElementData);
+         m_table->GetPinball()->GetAlarms()->UnregisterAlarm(m_durationEndCallback);
+         m_active = false;
       }
    }
 }
 
-void MaxDurationEffect::MaxDurationReached(TableElementData* tableElementData)
+void MaxDurationEffect::DurationEnd()
 {
-   tableElementData->m_value = 0;
-   TriggerTargetEffect(tableElementData);
+   TriggerTargetEffect(&m_untriggerData);
    m_active = false;
 }
 
@@ -57,6 +54,10 @@ void MaxDurationEffect::Finish()
 {
    try
    {
+      if (m_table && m_table->GetPinball() && m_table->GetPinball()->GetAlarms())
+      {
+         m_table->GetPinball()->GetAlarms()->UnregisterAlarm(m_durationEndCallback);
+      }
    }
    catch (...)
    {

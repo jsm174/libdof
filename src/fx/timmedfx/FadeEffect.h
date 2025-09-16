@@ -3,6 +3,7 @@
 #include "../EffectEffectBase.h"
 #include "FadeEffectDurationModeEnum.h"
 #include "../../table/TableElementData.h"
+#include "../../pinballsupport/Action.h"
 
 namespace DOF
 {
@@ -38,6 +39,7 @@ private:
    float m_stepValue;
    int m_lastTargetTriggerValue;
    TableElementData m_tableElementData;
+   Action m_fadingCallback;
 };
 
 }

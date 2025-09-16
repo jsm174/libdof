@@ -907,9 +907,7 @@ void Configurator::SetupTable(
 
                      switch (tcs->GetOutputControl())
                      {
-                     case OutputControlEnum::FixedOn:
-                        table->GetAssignedStaticEffects()->Add(finalEffect->GetName());
-                        break;
+                     case OutputControlEnum::FixedOn: table->GetAssignedStaticEffects()->Add(finalEffect->GetName()); break;
                      case OutputControlEnum::Controlled:
                         if (!StringExtensions::IsNullOrWhiteSpace(tcs->GetTableElement()))
                         {

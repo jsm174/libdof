@@ -3,6 +3,7 @@
 #include "../EffectEffectBase.h"
 #include "BlinkEffectUntriggerBehaviourEnum.h"
 #include "../../table/TableElementData.h"
+#include "../../pinballsupport/Action.h"
 #include <functional>
 
 namespace DOF
@@ -47,7 +48,7 @@ private:
    int m_blinkOrgTableElementDataValue;
    TableElementData m_blinkTableElementData;
 
-   std::function<void()> m_alarmCallback;
+   Action m_alarmCallback;
 };
 
 }

@@ -22,8 +22,8 @@ BlinkEffect::BlinkEffect()
    , m_blinkState(false)
    , m_blinkOrgTableElementDataValue(1)
    , m_blinkTableElementData()
+   , m_alarmCallback(this, &BlinkEffect::DoBlink)
 {
-   m_alarmCallback = [this]() { this->DoBlink(); };
 }
 
 BlinkEffect::~BlinkEffect() { }

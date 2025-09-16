@@ -3,6 +3,7 @@
 #include "../EffectEffectBase.h"
 #include "../RetriggerBehaviourEnum.h"
 #include "../../table/TableElementData.h"
+#include "../../pinballsupport/Action.h"
 #include <chrono>
 
 namespace DOF
@@ -24,15 +25,14 @@ public:
    virtual std::string GetXmlElementName() const override { return "MinDurationEffect"; }
 
 private:
-   void MinDurationReached(TableElementData* tableElementData);
    void MinDurationEnd();
 
    RetriggerBehaviourEnum m_retriggerBehaviour;
    int m_minDurationMs;
    bool m_active;
-   bool m_untriggered;
-   TableElementData m_durationTimerTableElementData;
+   TableElementData m_untriggerData;
    std::chrono::steady_clock::time_point m_durationStart;
+   Action m_minDurationEndCallback;
 };
 
 }

@@ -2,6 +2,7 @@
 
 #include "../EffectEffectBase.h"
 #include "../../table/TableElementData.h"
+#include "../../pinballsupport/Action.h"
 #include <functional>
 
 namespace DOF
@@ -22,10 +23,10 @@ public:
    virtual std::string GetXmlElementName() const override { return "DelayEffect"; }
 
 private:
-   void AfterDelay(TableElementData* data);
+   void AfterDelay();
 
    int m_delayMs;
-   std::function<void()> m_afterDelayCallback;
+   Action m_afterDelayCallback;
    TableElementData m_delayTableElementData;
 };
 

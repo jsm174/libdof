@@ -1,10 +1,12 @@
 #pragma once
 
 #include "DOF/DOF.h"
+#include "Action.h"
 #include <functional>
 #include <vector>
 #include <mutex>
 #include <chrono>
+#include <memory>
 
 namespace DOF
 {
@@ -15,7 +17,7 @@ class Pinball;
 class AlarmHandler
 {
 public:
-   using AlarmCallback = std::function<void()>;
+   using AlarmCallback = Action;
    using TimePoint = std::chrono::steady_clock::time_point;
 
    AlarmHandler();
@@ -23,10 +25,14 @@ public:
 
    void Init(Pinball* pPinball);
    void Finish();
+
    void RegisterAlarm(int durationMs, AlarmCallback alarmHandler, bool dontUnregister = false);
-   void RegisterIntervalAlarm(int intervalMs, void* owner, AlarmCallback intervalAlarmHandler);
    void UnregisterAlarm(AlarmCallback alarmHandler);
-   void UnregisterIntervalAlarm(void* owner);
+   void RegisterAlarm(int durationMs, AlarmCallback alarmHandler, void* parameter, bool dontUnregister = false);
+   void UnregisterAlarm(AlarmCallback alarmHandler, void* parameter);
+
+   void RegisterIntervalAlarm(int intervalMs, AlarmCallback intervalAlarmHandler);
+   void UnregisterIntervalAlarm(AlarmCallback intervalAlarmHandler);
    TimePoint GetNextAlarmTime();
    bool ExecuteAlarms(TimePoint alarmTime);
 
@@ -35,13 +41,34 @@ private:
    {
       TimePoint alarmTime;
       AlarmCallback alarmHandler;
+      void* parameter;
+      bool hasParameter;
       bool dontUnregister;
 
       AlarmSetting(TimePoint time, AlarmCallback handler, bool dontUnreg = false)
          : alarmTime(time)
          , alarmHandler(handler)
+         , parameter(nullptr)
+         , hasParameter(false)
          , dontUnregister(dontUnreg)
       {
+      }
+
+      AlarmSetting(TimePoint time, AlarmCallback handler, void* param, bool dontUnreg = false)
+         : alarmTime(time)
+         , alarmHandler(handler)
+         , parameter(param)
+         , hasParameter(true)
+         , dontUnregister(dontUnreg)
+      {
+      }
+
+      void Execute() const
+      {
+         if (hasParameter)
+            alarmHandler(parameter);
+         else
+            alarmHandler();
       }
    };
 
@@ -50,13 +77,11 @@ private:
       int intervalMs;
       TimePoint nextAlarm;
       AlarmCallback intervalAlarmHandler;
-      void* owner;
 
-      IntervalAlarmSetting(int interval, AlarmCallback handler, void* ownerPtr = nullptr)
+      IntervalAlarmSetting(int interval, AlarmCallback handler)
          : intervalMs(interval)
          , intervalAlarmHandler(handler)
          , nextAlarm(std::chrono::steady_clock::now() + std::chrono::milliseconds(interval))
-         , owner(ownerPtr)
       {
       }
    };
