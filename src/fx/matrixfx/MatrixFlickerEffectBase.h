@@ -7,6 +7,7 @@
 #include "../../table/Table.h"
 #include "../../Pinball.h"
 #include "../../pinballsupport/AlarmHandler.h"
+#include "../../pinballsupport/Action.h"
 #include <random>
 #include <chrono>
 #include <functional>
@@ -58,7 +59,7 @@ private:
    int m_currentValue;
    TableElementData* m_flickerTableElementData;
    std::mt19937 m_randomGenerator;
-   std::function<void()> m_intervalAlarmCallback;
+   Action m_intervalAlarmCallback;
 
    struct FlickerObject
    {
@@ -85,7 +86,7 @@ MatrixFlickerEffectBase<MatrixElementType>::MatrixFlickerEffectBase()
    , m_currentValue(0)
    , m_flickerTableElementData(nullptr)
    , m_randomGenerator(std::random_device {}())
-   , m_intervalAlarmCallback(nullptr)
+   , m_intervalAlarmCallback()
 {
 }
 
@@ -137,9 +138,9 @@ template <typename MatrixElementType> void MatrixFlickerEffectBase<MatrixElement
       {
          if (!m_intervalAlarmCallback)
          {
-            m_intervalAlarmCallback = [this]() { this->DoFlicker(); };
+            m_intervalAlarmCallback = Action(this, &MatrixFlickerEffectBase<MatrixElementType>::DoFlicker);
          }
-         this->m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(30, this, m_intervalAlarmCallback);
+         this->m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(30, m_intervalAlarmCallback);
          m_active = true;
       }
 
@@ -240,8 +241,8 @@ template <typename MatrixElementType> void MatrixFlickerEffectBase<MatrixElement
 
       if (m_intervalAlarmCallback)
       {
-         this->m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(this);
-         m_intervalAlarmCallback = nullptr;
+         this->m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(m_intervalAlarmCallback);
+         m_intervalAlarmCallback = Action();
       }
       m_active = false;
    }

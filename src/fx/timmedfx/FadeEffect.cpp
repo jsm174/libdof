@@ -3,6 +3,7 @@
 #include "../../table/Table.h"
 #include "../../Pinball.h"
 #include "../../pinballsupport/AlarmHandler.h"
+#include "../../pinballsupport/Action.h"
 #include "../../general/MathExtensions.h"
 #include "../../general/StringExtensions.h"
 #include "../../Log.h"
@@ -20,6 +21,7 @@ FadeEffect::FadeEffect()
    , m_stepValue(0)
    , m_lastTargetTriggerValue(-1)
    , m_tableElementData()
+   , m_fadingCallback(this, &FadeEffect::FadingStep)
 {
 }
 
@@ -48,7 +50,7 @@ void FadeEffect::Trigger(TableElementData* tableElementData)
       }
       else
       {
-         m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(this);
+         m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(m_fadingCallback);
          m_currentValue = m_targetValue;
          m_lastTargetTriggerValue = -1;
          TriggerTargetEffect(&m_tableElementData);
@@ -62,11 +64,11 @@ void FadeEffect::FadingStep()
 
    if ((m_currentValue < m_targetValue && m_stepValue > 0) || (m_currentValue > m_targetValue && m_stepValue < 0))
    {
-      m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(FadingRefreshIntervalMs, this, [this]() { this->FadingStep(); });
+      m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(FadingRefreshIntervalMs, m_fadingCallback);
    }
    else
    {
-      m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(this);
+      m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(m_fadingCallback);
       m_currentValue = m_targetValue;
    }
 
@@ -82,7 +84,7 @@ void FadeEffect::Finish()
 {
    try
    {
-      m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(this);
+      m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(m_fadingCallback);
    }
    catch (...)
    {

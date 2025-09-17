@@ -3,57 +3,55 @@
 #include "../../table/Table.h"
 #include "../../Pinball.h"
 #include "../../pinballsupport/AlarmHandler.h"
+#include "../../general/MathExtensions.h"
+#include <climits>
 
 namespace DOF
 {
 
 ExtendDurationEffect::ExtendDurationEffect()
-   : m_retriggerBehaviour(RetriggerBehaviourEnum::Restart)
-   , m_durationMs(500)
-   , m_active(false)
-   , m_durationTimerTableElementData()
+   : m_durationMs(500)
+   , m_delayedData()
+   , m_extendedDurationEndCallback(this, &ExtendDurationEffect::ExtendedDurationEnd)
 {
 }
+
+void ExtendDurationEffect::SetDurationMs(int value) { m_durationMs = MathExtensions::Limit(value, 0, INT_MAX); }
 
 void ExtendDurationEffect::Trigger(TableElementData* tableElementData)
 {
    if (m_targetEffect != nullptr)
    {
-      TriggerTargetEffect(tableElementData);
-
       if (tableElementData->m_value != 0)
       {
-         if (!m_active)
+         TriggerTargetEffect(tableElementData);
+      }
+      else
+      {
+         if (m_durationMs > 0)
          {
-            m_durationTimerTableElementData = *tableElementData;
-            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, [this]() { this->ExtendDurationEnd(&m_durationTimerTableElementData); }, true);
-            m_active = true;
+            m_delayedData = *tableElementData;
+            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, m_extendedDurationEndCallback, true);
          }
-         else if (m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
+         else
          {
-            m_durationTimerTableElementData = *tableElementData;
-            m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, [this]() { this->ExtendDurationEnd(&m_durationTimerTableElementData); }, true);
+            TriggerTargetEffect(tableElementData);
          }
       }
    }
 }
 
-void ExtendDurationEffect::ExtendDurationEnd(TableElementData* tableElementData)
-{
-   tableElementData->m_value = 0;
-   TriggerTargetEffect(tableElementData);
-   m_active = false;
-}
+void ExtendDurationEffect::ExtendedDurationEnd() { TriggerTargetEffect(&m_delayedData); }
 
 void ExtendDurationEffect::Finish()
 {
    try
    {
+      m_table->GetPinball()->GetAlarms()->UnregisterAlarm(m_extendedDurationEndCallback);
    }
    catch (...)
    {
    }
-   m_active = false;
    EffectEffectBase::Finish();
 }
 

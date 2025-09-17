@@ -37,7 +37,7 @@ void AlarmHandler::UnregisterAlarm(AlarmCallback alarmHandler)
    auto it = m_alarmList.begin();
    while (it != m_alarmList.end())
    {
-      if (it->alarmHandler.target<void (*)()>() == alarmHandler.target<void (*)()>())
+      if (it->alarmHandler == alarmHandler)
       {
          it = m_alarmList.erase(it);
       }
@@ -95,7 +95,7 @@ bool AlarmHandler::ProcessAlarms(TimePoint alarmTime)
    {
       try
       {
-         alarm.alarmHandler();
+         alarm.Execute();
       }
       catch (...)
       {
@@ -105,22 +105,22 @@ bool AlarmHandler::ProcessAlarms(TimePoint alarmTime)
    return alarmsExecuted;
 }
 
-void AlarmHandler::RegisterIntervalAlarm(int intervalMs, void* owner, AlarmCallback intervalAlarmHandler)
+void AlarmHandler::RegisterIntervalAlarm(int intervalMs, AlarmCallback intervalAlarmHandler)
 {
    std::lock_guard<std::recursive_mutex> lock(m_intervalAlarmMutex);
 
-   UnregisterIntervalAlarm(owner);
-   m_intervalAlarmList.emplace_back(intervalMs, intervalAlarmHandler, owner);
+   UnregisterIntervalAlarm(intervalAlarmHandler);
+   m_intervalAlarmList.emplace_back(intervalMs, intervalAlarmHandler);
 }
 
-void AlarmHandler::UnregisterIntervalAlarm(void* owner)
+void AlarmHandler::UnregisterIntervalAlarm(AlarmCallback intervalAlarmHandler)
 {
    std::lock_guard<std::recursive_mutex> lock(m_intervalAlarmMutex);
 
    auto it = m_intervalAlarmList.begin();
    while (it != m_intervalAlarmList.end())
    {
-      if (it->owner == owner)
+      if (it->intervalAlarmHandler == intervalAlarmHandler)
       {
          it = m_intervalAlarmList.erase(it);
       }
@@ -198,6 +198,37 @@ bool AlarmHandler::ProcessIntervalAlarms(TimePoint alarmTime)
    }
 
    return alarmsExecuted;
+}
+
+void AlarmHandler::RegisterAlarm(int durationMs, AlarmCallback alarmHandler, void* parameter, bool dontUnregister)
+{
+   std::lock_guard<std::recursive_mutex> lock(m_alarmMutex);
+
+   if (!dontUnregister)
+   {
+      UnregisterAlarm(alarmHandler, parameter);
+   }
+
+   TimePoint alarmTime = std::chrono::steady_clock::now() + std::chrono::milliseconds(durationMs);
+   m_alarmList.emplace_back(alarmTime, alarmHandler, parameter, dontUnregister);
+}
+
+void AlarmHandler::UnregisterAlarm(AlarmCallback alarmHandler, void* parameter)
+{
+   std::lock_guard<std::recursive_mutex> lock(m_alarmMutex);
+
+   auto it = m_alarmList.begin();
+   while (it != m_alarmList.end())
+   {
+      if (it->alarmHandler == alarmHandler && it->hasParameter && it->parameter == parameter)
+      {
+         it = m_alarmList.erase(it);
+      }
+      else
+      {
+         ++it;
+      }
+   }
 }
 
 }

@@ -6,6 +6,7 @@
 #include "../../general/StringExtensions.h"
 #include "../../Log.h"
 #include "../../pinballsupport/AlarmHandler.h"
+#include "../../pinballsupport/Action.h"
 #include "../../general/bitmap/PixelData.h"
 #include <chrono>
 #include <vector>
@@ -95,7 +96,7 @@ template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<Matri
          {
             m_animationStep = 0;
          }
-         this->m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(m_animationFrameDurationMs, this, [this]() { this->Animate(); });
+         this->m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(m_animationFrameDurationMs, Action(this, &MatrixBitmapAnimationEffectBase<MatrixElementType>::Animate));
 
          Animate();
       }
@@ -112,7 +113,7 @@ template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<Matri
    {
       try
       {
-         this->m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(this);
+         this->m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(Action(this, &MatrixBitmapAnimationEffectBase<MatrixElementType>::Animate));
       }
       catch (...)
       {

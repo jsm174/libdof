@@ -82,7 +82,41 @@ void PacDriveSingleton::EnumerateDevices()
       if (currentDevice->serial_number)
       {
          std::wstring wserial(currentDevice->serial_number);
-         info.serial = std::string(wserial.begin(), wserial.end());
+#ifdef _WIN32
+         int size = WideCharToMultiByte(CP_UTF8, 0, wserial.c_str(), -1, nullptr, 0, nullptr, nullptr);
+         if (size > 0)
+         {
+            info.serial.resize(size - 1);
+            WideCharToMultiByte(CP_UTF8, 0, wserial.c_str(), -1, &info.serial[0], size, nullptr, nullptr);
+         }
+#else
+         info.serial.clear();
+         for (wchar_t wc : wserial)
+         {
+            if (wc <= 0x7F)
+            {
+               info.serial.push_back(static_cast<char>(wc));
+            }
+            else if (wc <= 0x7FF)
+            {
+               info.serial.push_back(static_cast<char>(0xC0 | ((wc >> 6) & 0x1F)));
+               info.serial.push_back(static_cast<char>(0x80 | (wc & 0x3F)));
+            }
+            else if (wc <= 0xFFFF)
+            {
+               info.serial.push_back(static_cast<char>(0xE0 | ((wc >> 12) & 0x0F)));
+               info.serial.push_back(static_cast<char>(0x80 | ((wc >> 6) & 0x3F)));
+               info.serial.push_back(static_cast<char>(0x80 | (wc & 0x3F)));
+            }
+            else
+            {
+               info.serial.push_back(static_cast<char>(0xF0 | ((wc >> 18) & 0x07)));
+               info.serial.push_back(static_cast<char>(0x80 | ((wc >> 12) & 0x3F)));
+               info.serial.push_back(static_cast<char>(0x80 | ((wc >> 6) & 0x3F)));
+               info.serial.push_back(static_cast<char>(0x80 | (wc & 0x3F)));
+            }
+         }
+#endif
       }
       else
       {

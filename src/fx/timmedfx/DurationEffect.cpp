@@ -12,6 +12,7 @@ DurationEffect::DurationEffect()
    , m_durationMs(500)
    , m_active(false)
    , m_durationTableElementData()
+   , m_durationEndCallback(this, &DurationEffect::DurationEnd)
 {
 }
 
@@ -23,13 +24,13 @@ void DurationEffect::Trigger(TableElementData* tableElementData)
       {
          TriggerTargetEffect(tableElementData);
          m_durationTableElementData = *tableElementData;
-         m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, [this]() { this->DurationEnd(); });
+         m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, m_durationEndCallback);
          m_active = true;
       }
       else if (m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
       {
          m_durationTableElementData = *tableElementData;
-         m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, [this]() { this->DurationEnd(); });
+         m_table->GetPinball()->GetAlarms()->RegisterAlarm(m_durationMs, m_durationEndCallback);
       }
    }
 }

@@ -7,6 +7,7 @@
 #include "../../table/Table.h"
 #include "../../Pinball.h"
 #include "../../pinballsupport/AlarmHandler.h"
+#include "../../pinballsupport/Action.h"
 #include <cmath>
 #include <chrono>
 
@@ -120,7 +121,7 @@ template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementT
 
 
    int stepDelayMs = MathExtensions::Limit(110 - m_plasmaSpeed, 10, 100);
-   this->m_table->GetPinball()->GetAlarms()->RegisterAlarm(stepDelayMs, [this]() { this->PlasmaStep(); }, false);
+   this->m_table->GetPinball()->GetAlarms()->RegisterAlarm(stepDelayMs, Action(this, &MatrixPlasmaEffectBase<MatrixElementType>::PlasmaStep), false);
 }
 
 template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementType>::UpdateMatrix()

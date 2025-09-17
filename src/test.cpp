@@ -123,6 +123,7 @@ void RunIJTests(DOF::DOF* pDof)
 
    std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_START_DELAY));
 
+   TriggerOutputOnOff(pDof, 'L', 88, 5000);
    TriggerOutputOnOff(pDof, 'S', 9);
    TriggerOutputOnOff(pDof, 'S', 12);
    TriggerOutputOnOff(pDof, 'S', 51);
