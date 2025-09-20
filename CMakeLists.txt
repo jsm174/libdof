@@ -462,3 +462,115 @@ if(BUILD_STATIC)
       endif()
    endif()
 endif()
+
+# LedWiz Direct Test Program
+if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
+   add_executable(ledwiz_test
+      ledwiz_test.cpp
+   )
+
+   target_include_directories(ledwiz_test PRIVATE
+      ${CMAKE_SOURCE_DIR}
+      ${CMAKE_SOURCE_DIR}/third-party/include
+   )
+
+   if(PLATFORM STREQUAL "win")
+      target_link_directories(ledwiz_test PUBLIC
+         third-party/build-libs/${PLATFORM}/${ARCH}
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      if(ARCH STREQUAL "x64")
+         target_link_libraries(ledwiz_test PUBLIC hidapi64 ws2_32)
+      else()
+         target_link_libraries(ledwiz_test PUBLIC hidapi ws2_32)
+      endif()
+   elseif(PLATFORM STREQUAL "macos")
+      target_link_directories(ledwiz_test PUBLIC
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(ledwiz_test PUBLIC hidapi)
+   elseif(PLATFORM STREQUAL "linux")
+      target_link_directories(ledwiz_test PUBLIC
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(ledwiz_test PUBLIC hidapi-hidraw)
+   endif()
+
+   if(POST_BUILD_COPY_EXT_LIBS)
+      if(PLATFORM STREQUAL "win")
+         if(ARCH STREQUAL "x64")
+            add_custom_command(TARGET ledwiz_test POST_BUILD
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/hidapi64.dll" "$<TARGET_FILE_DIR:ledwiz_test>"
+            )
+         else()
+            add_custom_command(TARGET ledwiz_test POST_BUILD
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/hidapi.dll" "$<TARGET_FILE_DIR:ledwiz_test>"
+            )
+         endif()
+      elseif(PLATFORM STREQUAL "macos")
+         add_custom_command(TARGET ledwiz_test POST_BUILD
+            COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libhidapi*.dylib" "$<TARGET_FILE_DIR:ledwiz_test>"
+         )
+      elseif(PLATFORM STREQUAL "linux")
+         add_custom_command(TARGET ledwiz_test POST_BUILD
+            COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libhidapi*.so*" "$<TARGET_FILE_DIR:ledwiz_test>"
+         )
+      endif()
+   endif()
+endif()
+
+# PacLed64 Direct Test Program
+if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
+   add_executable(pacled64_test
+      pacled64_direct_test.cpp
+   )
+
+   target_include_directories(pacled64_test PRIVATE
+      ${CMAKE_SOURCE_DIR}
+      ${CMAKE_SOURCE_DIR}/third-party/include
+   )
+
+   if(PLATFORM STREQUAL "win")
+      target_link_directories(pacled64_test PUBLIC
+         third-party/build-libs/${PLATFORM}/${ARCH}
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      if(ARCH STREQUAL "x64")
+         target_link_libraries(pacled64_test PUBLIC libusb64-1.0 ws2_32)
+      else()
+         target_link_libraries(pacled64_test PUBLIC libusb-1.0 ws2_32)
+      endif()
+   elseif(PLATFORM STREQUAL "macos")
+      target_link_directories(pacled64_test PUBLIC
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(pacled64_test PUBLIC usb-1.0)
+   elseif(PLATFORM STREQUAL "linux")
+      target_link_directories(pacled64_test PUBLIC
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(pacled64_test PUBLIC usb-1.0)
+   endif()
+
+   if(POST_BUILD_COPY_EXT_LIBS)
+      if(PLATFORM STREQUAL "win")
+         if(ARCH STREQUAL "x64")
+            add_custom_command(TARGET pacled64_test POST_BUILD
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libusb64-1.0.dll" "$<TARGET_FILE_DIR:pacled64_test>"
+            )
+         else()
+            add_custom_command(TARGET pacled64_test POST_BUILD
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libusb-1.0.dll" "$<TARGET_FILE_DIR:pacled64_test>"
+            )
+         endif()
+      elseif(PLATFORM STREQUAL "macos")
+         add_custom_command(TARGET pacled64_test POST_BUILD
+            COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libusb*.dylib" "$<TARGET_FILE_DIR:pacled64_test>"
+         )
+      elseif(PLATFORM STREQUAL "linux")
+         add_custom_command(TARGET pacled64_test POST_BUILD
+            COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libusb*.so*" "$<TARGET_FILE_DIR:pacled64_test>"
+         )
+      endif()
+   endif()
+endif()
