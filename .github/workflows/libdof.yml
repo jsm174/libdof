@@ -96,6 +96,8 @@ jobs:
              cp build/Release/dof_static.lib tmp
              cp build/Release/dof_test_s.exe tmp
              cp build/Release/dof_test.exe tmp
+             cp build/Release/ledwiz_test.exe tmp
+             cp build/Release/pacled64_test.exe tmp
           else
             ARTIFACT_PATH="libdof-${{ needs.version.outputs.tag }}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz"
             if [[ "${{ matrix.platform }}" == "macos" ]]; then
@@ -103,11 +105,15 @@ jobs:
                cp -a build/*.dylib tmp
                cp build/dof_test_s tmp
                cp build/dof_test tmp
+               cp build/ledwiz_test tmp
+               cp build/pacled64_test tmp
             elif [[ "${{ matrix.platform }}" == "linux" ]]; then
                cp build/libdof.a tmp
                cp -a build/*.{so,so.*} tmp
                cp build/dof_test_s tmp
                cp build/dof_test tmp
+               cp build/ledwiz_test tmp
+               cp build/pacled64_test tmp
             elif [[ "${{ matrix.platform }}" == "ios" || "${{ matrix.platform }}" == "ios-simulator" || "${{ matrix.platform }}" == "tvos" ]]; then
                cp build/libdof.a tmp
                cp -a build/*.dylib tmp

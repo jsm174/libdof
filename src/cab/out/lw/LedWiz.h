@@ -57,7 +57,7 @@ private:
 
    static std::string GetDeviceProductName(hid_device_info* dev);
    static std::string GetDeviceManufacturerName(hid_device_info* dev);
-   bool WriteUSB(const std::string& desc, const std::vector<uint8_t>& data);
+   bool WriteUSB(const std::vector<uint8_t>& data);
 
    int m_number;
    int m_minCommandIntervalMs;
