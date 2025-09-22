@@ -1,4 +1,5 @@
 #include "LedWiz.h"
+#include "LedWizOutput.h"
 #include "../../../Log.h"
 #include "../../../general/StringExtensions.h"
 #include "../../Cabinet.h"
@@ -23,6 +24,8 @@ namespace DOF
 {
 
 std::vector<LedWiz::LWDEVICE> LedWiz::s_deviceList = {};
+int LedWiz::s_startedUp = 0;
+std::mutex LedWiz::s_startupLocker;
 
 LedWiz::LedWiz()
 {
@@ -38,7 +41,14 @@ LedWiz::LedWiz(int number)
    SetNumber(number);
 }
 
-LedWiz::~LedWiz() { Finish(); }
+LedWiz::~LedWiz()
+{
+   if (m_fp)
+   {
+      AllOff();
+   }
+   DisconnectFromController();
+}
 
 
 void LedWiz::SetNumber(int value)
@@ -95,11 +105,46 @@ void LedWiz::Finish()
       AllOff();
    }
    DisconnectFromController();
-   OutputControllerCompleteBase::Finish();
    Log::Write(StringExtensions::Build("LedWiz Nr. {0:00} finished and updater thread stopped.", std::to_string(m_number)));
 }
 
 void LedWiz::Update() { }
+
+void LedWiz::OnOutputValueChanged(IOutput* output)
+{
+   if (!output || !m_fp)
+      return;
+
+   LedWizOutput* ledWizOutput = dynamic_cast<LedWizOutput*>(output);
+   if (!ledWizOutput)
+   {
+      Log::Exception(StringExtensions::Build("The OutputValueChanged event handler for LedWiz {0:00} has been called by a sender which is not a LedWizOutput.", std::to_string(m_number)));
+      return;
+   }
+
+   int ledWizOutputNumber = ledWizOutput->GetLedWizOutputNumber();
+   if (ledWizOutputNumber < 1 || ledWizOutputNumber > 32)
+   {
+      Log::Exception(StringExtensions::Build("LedWiz output numbers must be in the range of 1-32. The supplied output number {0} is out of range.", std::to_string(ledWizOutputNumber)));
+      return;
+   }
+
+   OutputList* outputs = GetOutputs();
+   if (!outputs)
+      return;
+
+   std::vector<uint8_t> outputValues(32, 0);
+   for (auto* out : *outputs)
+   {
+      LedWizOutput* lwOut = dynamic_cast<LedWizOutput*>(out);
+      if (lwOut && lwOut->GetLedWizOutputNumber() >= 1 && lwOut->GetLedWizOutputNumber() <= 32)
+      {
+         outputValues[lwOut->GetLedWizOutputNumber() - 1] = lwOut->GetOutput();
+      }
+   }
+
+   UpdateOutputs(outputValues);
+}
 
 void LedWiz::AddOutputs()
 {
@@ -112,7 +157,8 @@ void LedWiz::AddOutputs()
       bool found = false;
       for (auto* output : *outputs)
       {
-         if (output->GetNumber() == i)
+         LedWizOutput* lwOut = dynamic_cast<LedWizOutput*>(output);
+         if (lwOut && lwOut->GetLedWizOutputNumber() == i)
          {
             found = true;
             break;
@@ -121,10 +167,9 @@ void LedWiz::AddOutputs()
 
       if (!found)
       {
-         Output* newOutput = new Output();
+         LedWizOutput* newOutput = new LedWizOutput(i);
          newOutput->SetName(StringExtensions::Build("{0}.{1:00}", GetName(), std::to_string(i)));
-         newOutput->SetNumber(i);
-         outputs->push_back(newOutput);
+         outputs->Add(newOutput);
       }
    }
 }
@@ -135,8 +180,9 @@ void LedWiz::AllOff()
 {
    if (m_fp)
    {
-      std::vector<uint8_t> buf = { 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+      std::vector<uint8_t> buf = { 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00 };
       WriteUSB(buf);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
    }
 }
 
@@ -165,6 +211,16 @@ void LedWiz::ConnectToController()
             m_path = device.path;
             Log::Write(StringExtensions::Build("LedWiz {0} connected successfully", GetName()));
             m_oldOutputValues.resize(32, 0);
+
+            std::vector<uint8_t> initSba = { 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00 };
+            WriteUSB(initSba);
+
+            for (int ofs = 0; ofs < 32; ofs += 8)
+            {
+               std::vector<uint8_t> initPba = { 0x00, 49, 49, 49, 49, 49, 49, 49, 49 };
+               WriteUSB(initPba);
+            }
+
             return;
          }
       }
@@ -206,7 +262,7 @@ void LedWiz::UpdateOutputs(const std::vector<uint8_t>& newOutputValues)
 
    if (hasChanges)
    {
-      std::vector<uint8_t> sbaCmd = { 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+      std::vector<uint8_t> sbaCmd = { 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00 };
 
       for (int i = 0; i < 32 && i < static_cast<int>(newOutputValues.size()); ++i)
       {
@@ -248,69 +304,76 @@ bool LedWiz::WriteUSB(const std::vector<uint8_t>& data)
 
    int result = hid_write(m_fp, data.data(), data.size());
    if (result < 0)
-   {
-      Log::Write(StringExtensions::Build("LedWiz {0} WriteUSB failed after retries", std::to_string(m_number)));
       return false;
-   }
 
    return true;
 }
 
-void LedWiz::FindDevices()
+void LedWiz::StartupLedWiz()
 {
-   s_deviceList.clear();
-
-   hid_device_info* devs = hid_enumerate(0x0000, 0x0000);
-   hid_device_info* curDev = devs;
-
-   while (curDev)
+   std::lock_guard<std::mutex> lock(s_startupLocker);
+   if (s_startedUp == 0)
    {
-      std::string productName = GetDeviceProductName(curDev);
-      std::string manufacturerName = GetDeviceManufacturerName(curDev);
+      s_deviceList.clear();
 
-      char vidStr[8], pidStr[8];
-      snprintf(vidStr, sizeof(vidStr), "%04X", curDev->vendor_id);
-      snprintf(pidStr, sizeof(pidStr), "%04X", curDev->product_id);
+      hid_device_info* devs = hid_enumerate(0x0000, 0x0000);
+      hid_device_info* curDev = devs;
 
-      Log::Instrumentation("LedWizDiscovery",
-         StringExtensions::Build("Scanning HID at VID/PID: {0}/{1}, product string: {2}, manufacturer: {3}", std::string(vidStr), std::string(pidStr), productName, manufacturerName));
-
-      bool ok = false;
-      std::string okBecause;
-
-      if (curDev->vendor_id == 0xFAFA)
+      while (curDev)
       {
-         ok = true;
-         okBecause = "recognized by LedWiz vendor ID";
-      }
-      else if (curDev->vendor_id == 0x20A0)
-      {
-         std::regex zebsPattern("zebsboards", std::regex::ECMAScript | std::regex::icase);
-         if (std::regex_search(manufacturerName, zebsPattern))
+         std::string productName = GetDeviceProductName(curDev);
+         std::string manufacturerName = GetDeviceManufacturerName(curDev);
+
+         bool ok = false;
+
+         if (curDev->vendor_id == 0xFAFA)
          {
             ok = true;
-            okBecause = "recognized by ZebsBoards manufacturer";
          }
+         else if (curDev->vendor_id == 0x20A0)
+         {
+            std::regex zebsPattern("zebsboards", std::regex::ECMAScript | std::regex::icase);
+            if (std::regex_search(manufacturerName, zebsPattern))
+            {
+               ok = true;
+            }
+         }
+
+         if (ok)
+         {
+            int unitNo = (curDev->product_id & 0x0F) + 1;
+            if (unitNo < 1 || unitNo > 16)
+               unitNo = 1;
+
+            s_deviceList.emplace_back(unitNo, curDev->path, productName);
+
+            char pidHex[8];
+            snprintf(pidHex, sizeof(pidHex), "%04X", curDev->product_id);
+            Log::Write(StringExtensions::Build("Found LedWiz device: {0} (unit {1}) PID:{2} Path:{3}", productName, std::to_string(unitNo), std::string(pidHex), std::string(curDev->path)));
+         }
+
+         curDev = curDev->next;
       }
 
-      if (ok)
-      {
-         int unitNo = (curDev->product_id & 0x0F) + 1;
-         if (unitNo < 1 || unitNo > 16)
-            unitNo = 1;
-
-         s_deviceList.emplace_back(unitNo, curDev->path, productName);
-
-         Log::Write(StringExtensions::Build("Found LedWiz device: {0} (unit {1}, {2})", productName, std::to_string(unitNo), okBecause));
-      }
-
-      curDev = curDev->next;
+      hid_free_enumeration(devs);
    }
-
-   hid_free_enumeration(devs);
-
-   Log::Write(StringExtensions::Build("LedWiz device scan found {0} devices", std::to_string(s_deviceList.size())));
+   s_startedUp++;
 }
+
+void LedWiz::TerminateLedWiz()
+{
+   std::lock_guard<std::mutex> lock(s_startupLocker);
+   if (s_startedUp > 0)
+   {
+      s_startedUp--;
+      if (s_startedUp == 0)
+      {
+         s_deviceList.clear();
+      }
+   }
+}
+
+void LedWiz::FindDevices() { StartupLedWiz(); }
 
 std::string LedWiz::GetDeviceProductName(hid_device_info* dev)
 {
@@ -358,6 +421,8 @@ std::string LedWiz::GetDeviceManufacturerName(hid_device_info* dev)
 
 std::vector<int> LedWiz::GetLedwizNumbers()
 {
+   StartupLedWiz();
+
    std::vector<int> numbers;
    for (const auto& device : s_deviceList)
    {
@@ -368,7 +433,14 @@ std::vector<int> LedWiz::GetLedwizNumbers()
 
 tinyxml2::XMLElement* LedWiz::ToXml(tinyxml2::XMLDocument& doc) const
 {
-   tinyxml2::XMLElement* element = OutputControllerCompleteBase::ToXml(doc);
+   tinyxml2::XMLElement* element = doc.NewElement(GetXmlElementName().c_str());
+
+   if (!GetName().empty())
+   {
+      tinyxml2::XMLElement* nameElement = doc.NewElement("Name");
+      nameElement->SetText(GetName().c_str());
+      element->InsertEndChild(nameElement);
+   }
 
    tinyxml2::XMLElement* numberElement = doc.NewElement("Number");
    numberElement->SetText(m_number);
@@ -383,8 +455,11 @@ tinyxml2::XMLElement* LedWiz::ToXml(tinyxml2::XMLDocument& doc) const
 
 bool LedWiz::FromXml(const tinyxml2::XMLElement* element)
 {
-   if (!OutputControllerCompleteBase::FromXml(element))
-      return false;
+   const tinyxml2::XMLElement* nameElement = element->FirstChildElement("Name");
+   if (nameElement && nameElement->GetText())
+   {
+      SetName(nameElement->GetText());
+   }
 
    const tinyxml2::XMLElement* numberElement = element->FirstChildElement("Number");
    if (numberElement && numberElement->GetText())
