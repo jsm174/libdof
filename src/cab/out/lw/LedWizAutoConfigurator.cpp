@@ -17,8 +17,6 @@ LedWizAutoConfigurator::~LedWizAutoConfigurator() { }
 
 void LedWizAutoConfigurator::AutoConfig(Cabinet* cabinet)
 {
-   Log::Write("LedWiz auto-configuration starting");
-
    std::vector<int> preconfigured;
    for (IOutputController* oc : *cabinet->GetOutputControllers())
    {

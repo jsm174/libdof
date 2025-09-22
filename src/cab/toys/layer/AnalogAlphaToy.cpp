@@ -70,7 +70,6 @@ void AnalogAlphaToy::UpdateOutputs()
    if (m_output != nullptr)
    {
       int resultingValue = GetResultingValue();
-      Log::Debug(StringExtensions::Build("AnalogAlphaToy: {0}: {1}", m_output->GetName(), std::to_string(resultingValue)));
 
       if (m_fadingCurve != nullptr)
          m_output->SetOutput(m_fadingCurve->MapValue(resultingValue));

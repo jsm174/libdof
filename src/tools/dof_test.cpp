@@ -31,7 +31,7 @@ struct TestRom
 };
 
 std::vector<TestRom> testRoms = { { "ij_l7", "Indiana Jones L7" }, { "tna", "Total Nuclear Annihilation" }, { "gw", "The Getaway High Speed II" }, { "goldcue", "Gold Cue" },
-   { "bourne", "Bourne Identity" }, { "twenty4", "24" } };
+   { "bourne", "Bourne Identity" }, { "twenty4", "24" }, { "afm", "Attack From Mars" } };
 
 void LIBDOFCALLBACK LogCallback(DOF_LogLevel logLevel, const char* format, va_list args)
 {
@@ -298,6 +298,42 @@ void RunTwenty4Tests(DOF::DOF* pDof)
    pDof->Finish();
 }
 
+void RunAFMTests(DOF::DOF* pDof)
+{
+   pDof->Init("", "afm");
+
+   Log("========================================");
+   Log("Testing ROM: afm");
+   Log("========================================");
+
+   std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_START_DELAY));
+
+   TriggerOutputOnOff(pDof, 'S', 27);
+   TriggerOutputOnOff(pDof, 'S', 11);
+   TriggerOutputOnOff(pDof, 'S', 28);
+   TriggerOutputOnOff(pDof, 'W', 74);
+   TriggerOutputOnOff(pDof, 'S', 9);
+   TriggerOutputOnOff(pDof, 'S', 25);
+   TriggerOutputOnOff(pDof, 'S', 12);
+   TriggerOutputOnOff(pDof, 'S', 21);
+   TriggerOutputOnOff(pDof, 'S', 23);
+   TriggerOutputOnOff(pDof, 'S', 26);
+   TriggerOutputOnOff(pDof, 'S', 10);
+   TriggerOutputOnOff(pDof, 'S', 17);
+   TriggerOutputOnOff(pDof, 'S', 18);
+   TriggerOutputOnOff(pDof, 'S', 22);
+   TriggerOutputOnOff(pDof, 'W', 38);
+   TriggerOutputOnOff(pDof, 'S', 19);
+   TriggerOutputOnOff(pDof, 'S', 13);
+   TriggerOutputOnOff(pDof, 'S', 20);
+   TriggerOutputOnOff(pDof, 'W', 48);
+   TriggerOutputOnOff(pDof, 'W', 72);
+   TriggerOutputOnOff(pDof, 'S', 39);
+   TriggerOutputOnOff(pDof, 'W', 65);
+
+   pDof->Finish();
+}
+
 std::string GetDefaultBasePath()
 {
 #ifdef _WIN32
@@ -401,6 +437,8 @@ int main(int argc, const char* argv[])
                RunBourneTests(pDof);
             else if (testRom.name == "twenty4")
                RunTwenty4Tests(pDof);
+            else if (testRom.name == "afm")
+               RunAFMTests(pDof);
             break;
          }
       }
@@ -428,6 +466,7 @@ int main(int argc, const char* argv[])
       RunGoldcueTests(pDof);
       RunBourneTests(pDof);
       RunTwenty4Tests(pDof);
+      RunAFMTests(pDof);
    }
 
    Log("Shutting down...");

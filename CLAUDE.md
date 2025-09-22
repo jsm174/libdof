@@ -5,7 +5,7 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 
 **Current Status**: ~99.5% complete - Core architecture, effects system, device management, all controller types, shape effects with bitmap rendering at 100% 1:1 correspondence.
 
-**Recent Major Implementation**: Complete PAC controllers libusb migration - PacLed64, PacDrive, PacUIO migrated from HIDAPI to libusb via PacDriveSingleton for unified USB device management. Fixed PacLed64 individual LED protocol with 0-based numbering to match Ultimarc specification. All PAC controllers now use libusb control transfers with proper device permissions. Serial port handling improved with Linux-specific fixes for USB CDC device cleanup to prevent hanging on close operations.
+**Recent Major Implementation**: Fixed critical LedWiz event subscription chain - LedWiz outputs must use `OutputList::Add()` not `push_back()` to properly subscribe to output change events. This ensures the event flow: `Output::SetOutput()` → `OutputList::OutputValueChanged` → `OutputControllerBase` → `LedWiz::OnOutputValueChanged()` → `UpdateOutputs()` → USB commands. LedWiz inheritance corrected from `OutputControllerCompleteBase` to `OutputControllerBase` to match C# exactly. PAC controllers previously migrated to libusb with proper device permissions.
 
 ## Core Coding Principles
 
@@ -39,6 +39,7 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **Matrix Targeting**: Matrix effects only for matrix toys, AnalogToyValueEffect for single outputs
 - **Change Detection**: Initialize `m_oldOutputValues` to 255 to match C# exactly
 - **Timing Values**: Must match C# (e.g. FadeEffect 30ms, MatrixFlicker 30ms interval)
+- **OutputList Event Chain**: MUST use `OutputList::Add()` not `push_back()` - Add() automatically subscribes outputs to events for controller notifications
 
 ### Cross-Platform Requirements
 - **Manual Dependencies**: Build libusb, libftdi, libserialport, hidapi from source
@@ -55,11 +56,12 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **Arrays**: MSVC requires `{{0.0f, 0.0f}}` for std::array initialization`
 
 ### Test ROM Configurations
-- **ij_l7**: Blink + Fade effects 
-- **gw**: Blink + Fade effects 
+- **ij_l7**: Blink + Fade effects
+- **gw**: Blink + Fade effects
 - **tna**: Matrix effects
 - **bourne**: Bitmap effects
 - **goldcue**: Shape effects
+- **afm**: RGB toys + LedWiz testing
 
 ## Implementation Status
 

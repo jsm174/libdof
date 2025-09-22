@@ -256,6 +256,7 @@ if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "li
       src/cab/out/ftdichip/FT245RBitbangControllerAutoConfigurator.cpp
       src/cab/out/ftdichip/FTDI.cpp
       src/cab/out/lw/LedWiz.cpp
+      src/cab/out/lw/LedWizOutput.cpp
       src/cab/out/lw/LedWizAutoConfigurator.cpp
       src/cab/out/pac/PacLed64.cpp
       src/cab/out/pac/PacLed64AutoConfigurator.cpp

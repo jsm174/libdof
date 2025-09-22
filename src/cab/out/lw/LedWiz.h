@@ -1,14 +1,15 @@
 #pragma once
 
-#include "../OutputControllerCompleteBase.h"
+#include "../OutputControllerBase.h"
 #include <hidapi/hidapi.h>
 #include <string>
 #include <chrono>
+#include <mutex>
 
 namespace DOF
 {
 
-class LedWiz : public OutputControllerCompleteBase
+class LedWiz : public OutputControllerBase
 {
 public:
    LedWiz();
@@ -31,14 +32,20 @@ public:
    static void FindDevices();
    static std::vector<int> GetLedwizNumbers();
 
+private:
+   static void StartupLedWiz();
+   static void TerminateLedWiz();
+   static int s_startedUp;
+   static std::mutex s_startupLocker;
+
 protected:
-   virtual int GetNumberOfConfiguredOutputs() override { return 32; }
+   virtual void OnOutputValueChanged(IOutput* output) override;
 
-
-   virtual bool VerifySettings() override;
-   virtual void ConnectToController() override;
-   virtual void DisconnectFromController() override;
-   virtual void UpdateOutputs(const std::vector<uint8_t>& outputValues) override;
+private:
+   bool VerifySettings();
+   void ConnectToController();
+   void DisconnectFromController();
+   void UpdateOutputs(const std::vector<uint8_t>& outputValues);
 
 private:
    struct LWDEVICE
