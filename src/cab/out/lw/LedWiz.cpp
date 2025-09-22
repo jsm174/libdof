@@ -136,7 +136,7 @@ void LedWiz::AllOff()
    if (m_fp)
    {
       std::vector<uint8_t> buf = { 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-      WriteUSB("ALL OFF", buf);
+      WriteUSB(buf);
    }
 }
 
@@ -219,49 +219,37 @@ void LedWiz::UpdateOutputs(const std::vector<uint8_t>& newOutputValues)
          }
       }
 
-      WriteUSB("SBA", sbaCmd);
+      WriteUSB(sbaCmd);
 
-      for (int startOutput = 0; startOutput < 32; startOutput += 8)
+      for (int ofs = 0; ofs < 32; ofs += 8)
       {
-         std::vector<uint8_t> pbaCmd = { 0x00, static_cast<uint8_t>(0x20 + (startOutput / 8)), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+         std::vector<uint8_t> pbaCmd = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-         for (int i = 0; i < 8 && (startOutput + i) < static_cast<int>(newOutputValues.size()); ++i)
+         for (int i = 0; i < 8; ++i)
          {
-            pbaCmd[2 + i] = static_cast<uint8_t>((newOutputValues[startOutput + i] * 48) / 255);
+            int outputIndex = ofs + i;
+            if (outputIndex < static_cast<int>(newOutputValues.size()))
+            {
+               pbaCmd[1 + i] = static_cast<uint8_t>((newOutputValues[outputIndex] * 49) / 255);
+            }
          }
 
-         WriteUSB(StringExtensions::Build("PBA{0}", std::to_string(startOutput / 8)), pbaCmd);
+         WriteUSB(pbaCmd);
       }
 
       m_oldOutputValues = newOutputValues;
    }
 }
 
-bool LedWiz::WriteUSB(const std::string& desc, const std::vector<uint8_t>& data)
+bool LedWiz::WriteUSB(const std::vector<uint8_t>& data)
 {
    if (!m_fp || data.empty())
       return false;
 
-   std::vector<std::string> hexBytes;
-   for (uint8_t b : data)
-   {
-      char hexStr[4];
-      snprintf(hexStr, sizeof(hexStr), "%02X", b);
-      hexBytes.push_back(std::string(hexStr));
-   }
-   std::string hexString;
-   for (size_t i = 0; i < hexBytes.size(); ++i)
-   {
-      if (i > 0)
-         hexString += ", ";
-      hexString += hexBytes[i];
-   }
-   Log::Instrumentation("LedWiz", StringExtensions::Build("LedWiz Write {0} : {1}", desc, hexString));
-
    int result = hid_write(m_fp, data.data(), data.size());
    if (result < 0)
    {
-      Log::Write(StringExtensions::Build("LedWiz USB write failed for {0}: {1}", desc, hid_error(m_fp) ? reinterpret_cast<const char*>(hid_error(m_fp)) : "Unknown error"));
+      Log::Write(StringExtensions::Build("LedWiz {0} WriteUSB failed after retries", std::to_string(m_number)));
       return false;
    }
 
@@ -297,7 +285,7 @@ void LedWiz::FindDevices()
       }
       else if (curDev->vendor_id == 0x20A0)
       {
-         std::regex zebsPattern("(?i)zebsboards");
+         std::regex zebsPattern("zebsboards", std::regex::ECMAScript | std::regex::icase);
          if (std::regex_search(manufacturerName, zebsPattern))
          {
             ok = true;

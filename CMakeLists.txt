@@ -333,7 +333,7 @@ if(BUILD_SHARED)
 
    if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
       add_executable(dof_test
-         src/test.cpp
+         src/tools/dof_test.cpp
       )
       target_link_libraries(dof_test PUBLIC dof_shared)
 
@@ -399,7 +399,7 @@ if(BUILD_STATIC)
 
    if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
       add_executable(dof_test_s
-         src/test.cpp
+         src/tools/dof_test.cpp
       )
 
       if(PLATFORM STREQUAL "win")
@@ -461,4 +461,72 @@ if(BUILD_STATIC)
          endif()
       endif()
    endif()
+endif()
+
+if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
+   add_executable(ledwiz_test
+      src/tools/ledwiz_test.cpp
+   )
+
+   target_include_directories(ledwiz_test PRIVATE
+      ${CMAKE_SOURCE_DIR}
+      ${CMAKE_SOURCE_DIR}/third-party/include
+   )
+
+   if(PLATFORM STREQUAL "win")
+      target_link_directories(ledwiz_test PUBLIC
+         third-party/build-libs/${PLATFORM}/${ARCH}
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      if(ARCH STREQUAL "x64")
+         target_link_libraries(ledwiz_test PUBLIC hidapi64)
+      else()
+         target_link_libraries(ledwiz_test PUBLIC hidapi)
+      endif()
+   elseif(PLATFORM STREQUAL "macos")
+      target_link_directories(ledwiz_test PUBLIC
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(ledwiz_test PUBLIC hidapi)
+   elseif(PLATFORM STREQUAL "linux")
+      target_link_directories(ledwiz_test PUBLIC
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(ledwiz_test PUBLIC hidapi-hidraw)
+   endif()
+
+endif()
+
+if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
+   add_executable(pacled64_test
+      src/tools/pacled64_test.cpp
+   )
+
+   target_include_directories(pacled64_test PRIVATE
+      ${CMAKE_SOURCE_DIR}
+      ${CMAKE_SOURCE_DIR}/third-party/include
+   )
+
+   if(PLATFORM STREQUAL "win")
+      target_link_directories(pacled64_test PUBLIC
+         third-party/build-libs/${PLATFORM}/${ARCH}
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      if(ARCH STREQUAL "x64")
+         target_link_libraries(pacled64_test PUBLIC libusb64-1.0)
+      else()
+         target_link_libraries(pacled64_test PUBLIC libusb-1.0)
+      endif()
+   elseif(PLATFORM STREQUAL "macos")
+      target_link_directories(pacled64_test PUBLIC
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(pacled64_test PUBLIC usb-1.0)
+   elseif(PLATFORM STREQUAL "linux")
+      target_link_directories(pacled64_test PUBLIC
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(pacled64_test PUBLIC usb-1.0)
+   endif()
+
 endif()

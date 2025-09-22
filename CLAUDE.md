@@ -105,6 +105,7 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **DudesCab**: hidapi HID multi-part messages
 - **DMX**: UDP ArtNet broadcast port 6454
 - **PinOne**: Named pipes with Base64 encoding over text
+- **LedWiz**: HIDAPI 9-byte packets (SBA: `[0x00, 0x40, bank0-3, globalSpeed, 0, 0]`, PBA: 4 chunks of `[0x00, bright1-8]` with 0-49 PWM range, ZebsBoards VID 0x20A0 supported)
 - **PAC Controllers**: libusb control transfers (PacLed64: individual LED intensity with 0-based numbering, PacDrive: 16-bit LED bitmask, PacUIO: via PacDriveSingleton)
 
 ### Linux Serial Port Handling (Critical)
