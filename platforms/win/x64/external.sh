@@ -82,9 +82,9 @@ cd ..
 # build libftdi and copy to third-party
 #
 
-curl -sL "http://developer.intra2net.com/git/?p=libftdi;a=snapshot;h=${LIBFTDI_SHA};sf=tgz" -o libftdi-${LIBFTDI_SHA}.tar.gz
+curl -sL https://github.com/jsm174/libftdi/archive/${LIBFTDI_SHA}.tar.gz -o libftdi-${LIBFTDI_SHA}.tar.gz
 tar xzf libftdi-${LIBFTDI_SHA}.tar.gz
-mv libftdi-${LIBFTDI_SHA:0:7} libftdi
+mv libftdi-${LIBFTDI_SHA} libftdi
 cd libftdi
 sed -i.bak 's/cmake_minimum_required([^)]*)/cmake_minimum_required(VERSION 3.10)/' CMakeLists.txt
 sed -i.bak 's/set_target_properties(ftdi1 PROPERTIES VERSION ${VERSION_FIXUP}\.${MINOR_VERSION}\.0 SOVERSION 2)/set_target_properties(ftdi1 PROPERTIES OUTPUT_NAME "ftdi164" VERSION ${VERSION_FIXUP}.${MINOR_VERSION}.0 SOVERSION 2)/' src/CMakeLists.txt

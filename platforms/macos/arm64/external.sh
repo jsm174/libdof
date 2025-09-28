@@ -61,7 +61,7 @@ tar xzf hidapi-${HIDAPI_SHA}.tar.gz
 mv hidapi-${HIDAPI_SHA} hidapi
 cd hidapi
 cmake \
-   -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
+   -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 \
    -DCMAKE_OSX_ARCHITECTURES=arm64 \
    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
    -B build
@@ -74,9 +74,9 @@ cd ..
 # build libftdi and copy to third-party
 #
 
-curl -sL "http://developer.intra2net.com/git/?p=libftdi;a=snapshot;h=${LIBFTDI_SHA};sf=tgz" -o libftdi-${LIBFTDI_SHA}.tar.gz
+curl -sL https://github.com/jsm174/libftdi/archive/${LIBFTDI_SHA}.tar.gz -o libftdi-${LIBFTDI_SHA}.tar.gz
 tar xzf libftdi-${LIBFTDI_SHA}.tar.gz
-mv libftdi-${LIBFTDI_SHA:0:7} libftdi
+mv libftdi-${LIBFTDI_SHA} libftdi
 cd libftdi
 sed -i.bak 's/cmake_minimum_required(VERSION 2.6 FATAL_ERROR)/cmake_minimum_required(VERSION 3.10)\ncmake_policy(SET CMP0042 NEW)/' CMakeLists.txt
 cmake \
@@ -85,7 +85,7 @@ cmake \
    -DSTATICLIBS=OFF \
    -DLIBUSB_INCLUDE_DIR=../libusb/libusb \
    -DLIBUSB_LIBRARIES=$(pwd)/../libusb/libusb/.libs/libusb-1.0.dylib \
-   -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 \
+   -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 \
    -DCMAKE_OSX_ARCHITECTURES=arm64 \
    -DCMAKE_INSTALL_NAME_DIR=@rpath \
    -DCMAKE_INSTALL_RPATH=@loader_path \
