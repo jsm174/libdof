@@ -176,24 +176,25 @@ std::string ReplaceArgument(const std::string& format, int argIndex, const std::
    std::string result = format;
    std::string pattern = "{" + std::to_string(argIndex);
 
-   size_t pos = result.find(pattern);
-   if (pos != std::string::npos)
+   size_t pos = 0;
+   while ((pos = result.find(pattern, pos)) != std::string::npos)
    {
       size_t endPos = result.find("}", pos);
-      if (endPos != std::string::npos)
+      if (endPos == std::string::npos)
+         break;
+
+      std::string placeholder = result.substr(pos, endPos - pos + 1);
+      std::string formattedArg = arg;
+
+      size_t colonPos = placeholder.find(":");
+      if (colonPos != std::string::npos)
       {
-         std::string placeholder = result.substr(pos, endPos - pos + 1);
-         std::string formattedArg = arg;
-
-         size_t colonPos = placeholder.find(":");
-         if (colonPos != std::string::npos)
-         {
-            std::string formatSpec = placeholder.substr(colonPos + 1, placeholder.length() - colonPos - 2);
-            formattedArg = FormatArgument(arg, formatSpec);
-         }
-
-         result.replace(pos, endPos - pos + 1, formattedArg);
+         std::string formatSpec = placeholder.substr(colonPos + 1, placeholder.length() - colonPos - 2);
+         formattedArg = FormatArgument(arg, formatSpec);
       }
+
+      result.replace(pos, endPos - pos + 1, formattedArg);
+      pos += formattedArg.length();
    }
    return result;
 }
