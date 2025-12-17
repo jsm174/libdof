@@ -84,16 +84,12 @@ std::string PinOneAutoConfigurator::TestSerialPort(const char* portName)
    try
    {
       if (sp_get_port_by_name(portName, &port) != SP_OK)
-      {
-         Log::Write(StringExtensions::Build("PinOne TestSerialPort: sp_get_port_by_name failed for {0}", std::string(portName)));
          return "";
-      }
 
       std::string portPath(portName);
       std::ifstream portFile(portPath);
       if (!portFile.good())
       {
-         Log::Write(StringExtensions::Build("PinOne TestSerialPort: Port file does not exist: {0}", portPath));
          sp_free_port(port);
          return "";
       }
@@ -101,12 +97,9 @@ std::string PinOneAutoConfigurator::TestSerialPort(const char* portName)
 
       if (sp_open(port, SP_MODE_READ_WRITE) != SP_OK)
       {
-         Log::Write(StringExtensions::Build("PinOne TestSerialPort: sp_open failed for {0}", std::string(portName)));
          sp_free_port(port);
          return "";
       }
-
-      Log::Write(StringExtensions::Build("PinOne TestSerialPort: Opened port {0}, configuring...", std::string(portName)));
 
       sp_set_baudrate(port, 2000000);
       sp_set_bits(port, 8);
@@ -123,45 +116,25 @@ std::string PinOneAutoConfigurator::TestSerialPort(const char* portName)
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
       uint8_t command[] = { 0, 251, 0, 0, 0, 0, 0, 0, 0 };
-      Log::Write(StringExtensions::Build("PinOne TestSerialPort: Sending detection command to {0}", std::string(portName)));
       sp_blocking_write(port, command, 9, 100);
 
       char buffer[256];
       int bytesRead = sp_blocking_read(port, buffer, sizeof(buffer) - 1, 100);
-
-      Log::Write(StringExtensions::Build("PinOne TestSerialPort: Read {0} bytes from {1}", std::to_string(bytesRead), std::string(portName)));
 
       if (bytesRead > 0)
       {
          buffer[bytesRead] = '\0';
          std::string result(buffer);
 
-         std::string hexDump;
-         for (int i = 0; i < bytesRead; i++)
-            hexDump += StringExtensions::Build("{0} ", std::to_string((unsigned char)buffer[i]));
-         Log::Write(StringExtensions::Build("PinOne TestSerialPort: Raw bytes: {0}", hexDump));
-         Log::Write(StringExtensions::Build("PinOne TestSerialPort: Response string: [{0}]", result));
-
          while (!result.empty() && (result.back() == '\r' || result.back() == '\n'))
             result.pop_back();
 
-         Log::Write(StringExtensions::Build("PinOne TestSerialPort: After stripping line endings: [{0}]", result));
-
          if (result == "DEBUG,CSD Board Connected")
          {
-            Log::Write(StringExtensions::Build("PinOne TestSerialPort: SUCCESS - PinOne detected on {0}", std::string(portName)));
             sp_close(port);
             sp_free_port(port);
             return std::string(portName);
          }
-         else
-         {
-            Log::Write("PinOne TestSerialPort: Response does not match expected string");
-         }
-      }
-      else
-      {
-         Log::Write(StringExtensions::Build("PinOne TestSerialPort: No response from {0}", std::string(portName)));
       }
 
       sp_flush(port, SP_BUF_BOTH);
@@ -173,7 +146,6 @@ std::string PinOneAutoConfigurator::TestSerialPort(const char* portName)
    }
    catch (...)
    {
-      Log::Write(StringExtensions::Build("PinOne TestSerialPort: Exception while testing {0}", std::string(portName)));
       if (port)
       {
          try
@@ -198,20 +170,9 @@ std::string PinOneAutoConfigurator::TestSerialPort(const char* portName)
 
 std::string PinOneAutoConfigurator::GetDevice()
 {
-   Log::Write("PinOne GetDevice: Starting serial port enumeration");
-
    struct sp_port** portList;
    if (sp_list_ports(&portList) != SP_OK)
-   {
-      Log::Write("PinOne GetDevice: sp_list_ports failed");
       return "";
-   }
-
-   int portCount = 0;
-   while (portList[portCount] != nullptr)
-      portCount++;
-
-   Log::Write(StringExtensions::Build("PinOne GetDevice: Found {0} serial ports", std::to_string(portCount)));
 
    for (int i = 0; portList[i] != nullptr; i++)
    {
@@ -219,12 +180,9 @@ std::string PinOneAutoConfigurator::GetDevice()
       if (!portName)
          continue;
 
-      Log::Write(StringExtensions::Build("PinOne GetDevice: Testing port {0}", std::string(portName)));
-
       std::string result = TestSerialPort(portName);
       if (!result.empty())
       {
-         Log::Write(StringExtensions::Build("PinOne GetDevice: Found PinOne on {0}", result));
          sp_free_port_list(portList);
          return result;
       }
@@ -232,19 +190,10 @@ std::string PinOneAutoConfigurator::GetDevice()
 
    sp_free_port_list(portList);
 
-   Log::Write("PinOne GetDevice: No PinOne found on serial ports, trying named pipe server");
-
    std::string comPort = "";
    PinOneCommunication communication("");
    if (communication.ConnectToServer())
-   {
       comPort = communication.GetCOMPort();
-      Log::Write(StringExtensions::Build("PinOne GetDevice: Got COM port from server: {0}", comPort));
-   }
-   else
-   {
-      Log::Write("PinOne GetDevice: Named pipe server connection failed");
-   }
 
    return comPort;
 }
