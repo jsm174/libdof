@@ -86,7 +86,6 @@ std::string PinOneAutoConfigurator::TestSerialPort(const char* portName)
       if (sp_get_port_by_name(portName, &port) != SP_OK)
          return "";
 
-      // Check if port file actually exists before trying to open it
       std::string portPath(portName);
       std::ifstream portFile(portPath);
       if (!portFile.good())
@@ -102,7 +101,6 @@ std::string PinOneAutoConfigurator::TestSerialPort(const char* portName)
          return "";
       }
 
-      // Set very short timeouts to prevent hanging
       sp_set_baudrate(port, 2000000);
       sp_set_bits(port, 8);
       sp_set_parity(port, SP_PARITY_NONE);
@@ -127,6 +125,10 @@ std::string PinOneAutoConfigurator::TestSerialPort(const char* portName)
       {
          buffer[bytesRead] = '\0';
          std::string result(buffer);
+
+         while (!result.empty() && (result.back() == '\r' || result.back() == '\n'))
+            result.pop_back();
+
          if (result == "DEBUG,CSD Board Connected")
          {
             sp_close(port);
@@ -135,7 +137,6 @@ std::string PinOneAutoConfigurator::TestSerialPort(const char* portName)
          }
       }
 
-      // Force flush and set non-blocking mode before closing to prevent hang
       sp_flush(port, SP_BUF_BOTH);
       sp_set_rts(port, SP_RTS_OFF);
       sp_set_dtr(port, SP_DTR_OFF);
@@ -154,7 +155,7 @@ std::string PinOneAutoConfigurator::TestSerialPort(const char* portName)
             sp_set_dtr(port, SP_DTR_OFF);
          }
          catch (...)
-         { /* Ignore errors in cleanup */
+         {
          }
 
          sp_close(port);
@@ -162,7 +163,6 @@ std::string PinOneAutoConfigurator::TestSerialPort(const char* portName)
       }
    }
 
-   // Small delay to ensure port cleanup completes
    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
    return "";
@@ -174,17 +174,12 @@ std::string PinOneAutoConfigurator::GetDevice()
    if (sp_list_ports(&portList) != SP_OK)
       return "";
 
-   int portCount = 0;
-   while (portList[portCount] != nullptr)
-      portCount++;
-
    for (int i = 0; portList[i] != nullptr; i++)
    {
       char* portName = sp_get_port_name(portList[i]);
       if (!portName)
          continue;
 
-      // Test each port synchronously with timeouts matching C# version (100ms)
       std::string result = TestSerialPort(portName);
       if (!result.empty())
       {
@@ -198,9 +193,7 @@ std::string PinOneAutoConfigurator::GetDevice()
    std::string comPort = "";
    PinOneCommunication communication("");
    if (communication.ConnectToServer())
-   {
       comPort = communication.GetCOMPort();
-   }
 
    return comPort;
 }
