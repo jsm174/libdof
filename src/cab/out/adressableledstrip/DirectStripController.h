@@ -4,6 +4,7 @@
 #include "../OutputControllerBase.h"
 #include "../ISupportsSetValues.h"
 #include "DirectStripControllerApi.h"
+#include <atomic>
 #include <vector>
 #include <mutex>
 #include <thread>
@@ -68,6 +69,7 @@ private:
    std::condition_variable m_updateCondition;
    mutable std::mutex m_conditionMutex;
    bool m_keepUpdaterThreadAlive;
+   std::atomic<bool> m_updaterThreadFinished { false };
 
    DirectStripControllerApi* m_controller;
 };

@@ -3,6 +3,7 @@
 #include "DOF/DOF.h"
 #include "OutputControllerBase.h"
 #include "ISupportsSetValues.h"
+#include <atomic>
 #include <mutex>
 #include <vector>
 #include <thread>
@@ -70,6 +71,7 @@ private:
    std::condition_variable m_updateCondition;
    mutable std::mutex m_conditionMutex;
    bool m_keepUpdaterThreadAlive;
+   std::atomic<bool> m_updaterThreadFinished { false };
    void UpdaterThreadDoIt();
 };
 

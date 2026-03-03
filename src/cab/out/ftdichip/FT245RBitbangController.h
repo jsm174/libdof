@@ -62,9 +62,10 @@ private:
    std::mutex m_updaterThreadLocker;
    std::condition_variable m_updaterThreadCondition;
    std::atomic<bool> m_keepUpdaterThreadAlive;
+   std::atomic<bool> m_updaterThreadFinished;
    int m_firstTryFailCnt;
 
-   std::mutex m_ftdiLocker;
+   std::recursive_mutex m_ftdiLocker;
    FTDI* m_ftdi;
 
    void Connect();

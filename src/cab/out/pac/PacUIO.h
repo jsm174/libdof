@@ -63,6 +63,7 @@ private:
       std::mutex m_pacUIOUpdaterThreadLocker;
       std::condition_variable m_triggerCondition;
       std::atomic<bool> m_triggerUpdate { false };
+      std::atomic<bool> m_updaterThreadFinished { false };
 
    public:
       PacUIOUnit(int id);

@@ -293,6 +293,7 @@ void PacLed64::PacLed64Unit::StartPacLed64UpdaterThread()
    if (!IsUpdaterThreadAlive())
    {
       m_keepPacLed64UpdaterAlive = true;
+      m_updaterThreadFinished = false;
       m_pacLed64Updater = std::thread(&PacLed64Unit::PacLed64UpdaterDoIt, this);
    }
 }
@@ -308,7 +309,16 @@ void PacLed64::PacLed64Unit::TerminatePacLed64UpdaterThread()
 
    if (m_pacLed64Updater.joinable())
    {
-      m_pacLed64Updater.join();
+      auto start = std::chrono::steady_clock::now();
+      while (!m_updaterThreadFinished && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 1000)
+      {
+         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+
+      if (m_updaterThreadFinished)
+         m_pacLed64Updater.join();
+      else
+         m_pacLed64Updater.detach();
    }
 }
 
@@ -321,6 +331,7 @@ void PacLed64::PacLed64Unit::PacLed64UpdaterDoIt()
    catch (const std::exception& e)
    {
       Log::Exception(StringExtensions::Build("Exception occurred while setting fade time for PacLed64 {0} to 0: {1}", std::to_string(m_index), e.what()));
+      m_updaterThreadFinished = true;
       return;
    }
 
@@ -355,6 +366,7 @@ void PacLed64::PacLed64Unit::PacLed64UpdaterDoIt()
       }
       m_triggerUpdate = false;
    }
+   m_updaterThreadFinished = true;
 }
 
 void PacLed64::PacLed64Unit::SendPacLed64Update()

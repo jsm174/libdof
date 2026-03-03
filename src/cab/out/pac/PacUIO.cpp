@@ -205,6 +205,7 @@ void PacUIO::PacUIOUnit::StartPacUIOUpdaterThread()
    if (!IsUpdaterThreadAlive())
    {
       m_keepPacUIOUpdaterAlive.store(true);
+      m_updaterThreadFinished = false;
       m_pacUIOUpdater = std::thread(&PacUIOUnit::PacUIOUpdaterDoIt, this);
    }
 }
@@ -218,10 +219,16 @@ void PacUIO::PacUIOUnit::TerminatePacUIOUpdaterThread()
       TriggerPacUIOUpdaterThread();
       lock.unlock();
 
-      if (m_pacUIOUpdater.joinable())
+      auto start = std::chrono::steady_clock::now();
+      while (!m_updaterThreadFinished && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 1000)
       {
-         m_pacUIOUpdater.join();
+         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
+
+      if (m_updaterThreadFinished)
+         m_pacUIOUpdater.join();
+      else
+         m_pacUIOUpdater.detach();
    }
 }
 
@@ -240,6 +247,7 @@ void PacUIO::PacUIOUnit::PacUIOUpdaterDoIt()
    catch (const std::exception& e)
    {
       Log::Exception(StringExtensions::Build("A exception occurred while setting the fadetime for PacUIO {0} to 0.", std::to_string(m_index)));
+      m_updaterThreadFinished = true;
       return;
    }
 
@@ -274,6 +282,7 @@ void PacUIO::PacUIOUnit::PacUIOUpdaterDoIt()
       }
       m_triggerUpdate.store(false);
    }
+   m_updaterThreadFinished = true;
 }
 
 void PacUIO::PacUIOUnit::SendPacUIOUpdate()

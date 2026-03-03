@@ -186,6 +186,7 @@ void PacDrive::PacDriveUnit::StartPacDriveUpdaterThread()
    if (!IsUpdaterThreadAlive())
    {
       m_keepPacDriveUpdaterAlive = true;
+      m_updaterThreadFinished = false;
       m_pacDriveUpdater = std::thread(&PacDriveUnit::PacDriveUpdaterDoIt, this);
    }
 }
@@ -201,7 +202,16 @@ void PacDrive::PacDriveUnit::TerminatePacDriveUpdaterThread()
 
    if (m_pacDriveUpdater.joinable())
    {
-      m_pacDriveUpdater.join();
+      auto start = std::chrono::steady_clock::now();
+      while (!m_updaterThreadFinished && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 1000)
+      {
+         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+
+      if (m_updaterThreadFinished)
+         m_pacDriveUpdater.join();
+      else
+         m_pacDriveUpdater.detach();
    }
 }
 
@@ -237,6 +247,7 @@ void PacDrive::PacDriveUnit::PacDriveUpdaterDoIt()
       }
       m_triggerUpdate = false;
    }
+   m_updaterThreadFinished = true;
 }
 
 void PacDrive::PacDriveUnit::SendPacDriveUpdate()

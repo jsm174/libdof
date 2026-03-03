@@ -65,7 +65,7 @@ void PinControl::UpdateOutputs(const std::vector<uint8_t>& outputValues)
 {
    if (m_port)
    {
-      std::lock_guard<std::mutex> lock(m_portLocker);
+      std::lock_guard<std::recursive_mutex> lock(m_portLocker);
 
       for (int i = 0; i < 7 && i < static_cast<int>(outputValues.size()); i++)
       {
@@ -115,7 +115,7 @@ void PinControl::UpdateOutputs(const std::vector<uint8_t>& outputValues)
 
 void PinControl::ConnectToController()
 {
-   std::lock_guard<std::mutex> lock(m_portLocker);
+   std::lock_guard<std::recursive_mutex> lock(m_portLocker);
 
    try
    {
@@ -151,7 +151,7 @@ void PinControl::ConnectToController()
 
 void PinControl::DisconnectFromController()
 {
-   std::lock_guard<std::mutex> lock(m_portLocker);
+   std::lock_guard<std::recursive_mutex> lock(m_portLocker);
 
    if (m_port != nullptr)
    {

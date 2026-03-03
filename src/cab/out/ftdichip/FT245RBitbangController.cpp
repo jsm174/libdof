@@ -19,6 +19,7 @@ FT245RBitbangController::FT245RBitbangController()
    , m_newValue(0)
    , m_currentValue(255)
    , m_keepUpdaterThreadAlive(false)
+   , m_updaterThreadFinished(false)
    , m_firstTryFailCnt(0)
    , m_updaterThread(nullptr)
    , m_ftdi(nullptr)
@@ -86,7 +87,7 @@ void FT245RBitbangController::AddOutputs()
          Output* newOutput = new Output();
          newOutput->SetName(StringExtensions::Build("{0}.{1:00}", GetName(), std::to_string(i)));
          newOutput->SetNumber(i);
-         outputs->push_back(newOutput);
+         outputs->Add(newOutput);
       }
    }
 }
@@ -125,6 +126,7 @@ void FT245RBitbangController::InitUpdaterThread()
    if (!GetUpdaterThreadIsActive())
    {
       m_keepUpdaterThreadAlive = true;
+      m_updaterThreadFinished = false;
       try
       {
          m_updaterThread = new std::thread(&FT245RBitbangController::UpdaterThreadDoIt, this);
@@ -148,7 +150,16 @@ void FT245RBitbangController::FinishUpdaterThread()
 
          if (m_updaterThread->joinable())
          {
-            m_updaterThread->join();
+            auto start = std::chrono::steady_clock::now();
+            while (!m_updaterThreadFinished && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 1000)
+            {
+               std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+
+            if (m_updaterThreadFinished)
+               m_updaterThread->join();
+            else
+               m_updaterThread->detach();
          }
          delete m_updaterThread;
          m_updaterThread = nullptr;
@@ -173,6 +184,7 @@ void FT245RBitbangController::UpdaterThreadDoIt()
    if (!m_ftdi)
    {
       Log::Warning(StringExtensions::Build("No connection to FTDI chip {0}. Updater thread will terminate.", m_serialNumber));
+      m_updaterThreadFinished = true;
       return;
    }
 
@@ -184,6 +196,7 @@ void FT245RBitbangController::UpdaterThreadDoIt()
    {
       Log::Exception(StringExtensions::Build("Could not send initial update to FTDI chip {0}. Updater thread will terminate.", m_serialNumber));
       Disconnect();
+      m_updaterThreadFinished = true;
       return;
    }
 
@@ -254,11 +267,12 @@ void FT245RBitbangController::UpdaterThreadDoIt()
       Log::Exception(StringExtensions::Build("Final update to turn off all output for FTDI chip {0} failed.", m_serialNumber));
    }
    Disconnect();
+   m_updaterThreadFinished = true;
 }
 
 void FT245RBitbangController::Connect()
 {
-   std::lock_guard<std::mutex> lock(m_ftdiLocker);
+   std::lock_guard<std::recursive_mutex> lock(m_ftdiLocker);
 
    if (m_ftdi)
    {
@@ -291,7 +305,8 @@ void FT245RBitbangController::Connect()
 
    try
    {
-      FTDI::FT_STATUS status = m_ftdi->SetBitMode(0xFF, 0x04);
+      // C# uses FT_BIT_MODE_SYNC_BITBANG (0x04) via proprietary FTD2XX.dll. libftdi requires async bitbang (0x01) for equivalent behavior.
+      FTDI::FT_STATUS status = m_ftdi->SetBitMode(0xFF, 0x01);
       if (status != FTDI::FT_OK)
       {
          throw std::runtime_error("Failed to set bitbang mode");
@@ -311,7 +326,7 @@ void FT245RBitbangController::Connect()
 
 void FT245RBitbangController::SendUpdate(uint8_t outputData)
 {
-   std::lock_guard<std::mutex> lock(m_ftdiLocker);
+   std::lock_guard<std::recursive_mutex> lock(m_ftdiLocker);
 
    if (m_ftdi)
    {
@@ -333,7 +348,7 @@ void FT245RBitbangController::SendUpdate(uint8_t outputData)
 
 void FT245RBitbangController::Disconnect()
 {
-   std::lock_guard<std::mutex> lock(m_ftdiLocker);
+   std::lock_guard<std::recursive_mutex> lock(m_ftdiLocker);
 
    if (m_ftdi)
    {
