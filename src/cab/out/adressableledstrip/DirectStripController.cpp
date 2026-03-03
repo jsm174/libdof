@@ -6,7 +6,6 @@
 #include "../../../general/MathExtensions.h"
 #include <algorithm>
 #include <cstring>
-#include <future>
 
 namespace DOF
 {
@@ -138,6 +137,7 @@ void DirectStripController::InitUpdaterThread()
    if (!IsUpdaterThreadActive())
    {
       m_keepUpdaterThreadAlive = true;
+      m_updaterThreadFinished = false;
       try
       {
          m_updaterThread = new std::thread(&DirectStripController::UpdaterThreadDoIt, this);
@@ -159,11 +159,21 @@ void DirectStripController::FinishUpdaterThread()
          m_keepUpdaterThreadAlive = false;
          UpdaterThreadSignal();
 
-         auto future = std::async(std::launch::async, [this]() { m_updaterThread->join(); });
-
-         if (future.wait_for(std::chrono::milliseconds(1000)) == std::future_status::timeout)
+         if (m_updaterThread->joinable())
          {
-            Log::Warning("DirectStripController updater thread did not quit within timeout.");
+            auto start = std::chrono::steady_clock::now();
+            while (!m_updaterThreadFinished && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 1000)
+            {
+               std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+
+            if (m_updaterThreadFinished)
+               m_updaterThread->join();
+            else
+            {
+               Log::Warning("DirectStripController updater thread did not quit within timeout.");
+               m_updaterThread->detach();
+            }
          }
 
          delete m_updaterThread;
@@ -194,6 +204,8 @@ void DirectStripController::UpdaterThreadDoIt()
          Log::Warning(StringExtensions::Build("WS2811 Strip Controller Nr. {0} is not present. Will not send updates.", std::to_string(m_controllerNumber)));
          delete m_controller;
          m_controller = nullptr;
+         m_updaterThreadFinished = true;
+         return;
       }
    }
 
@@ -244,6 +256,7 @@ void DirectStripController::UpdaterThreadDoIt()
       delete m_controller;
       m_controller = nullptr;
    }
+   m_updaterThreadFinished = true;
 }
 
 bool DirectStripController::FromXml(const tinyxml2::XMLElement* element)

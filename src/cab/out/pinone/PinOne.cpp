@@ -148,7 +148,7 @@ void PinOne::ConnectToController()
 {
    try
    {
-      std::lock_guard<std::mutex> lock(m_portLocker);
+      std::lock_guard<std::recursive_mutex> lock(m_portLocker);
 
       if (m_pinOneCommunication)
          DisconnectFromController();
@@ -180,7 +180,7 @@ void PinOne::ConnectToController()
 
 void PinOne::DisconnectFromController()
 {
-   std::lock_guard<std::mutex> lock(m_portLocker);
+   std::lock_guard<std::recursive_mutex> lock(m_portLocker);
 
    if (m_pinOneCommunication)
    {

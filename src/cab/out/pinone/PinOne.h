@@ -24,7 +24,7 @@ private:
 
    std::string m_comPort = "comm1";
    bool m_comPortSet = false;
-   std::mutex m_portLocker;
+   std::recursive_mutex m_portLocker;
    PinOneCommunication* m_pinOneCommunication = nullptr;
 
    std::vector<uint8_t> m_oldOutputValues;

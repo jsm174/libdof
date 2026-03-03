@@ -6,7 +6,6 @@
 #include <cstring>
 #include <condition_variable>
 #include <memory>
-#include <future>
 
 namespace DOF
 {
@@ -217,6 +216,7 @@ void OutputControllerCompleteBase::InitUpdaterThread()
    if (!IsUpdaterThreadActive())
    {
       m_keepUpdaterThreadAlive = true;
+      m_updaterThreadFinished = false;
       try
       {
          m_updaterThread = std::make_unique<std::thread>(&OutputControllerCompleteBase::UpdaterThreadDoIt, this);
@@ -237,20 +237,14 @@ void OutputControllerCompleteBase::FinishUpdaterThread()
       UpdaterThreadSignal();
 
       auto start = std::chrono::steady_clock::now();
-      bool joined = false;
-
-      while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 1000)
+      while (!m_updaterThreadFinished && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 1000)
       {
-         if (!IsUpdaterThreadActive())
-         {
-            m_updaterThread->join();
-            joined = true;
-            break;
-         }
          std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
 
-      if (!joined)
+      if (m_updaterThreadFinished)
+         m_updaterThread->join();
+      else
       {
          Log::Warning("Updater thread did not quit within timeout. Thread termination may be forceful.");
          m_updaterThread->detach();
@@ -287,6 +281,7 @@ void OutputControllerCompleteBase::UpdaterThreadDoIt()
          catch (...)
          {
          }
+         m_updaterThreadFinished = true;
          return;
       }
 
@@ -377,6 +372,7 @@ void OutputControllerCompleteBase::UpdaterThreadDoIt()
    {
       Log::Exception(StringExtensions::Build("Exception occurred in updater thread: {0}", e.what()));
    }
+   m_updaterThreadFinished = true;
 }
 
 }

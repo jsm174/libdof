@@ -36,7 +36,7 @@ protected:
 private:
    std::string m_comPort;
    uint8_t* m_oldValues;
-   std::mutex m_portLocker;
+   std::recursive_mutex m_portLocker;
    struct sp_port* m_port;
 };
 

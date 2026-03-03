@@ -111,6 +111,7 @@ private:
       bool IsUpdaterThreadAlive() const;
 
       std::atomic<bool> m_forceFullUpdate;
+      std::atomic<bool> m_updaterThreadFinished { false };
    };
 };
 

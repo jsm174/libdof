@@ -65,6 +65,7 @@ private:
       std::mutex m_pacDriveUpdaterThreadLocker;
       std::condition_variable m_updateCondition;
       std::atomic<bool> m_triggerUpdate;
+      std::atomic<bool> m_updaterThreadFinished { false };
 
       void StartPacDriveUpdaterThread();
       void TerminatePacDriveUpdaterThread();
