@@ -86,7 +86,7 @@ void FT245RBitbangController::AddOutputs()
          Output* newOutput = new Output();
          newOutput->SetName(StringExtensions::Build("{0}.{1:00}", GetName(), std::to_string(i)));
          newOutput->SetNumber(i);
-         outputs->push_back(newOutput);
+         outputs->Add(newOutput);
       }
    }
 }
@@ -148,7 +148,25 @@ void FT245RBitbangController::FinishUpdaterThread()
 
          if (m_updaterThread->joinable())
          {
-            m_updaterThread->join();
+            auto start = std::chrono::steady_clock::now();
+            bool joined = false;
+
+            while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < 1000)
+            {
+               if (!GetUpdaterThreadIsActive())
+               {
+                  m_updaterThread->join();
+                  joined = true;
+                  break;
+               }
+               std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+
+            if (!joined)
+            {
+               Log::Warning(StringExtensions::Build("FT245RBitbangController {0} updater thread did not quit within timeout. Thread will be detached.", m_serialNumber));
+               m_updaterThread->detach();
+            }
          }
          delete m_updaterThread;
          m_updaterThread = nullptr;
@@ -245,6 +263,11 @@ void FT245RBitbangController::UpdaterThreadDoIt()
       }
    }
 
+   // During normal shutdown, avoid additional FTDI I/O/close work here.
+   // Some adapters/drivers can block in teardown; the process is exiting anyway.
+   if (!m_keepUpdaterThreadAlive)
+      return;
+
    try
    {
       SendUpdate(0);
@@ -262,7 +285,18 @@ void FT245RBitbangController::Connect()
 
    if (m_ftdi)
    {
-      Disconnect();
+      if (m_ftdi->IsOpen())
+      {
+         try
+         {
+            m_ftdi->Close();
+         }
+         catch (...)
+         {
+         }
+      }
+      delete m_ftdi;
+      m_ftdi = nullptr;
    }
 
    if (StringExtensions::IsNullOrWhiteSpace(m_serialNumber))
@@ -291,7 +325,8 @@ void FT245RBitbangController::Connect()
 
    try
    {
-      FTDI::FT_STATUS status = m_ftdi->SetBitMode(0xFF, 0x04);
+      // Use async bitbang mode to match working direct libftdi behavior.
+      FTDI::FT_STATUS status = m_ftdi->SetBitMode(0xFF, 0x01);
       if (status != FTDI::FT_OK)
       {
          throw std::runtime_error("Failed to set bitbang mode");
