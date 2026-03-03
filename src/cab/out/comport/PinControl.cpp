@@ -53,6 +53,16 @@ bool PinControl::VerifySettings()
 
       if (!found)
       {
+         struct sp_port* port = nullptr;
+         if (sp_get_port_by_name(m_comPort.c_str(), &port) == SP_OK && port)
+         {
+            sp_free_port(port);
+            found = true;
+         }
+      }
+
+      if (!found)
+      {
          Log::Warning(StringExtensions::Build("ComPort {0} is defined for {1} {2}, but does not exist.", m_comPort, "PinControl", GetName()));
          return false;
       }

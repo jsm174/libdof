@@ -176,6 +176,16 @@ bool TeensyStripController::VerifySettings()
 
    if (!portFound)
    {
+      struct sp_port* port = nullptr;
+      if (sp_get_port_by_name(m_comPortName.c_str(), &port) == SP_OK && port)
+      {
+         sp_free_port(port);
+         portFound = true;
+      }
+   }
+
+   if (!portFound)
+   {
       std::string availablePorts;
       for (int i = 0; ports[i]; i++)
       {
@@ -370,6 +380,16 @@ void TeensyStripController::ConnectToController()
 
       if (portName && m_comPortName == portName)
          portFound = true;
+   }
+
+   if (!portFound)
+   {
+      struct sp_port* port = nullptr;
+      if (sp_get_port_by_name(m_comPortName.c_str(), &port) == SP_OK && port)
+      {
+         sp_free_port(port);
+         portFound = true;
+      }
    }
 
    if (!portFound)
