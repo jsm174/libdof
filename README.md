@@ -25,13 +25,13 @@ This library is currently used by [Visual Pinball Standalone](https://github.com
 - **[PacLED64](https://www.ultimarc.com/output/led-and-output-controllers/pacled64/)** - Ultimarc's 64-output LED controller with PWM support
 - **[LedWiz](https://groovygamegear.com/webstore/index.php?main_page=product_info&products_id=239)** - LED-Wiz's 32-port USB compatible lighting and output controller
 - **[PinOne](https://www.clevelandsoftwaredesign.com/pinball-parts/pinone)** - Cleveland Software Design controller with 63 outputs
+- **[FTDI Controllers](https://directoutput.github.io/DirectOutput/hardware.html#hardware_FT245bitbang)** - FT245R bitbang controllers  
 
 ### **Implemented & Ready To Test**
 - **DudesCab** - RP2040-based controller with 128 PWM outputs
 - **UMXController** - Unified MX protocol for addressable LED strips (via DudesCab MX)
 - **ArtNet/DMX** - Professional lighting control via Ethernet (all platforms)
 - **PinControl** - Arduino-based controller with 10 outputs
-- **FTDI Controllers** - FT245R bitbang controllers  
 - **WS2811/WS2812 LED Strips** - Addressable LED strip support
 - **PAC Controllers** (PacDrive, PacUIO) - Cross-platform libusb implementation
 
