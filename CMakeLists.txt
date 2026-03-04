@@ -249,9 +249,13 @@ if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "li
       src/cab/out/adressableledstrip/TeensyStripController.cpp
       src/cab/out/adressableledstrip/WemosD1StripController.cpp
       src/cab/out/adressableledstrip/WS2811StripController.cpp
+      src/cab/out/adressableledstrip/UMXDevice.cpp
+      src/cab/out/adressableledstrip/UMXController.cpp
+      src/cab/out/adressableledstrip/UMXControllerAutoConfigurator.cpp
       src/cab/out/comport/PinControl.cpp
       src/cab/out/dudescab/DudesCab.cpp
       src/cab/out/dudescab/DudesCabAutoConfigurator.cpp
+      src/cab/out/dudescab/UMXDudesCabDevice.cpp
       src/cab/out/ftdichip/FT245RBitbangController.cpp
       src/cab/out/ftdichip/FT245RBitbangControllerAutoConfigurator.cpp
       src/cab/out/ftdichip/FTDI.cpp

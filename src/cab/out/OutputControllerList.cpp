@@ -9,6 +9,8 @@
 #include "pspico/PinscapePico.h"
 #include "lw/LedWiz.h"
 #include "dudescab/DudesCab.h"
+#include "adressableledstrip/UMXController.h"
+#include "adressableledstrip/UMXControllerAutoConfigurator.h"
 #endif
 
 #ifdef __LIBUSB__
@@ -65,6 +67,7 @@ void OutputControllerList::Finish()
    Pinscape::ClearDevices();
    PinscapePico::ClearDevices();
    DudesCab::ClearDevices();
+   UMXControllerAutoConfigurator::ClearDevices();
 #endif
 
    Log::Write("Output controllers finished");
@@ -115,6 +118,8 @@ IOutputController* OutputControllerList::CreateController(const std::string& typ
       return new LedWiz();
    else if (typeName == "DudesCab")
       return new DudesCab();
+   else if (typeName == "UMXController")
+      return new UMXController();
 #endif
 #ifdef __LIBUSB__
    else if (typeName == "PacLed64")

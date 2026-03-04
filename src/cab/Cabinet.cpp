@@ -24,6 +24,7 @@
 #include "out/pspico/PinscapePicoAutoConfigurator.h"
 #include "out/lw/LedWizAutoConfigurator.h"
 #include "out/dudescab/DudesCabAutoConfigurator.h"
+#include "out/adressableledstrip/UMXControllerAutoConfigurator.h"
 #endif
 
 #ifdef __LIBUSB__
@@ -99,6 +100,7 @@ void Cabinet::AutoConfig()
    items.push_back(new PinscapePicoAutoConfigurator());
    items.push_back(new LedWizAutoConfigurator());
    items.push_back(new DudesCabAutoConfigurator());
+   items.push_back(new UMXControllerAutoConfigurator());
 #endif
 
 #ifdef __LIBUSB__

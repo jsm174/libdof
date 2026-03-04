@@ -28,6 +28,7 @@ This library is currently used by [Visual Pinball Standalone](https://github.com
 
 ### **Implemented & Ready To Test**
 - **DudesCab** - RP2040-based controller with 128 PWM outputs
+- **UMXController** - Unified MX protocol for addressable LED strips (via DudesCab MX)
 - **ArtNet/DMX** - Professional lighting control via Ethernet (all platforms)
 - **PinControl** - Arduino-based controller with 10 outputs
 - **FTDI Controllers** - FT245R bitbang controllers  
