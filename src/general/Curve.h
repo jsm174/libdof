@@ -45,11 +45,12 @@ public:
    virtual bool FromXml(const tinyxml2::XMLElement* element) override;
    virtual std::string GetXmlElementName() const override { return "Curve"; }
 
+   static std::string CurveTypeEnumToString(CurveTypeEnum curveType);
+   static CurveTypeEnum StringToCurveTypeEnum(const std::string& str);
+
 private:
    void BuildCurve(CurveTypeEnum curveType);
    CurveTypeEnum* GetCurveTypeEnum() const;
-   static std::string CurveTypeEnumToString(CurveTypeEnum curveType);
-   static CurveTypeEnum StringToCurveTypeEnum(const std::string& str);
 };
 
 }

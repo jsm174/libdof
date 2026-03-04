@@ -39,51 +39,146 @@ public:
    class Device
    {
    public:
-      enum HIDReportType
+      enum class RIDType : uint8_t
+      {
+         None = 0,
+         RIDOutputs = 3,
+         RIDOutputsMx = 5
+      };
+
+      enum class HIDCommonReportType : uint8_t
       {
          RT_HANDSHAKE = 1,
-         RT_INFOS,
-         RT_PWM_GETEXTENSIONSINFOS,
+         RT_SETADMIN,
+         RT_VERSION,
+         RT_GETSTATUS,
+         RT_FORCELOGLEVEL,
+         RT_RESETCARD,
+         RT_SETPROFILING,
+         RT_GETPROFILING,
+         RT_COMMONCOMMANDS_END = 99,
+         RT_MAX,
+
+         RT_OLD_VERSION = 2
+      };
+
+      enum class DudesCabLogLevel : uint8_t
+      {
+         None = 0,
+         Errors,
+         Warnings,
+         Infos,
+         Debug
+      };
+
+      enum class HIDReportType : uint8_t
+      {
+         RT_PWM_GETINFOS = static_cast<uint8_t>(HIDCommonReportType::RT_MAX),
          RT_PWM_ALLOFF,
          RT_PWM_OUTPUTS,
-         RT_MX_GETEXTENSIONSINFOS,
+
+         RT_MAX,
+
+         RT_PWM_OLD_GETINFOS = 3,
+         RT_PWM_OLD_ALLOFF = 4,
+         RT_PWM_OLD_OUTPUTS = 5,
+      };
+
+      enum class HIDReportTypeMx : uint8_t
+      {
+         RT_UMXHANDSHAKE = static_cast<uint8_t>(HIDCommonReportType::RT_MAX),
+         RT_MX_GETINFOS,
+         RT_MX_GETCONFIG,
          RT_MX_ALLOFF,
          RT_MX_OUTPUTS,
+         RT_MX_RUNTEST,
+
          RT_MAX
       };
 
-      Device(const std::string& path, const std::string& name, const std::string& serial, uint16_t vendorID, uint16_t productID, uint16_t version);
+      struct Version
+      {
+         int major = 0;
+         int minor = 0;
+         int build = 0;
+
+         Version() = default;
+         Version(int maj, int min, int bld)
+            : major(maj)
+            , minor(min)
+            , build(bld)
+         {
+         }
+
+         bool operator<(const Version& other) const
+         {
+            if (major != other.major)
+               return major < other.major;
+            if (minor != other.minor)
+               return minor < other.minor;
+            return build < other.build;
+         }
+         bool operator>=(const Version& other) const { return !(*this < other); }
+      };
+
+      Device(RIDType rid, const std::string& path, const std::string& name, const std::string& serial, uint16_t vendorID, uint16_t productID, int16_t version);
       ~Device();
 
+      std::string ToString() const;
       int UnitNo() const { return m_unitNo; }
       int NumOutputs() const { return m_numOutputs; }
       const std::string& GetSerial() const { return m_serial; }
-      std::string ToString() const;
 
       void AllOff();
-      void SendCommand(HIDReportType command, const std::vector<uint8_t>& parameters = {});
+      void ReadPwmOutputsConfig();
+      bool HasOutputEnabled(uint8_t extNum, uint8_t outputNum);
+      bool SupportMx();
 
-      uint8_t PwmMaxOutputsPerExtension;
-      uint8_t PwmExtensionsMask;
+      void SendCommand(HIDCommonReportType command, const std::vector<uint8_t>& parameters = {});
+      void SendCommand(HIDReportType command, const std::vector<uint8_t>& parameters = {});
+      void SendCommand(HIDReportTypeMx command, const std::vector<uint8_t>& parameters = {});
+
+      std::vector<uint8_t> ReadUSB(uint8_t command);
+
+      static bool ReadBool(const std::vector<uint8_t>& data, int& index);
+      static uint8_t ReadByte(const std::vector<uint8_t>& data, int& index);
+      static int16_t ReadShort(const std::vector<uint8_t>& data, int& index);
+      static int ReadLong(const std::vector<uint8_t>& data, int& index);
+      static std::string ReadString(const std::vector<uint8_t>& data, int& index);
+
+      static const int hidCommandPrefixSize = 5;
+
+      std::string m_name;
+      std::string m_devicename;
+      RIDType m_deviceRid;
+      int m_maxExtensions;
+      uint8_t m_pwmMaxOutputsPerExtension;
+      uint8_t m_pwmExtensionsMask;
+      std::vector<int> m_pwmOutputsMask;
+      Version m_firmwareVersion;
+      uint8_t m_configVersion;
 
    private:
-      std::string m_path;
-      std::string m_name;
-      std::string m_serial;
-      uint16_t m_vendorID;
-      uint16_t m_productID;
-      uint16_t m_version;
-      int m_unitNo;
-      int m_numOutputs;
-      int m_maxExtensions;
-
-      hid_device* m_hidDevice;
-
+      void SendCommand(RIDType rid, uint8_t command, const std::vector<uint8_t>& parameters = {});
       std::vector<uint8_t> ReadUSB();
       bool WriteUSB(const std::vector<uint8_t>& data);
 
-      static const int HID_COMMAND_PREFIX_SIZE = 5;
-      static const uint8_t RID_OUTPUTS = 3;
+      HIDCommonReportType RemapCommonCommand(HIDCommonReportType command);
+      HIDReportType RemapPwmCommand(HIDReportType command);
+      uint8_t RemapIncomingCommand(uint8_t command);
+
+      std::string m_path;
+      std::string m_serial;
+      uint16_t m_vendorID;
+      uint16_t m_productID;
+      int16_t m_version;
+      int16_t m_unitNo;
+      int m_numOutputs;
+
+      hid_device* m_hidDevice;
+
+      static const Version s_minimalMxVersion;
+      static const Version s_newProtocolVersion;
    };
 
    static std::vector<Device*> AllDevices();

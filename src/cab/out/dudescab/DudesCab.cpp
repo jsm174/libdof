@@ -3,9 +3,12 @@
 #include "../../../Log.h"
 #include "../../../general/StringExtensions.h"
 #include "../../../general/MathExtensions.h"
+#include "../adressableledstrip/UMXControllerAutoConfigurator.h"
+#include "UMXDudesCabDevice.h"
 #include <algorithm>
 #include <cstring>
 #include <thread>
+#include <sstream>
 
 #include <hidapi/hidapi.h>
 
@@ -13,12 +16,16 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
+#undef RT_VERSION
 #endif
 
 namespace DOF
 {
 
 std::vector<DudesCab::Device*> DudesCab::s_devices;
+
+const DudesCab::Device::Version DudesCab::Device::s_minimalMxVersion(1, 9, 0);
+const DudesCab::Device::Version DudesCab::Device::s_newProtocolVersion(1, 9, 0);
 
 DudesCab::DudesCab()
    : m_number(-1)
@@ -90,12 +97,10 @@ void DudesCab::Instrumentation(const std::string& message) { Log::Instrumentatio
 
 void DudesCab::UpdateOutputs(const std::vector<uint8_t>& newOutputValues)
 {
-   if (std::all_of(newOutputValues.begin(), newOutputValues.end(), [](uint8_t x) { return x == 0; }))
-   {
-      if (m_dev)
-         m_dev->AllOff();
-   }
-   else
+   if (m_dev == nullptr)
+      return;
+
+   if (newOutputValues != m_oldOutputValues)
    {
       m_outputBuffer.clear();
       m_outputBuffer.push_back(0);
@@ -110,33 +115,42 @@ void DudesCab::UpdateOutputs(const std::vector<uint8_t>& newOutputValues)
       {
          if (m_oldOutputValues.size() <= static_cast<size_t>(numDofOutput) || newOutputValues[numDofOutput] != m_oldOutputValues[numDofOutput])
          {
-            uint8_t extNum = static_cast<uint8_t>(numDofOutput / m_dev->PwmMaxOutputsPerExtension);
-            uint8_t outputNum = static_cast<uint8_t>(numDofOutput % m_dev->PwmMaxOutputsPerExtension);
+            uint8_t extNum = static_cast<uint8_t>(numDofOutput / m_dev->m_pwmMaxOutputsPerExtension);
+            uint8_t outputNum = static_cast<uint8_t>(numDofOutput % m_dev->m_pwmMaxOutputsPerExtension);
 
-            std::string oldVal = m_oldOutputValues.size() > static_cast<size_t>(numDofOutput) ? std::to_string(m_oldOutputValues[numDofOutput]) : "0";
-            Instrumentation(StringExtensions::Build("Prepare Dof Value to send : DOF #{0} {1} => {2}, Extension #{3}, Output #{4}",
-               { std::to_string(numDofOutput), oldVal, std::to_string(newOutputValues[numDofOutput]), std::to_string(extNum), std::to_string(outputNum) }));
-
-            extMask |= (1 << extNum);
-            if (oldExtMask != extMask)
+            if (m_dev->HasOutputEnabled(extNum, outputNum))
             {
-               oldExtMask = extMask;
-               if (outputMask != 0)
-               {
-                  m_outputBuffer[outputMaskOffset] = static_cast<uint8_t>(outputMask & 0xFF);
-                  m_outputBuffer[outputMaskOffset + 1] = static_cast<uint8_t>((outputMask >> 8) & 0xFF);
-                  Instrumentation(StringExtensions::Build("        Changed OutputMask 0x{0:X4}", std::to_string(outputMask)));
-                  outputMask = 0;
-               }
-               Instrumentation(StringExtensions::Build("    Extension {0} has changes", std::to_string(extNum)));
-               outputMaskOffset = static_cast<int>(m_outputBuffer.size());
-               m_outputBuffer.push_back(0);
-               m_outputBuffer.push_back(0);
-            }
+               Instrumentation(StringExtensions::Build("Prepare Dof Value to send : DOF #{0} {1} => {2}, Extension #{3}, Output #{4}",
+                  { std::to_string(numDofOutput), m_oldOutputValues.size() > static_cast<size_t>(numDofOutput) ? std::to_string(m_oldOutputValues[numDofOutput]) : "0",
+                     std::to_string(newOutputValues[numDofOutput]), std::to_string(extNum), std::to_string(outputNum) }));
 
-            outputMask |= (1 << outputNum);
-            m_outputBuffer.push_back(newOutputValues[numDofOutput]);
-            nbValuesToSend++;
+               extMask |= (1 << extNum);
+               if (oldExtMask != extMask)
+               {
+                  oldExtMask = extMask;
+                  if (outputMask != 0)
+                  {
+                     m_outputBuffer[outputMaskOffset] = static_cast<uint8_t>(outputMask & 0xFF);
+                     m_outputBuffer[outputMaskOffset + 1] = static_cast<uint8_t>((outputMask >> 8) & 0xFF);
+                     Instrumentation(StringExtensions::Build("        Changed OutputMask 0x{0:X4}", std::to_string(outputMask)));
+                     outputMask = 0;
+                  }
+                  Instrumentation(StringExtensions::Build("    Extension {0} has changes", std::to_string(extNum)));
+                  outputMaskOffset = static_cast<int>(m_outputBuffer.size());
+                  m_outputBuffer.push_back(0);
+                  m_outputBuffer.push_back(0);
+               }
+
+               outputMask |= (1 << outputNum);
+               m_outputBuffer.push_back(newOutputValues[numDofOutput]);
+               nbValuesToSend++;
+            }
+            else
+            {
+               Instrumentation(StringExtensions::Build("You are sending Pwm updates to a disabled output or a missing extension (ext: {0}, output: {1}), it could be a wrong configuration "
+                                                       "or a missmatch with your config on dofconfigtool site.",
+                  std::to_string(extNum + 1), std::to_string(outputNum + 1)));
+            }
          }
       }
 
@@ -151,11 +165,10 @@ void DudesCab::UpdateOutputs(const std::vector<uint8_t>& newOutputValues)
 
       Instrumentation(StringExtensions::Build("{0} Dof Values to send to Dude's cab", std::to_string(nbValuesToSend)));
 
-      if (m_dev)
-         m_dev->SendCommand(Device::RT_PWM_OUTPUTS, m_outputBuffer);
-   }
+      m_dev->SendCommand(Device::HIDReportType::RT_PWM_OUTPUTS, m_outputBuffer);
 
-   m_oldOutputValues = newOutputValues;
+      m_oldOutputValues = newOutputValues;
+   }
 }
 
 void DudesCab::UpdateDelay()
@@ -168,12 +181,15 @@ void DudesCab::UpdateDelay()
    m_lastUpdate = std::chrono::steady_clock::now();
 }
 
-void DudesCab::ConnectToController() { }
+void DudesCab::ConnectToController() { DisconnectFromController(); }
 
 void DudesCab::DisconnectFromController()
 {
    if (m_inUseState == InUseState::Running && m_dev)
+   {
       m_dev->AllOff();
+      m_dev = nullptr;
+   }
 }
 
 std::vector<DudesCab::Device*> DudesCab::AllDevices()
@@ -193,6 +209,9 @@ void DudesCab::ClearDevices()
 
 std::vector<DudesCab::Device*> DudesCab::FindDevices()
 {
+   UMXControllerAutoConfigurator::RemoveAllUMXDevices();
+
+   std::vector<Device*> dudedevices;
    std::vector<Device*> devices;
 
    struct hid_device_info* devs = hid_enumerate(VendorID, ProductID);
@@ -211,51 +230,73 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
             WideCharToMultiByte(CP_UTF8, 0, cur_dev->product_string, -1, &productName[0], size, nullptr, nullptr);
          }
          else
-         {
             productName = "<not available>";
-         }
 #else
          productName = std::string(reinterpret_cast<const char*>(cur_dev->product_string));
 #endif
       }
 
-      if (!productName.empty() && productName.find("DudesCab Outputs") != std::string::npos)
+      std::string serialNumber;
+      if (cur_dev->serial_number)
       {
-         std::string serialNumber;
-         if (cur_dev->serial_number)
-         {
 #ifdef _WIN32
-            int size = WideCharToMultiByte(CP_UTF8, 0, cur_dev->serial_number, -1, nullptr, 0, nullptr, nullptr);
-            if (size > 0)
-            {
-               serialNumber.resize(size - 1);
-               WideCharToMultiByte(CP_UTF8, 0, cur_dev->serial_number, -1, &serialNumber[0], size, nullptr, nullptr);
-            }
-            else
-            {
-               serialNumber = "<not available>";
-            }
-#else
-            serialNumber = std::string(reinterpret_cast<const char*>(cur_dev->serial_number));
-#endif
+         int size = WideCharToMultiByte(CP_UTF8, 0, cur_dev->serial_number, -1, nullptr, 0, nullptr, nullptr);
+         if (size > 0)
+         {
+            serialNumber.resize(size - 1);
+            WideCharToMultiByte(CP_UTF8, 0, cur_dev->serial_number, -1, &serialNumber[0], size, nullptr, nullptr);
          }
          else
             serialNumber = "<not available>";
+#else
+         serialNumber = std::string(reinterpret_cast<const char*>(cur_dev->serial_number));
+#endif
+      }
+      else
+         serialNumber = "<not available>";
 
-         bool alreadyEnumerated = false;
-         for (Device* existingDevice : devices)
+      bool isDude = (cur_dev->vendor_id == VendorID && cur_dev->product_id == ProductID);
+      if (isDude && !productName.empty())
+      {
+         Device::RIDType deviceRid = Device::RIDType::None;
+
+         if (productName == "DudesCab Outputs")
+            deviceRid = Device::RIDType::RIDOutputs;
+         else if (productName == "DudesCab Outputs MX")
+            deviceRid = Device::RIDType::RIDOutputsMx;
+
+         if (deviceRid != Device::RIDType::None)
          {
-            if (existingDevice->GetSerial() == serialNumber)
+            bool alreadyEnumerated = false;
+            for (Device* existingDevice : dudedevices)
             {
-               alreadyEnumerated = true;
-               break;
+               if (existingDevice->m_deviceRid == deviceRid && existingDevice->GetSerial() == serialNumber && existingDevice->m_devicename == productName)
+               {
+                  alreadyEnumerated = true;
+                  break;
+               }
             }
-         }
 
-         if (!alreadyEnumerated)
-         {
-            Device* device = new Device(cur_dev->path, productName.empty() ? "<not available>" : productName, serialNumber, cur_dev->vendor_id, cur_dev->product_id, cur_dev->release_number);
-            devices.push_back(device);
+            if (!alreadyEnumerated)
+            {
+               Device* newDevice = new Device(deviceRid, cur_dev->path, productName, serialNumber, cur_dev->vendor_id, cur_dev->product_id, cur_dev->release_number);
+               dudedevices.push_back(newDevice);
+
+               if (deviceRid == Device::RIDType::RIDOutputs)
+               {
+                  newDevice->ReadPwmOutputsConfig();
+                  devices.push_back(newDevice);
+               }
+               else if (deviceRid == Device::RIDType::RIDOutputsMx)
+               {
+                  if (newDevice->SupportMx())
+                  {
+                     UMXDudesCabDevice* dudeUMX = new UMXDudesCabDevice();
+                     dudeUMX->SetDevice(newDevice);
+                     UMXControllerAutoConfigurator::AddUMXDevice(dudeUMX);
+                  }
+               }
+            }
          }
       }
       cur_dev = cur_dev->next;
@@ -263,14 +304,13 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
 
    hid_free_enumeration(devs);
 
-   Log::Write(StringExtensions::Build("DudesCab device scan found {0} devices", std::to_string(devices.size())));
-
    return devices;
 }
 
-DudesCab::Device::Device(const std::string& path, const std::string& name, const std::string& serial, uint16_t vendorID, uint16_t productID, uint16_t version)
-   : m_path(path)
-   , m_name(name)
+DudesCab::Device::Device(RIDType rid, const std::string& path, const std::string& name, const std::string& serial, uint16_t vendorID, uint16_t productID, int16_t version)
+   : m_deviceRid(rid)
+   , m_path(path)
+   , m_devicename(name)
    , m_serial(serial)
    , m_vendorID(vendorID)
    , m_productID(productID)
@@ -278,76 +318,73 @@ DudesCab::Device::Device(const std::string& path, const std::string& name, const
    , m_unitNo(0)
    , m_numOutputs(128)
    , m_maxExtensions(0)
-   , PwmMaxOutputsPerExtension(0)
-   , PwmExtensionsMask(0)
+   , m_pwmMaxOutputsPerExtension(0)
+   , m_pwmExtensionsMask(0)
+   , m_configVersion(0)
    , m_hidDevice(nullptr)
 {
    m_hidDevice = hid_open_path(path.c_str());
-   if (m_hidDevice)
+   if (!m_hidDevice)
+      return;
+
+   std::vector<uint8_t> answer;
+
+   SendCommand(HIDCommonReportType::RT_HANDSHAKE);
+   answer = ReadUSB(static_cast<uint8_t>(HIDCommonReportType::RT_HANDSHAKE));
+   if (answer.size() > hidCommandPrefixSize)
    {
-      SendCommand(RT_HANDSHAKE);
-      std::vector<uint8_t> answer = ReadUSB();
-      if (answer.size() > HID_COMMAND_PREFIX_SIZE)
-      {
-         std::string handShake(answer.begin() + HID_COMMAND_PREFIX_SIZE, answer.end());
-         handShake.erase(std::find(handShake.begin(), handShake.end(), '\0'), handShake.end());
+      std::string handShake(answer.begin() + hidCommandPrefixSize, answer.end());
+      handShake.erase(std::find(handShake.begin(), handShake.end(), '\0'), handShake.end());
 
-         size_t pipePos = handShake.find('|');
-         if (pipePos != std::string::npos)
+      std::vector<std::string> splits;
+      std::istringstream stream(handShake);
+      std::string token;
+      while (std::getline(stream, token, '|'))
+         splits.push_back(token);
+
+      switch (splits.size())
+      {
+      case 1: Log::Warning("Old Dude's Cab handshake, you should update your firmware"); break;
+
+      case 2:
+         Log::Warning("Old Dude's Cab handshake, you should update your firmware");
+         m_name = splits[0];
+         handShake = splits[1];
+         break;
+
+      case 3:
+      default:
+         m_name = splits[0];
+         handShake = splits[1];
          {
-            m_name = handShake.substr(0, pipePos);
-            handShake = handShake.substr(pipePos + 1);
+            std::vector<std::string> numbers;
+            std::istringstream vstream(splits[2]);
+            std::string vtoken;
+            while (std::getline(vstream, vtoken, '.'))
+               numbers.push_back(vtoken);
+            if (numbers.size() == 3)
+               m_firmwareVersion = Version(std::stoi(numbers[0]), std::stoi(numbers[1]), std::stoi(numbers[2]));
          }
-         else
-         {
-            Log::Warning("Old Dude's Cab handshake, you should update your firmware");
-         }
-         Log::Write(StringExtensions::Build("{0} says : {1}", m_name, handShake));
+         break;
       }
+      Log::Write(StringExtensions::Build("{0} says : {1}", m_name, handShake));
+   }
 
-      SendCommand(RT_INFOS);
-      answer = ReadUSB();
-      if (answer.size() > HID_COMMAND_PREFIX_SIZE)
+   SendCommand(HIDCommonReportType::RT_VERSION);
+   answer = ReadUSB(static_cast<uint8_t>(HIDCommonReportType::RT_VERSION));
+   if (answer.size() > hidCommandPrefixSize)
+   {
+      std::vector<uint8_t> info(answer.begin() + hidCommandPrefixSize, answer.end());
+      if (info.size() >= 5)
       {
-         std::vector<uint8_t> info(answer.begin() + HID_COMMAND_PREFIX_SIZE, answer.end());
-         if (info.size() >= 5)
-         {
-            Log::Write(StringExtensions::Build("DudesCab Controller Informations : Name [{0}], v{1}.{2}.{3}, unit #{4}, Max extensions {5}",
-               { m_name, std::to_string(info[0]), std::to_string(info[1]), std::to_string(info[2]), std::to_string(info[3]), std::to_string(info[4]) }));
-            m_unitNo = info[3];
-            m_maxExtensions = info[4];
-         }
-      }
-
-      SendCommand(RT_PWM_GETEXTENSIONSINFOS);
-      answer = ReadUSB();
-      if (answer.size() > HID_COMMAND_PREFIX_SIZE)
-      {
-         std::vector<uint8_t> pwmInfo(answer.begin() + HID_COMMAND_PREFIX_SIZE, answer.end());
-         if (pwmInfo.size() >= 2)
-         {
-            PwmMaxOutputsPerExtension = pwmInfo[0];
-            PwmExtensionsMask = pwmInfo[1];
-            Log::Write(StringExtensions::Build(
-               "    Pwm Informations : Max outputs per extensions {0}, Extension Mask 0x{1}", { std::to_string(PwmMaxOutputsPerExtension), std::to_string(PwmExtensionsMask) }));
-
-            if (pwmInfo.size() > 2)
-            {
-               m_numOutputs = 0;
-               uint8_t nbMasks = pwmInfo[2];
-               if (pwmInfo.size() >= 4 + (nbMasks * 2))
-               {
-                  for (int ext = 0; ext < m_maxExtensions; ext++)
-                  {
-                     if ((PwmExtensionsMask & (1 << ext)) != 0)
-                     {
-                        m_numOutputs = std::max(m_numOutputs, (ext + 1) * PwmMaxOutputsPerExtension);
-                     }
-                  }
-               }
-               Log::Write(StringExtensions::Build("    Output configuration received, highest configured output is #{0}", std::to_string(m_numOutputs)));
-            }
-         }
+         Log::Write(StringExtensions::Build("DudesCab Controller Informations : Device [{0},RID:{1}] Name [{2}], v{3}.{4}.{5}, unit #{6}, Max extensions {7}",
+            { m_devicename, std::to_string(static_cast<int>(m_deviceRid)), m_name, std::to_string(info[0]), std::to_string(info[1]), std::to_string(info[2]), std::to_string(info[3]),
+               std::to_string(info[4]) }));
+         m_unitNo = info[3];
+         m_maxExtensions = info[4];
+         m_firmwareVersion = Version(info[0], info[1], info[2]);
+         if (info.size() >= 6)
+            m_configVersion = info[5];
       }
    }
 }
@@ -355,28 +392,129 @@ DudesCab::Device::Device(const std::string& path, const std::string& name, const
 DudesCab::Device::~Device()
 {
    if (m_hidDevice)
-   {
       hid_close(m_hidDevice);
+}
+
+std::string DudesCab::Device::ToString() const { return StringExtensions::Build("{0} (name: {1} unit:{2})", m_devicename, m_name, std::to_string(m_unitNo)); }
+
+void DudesCab::Device::ReadPwmOutputsConfig()
+{
+   m_numOutputs = 128;
+
+   SendCommand(HIDReportType::RT_PWM_GETINFOS);
+   std::vector<uint8_t> answer = ReadUSB(static_cast<uint8_t>(HIDReportType::RT_PWM_GETINFOS));
+   if (answer.size() <= hidCommandPrefixSize)
+      return;
+
+   uint8_t answersize = answer[hidCommandPrefixSize - 1];
+   std::vector<uint8_t> data(answer.begin() + hidCommandPrefixSize, answer.end());
+   if (data.size() < 2)
+      return;
+
+   m_pwmMaxOutputsPerExtension = data[0];
+   m_pwmExtensionsMask = data[1];
+   m_pwmOutputsMask.assign(m_maxExtensions, 0);
+   Log::Write(StringExtensions::Build(
+      "    Pwm Informations : Max outputs per extensions {0}, Extension Mask 0x{1}", std::to_string(m_pwmMaxOutputsPerExtension), std::to_string(m_pwmExtensionsMask)));
+
+   if (answersize > 2 && data.size() >= 4)
+   {
+      uint8_t nbMasks = data[2];
+      uint8_t maskSize = data[3];
+      std::vector<uint16_t> masks(nbMasks);
+      for (int mask = 0; mask < nbMasks; mask++)
+         masks[mask] = static_cast<uint16_t>(data[4 + (2 * mask)] + (data[4 + (2 * mask) + 1] << 8));
+
+      int curMask = 0;
+      m_numOutputs = 0;
+      for (int ext = 0; ext < m_maxExtensions; ext++)
+      {
+         if ((m_pwmExtensionsMask & (1 << ext)) != 0)
+         {
+            m_pwmOutputsMask[ext] = masks[curMask];
+            for (int output = 0; output < m_pwmMaxOutputsPerExtension; output++)
+            {
+               if ((masks[curMask] & (1 << output)) != 0)
+                  m_numOutputs = std::max(m_numOutputs, (ext * m_pwmMaxOutputsPerExtension) + output + 1);
+            }
+            curMask++;
+         }
+         else
+            m_pwmOutputsMask[ext] = 0;
+      }
+      Log::Write(StringExtensions::Build("    Output configuration received, highest configured output is #{0}", std::to_string(m_numOutputs)));
+   }
+   else
+   {
+      Log::Warning(StringExtensions::Build("No output configuration received, {0} will be used, you should update your DudesCab firmware", std::to_string(m_numOutputs)));
    }
 }
 
-std::string DudesCab::Device::ToString() const { return StringExtensions::Build("{0} (unit {1})", m_name, std::to_string(m_unitNo)); }
+bool DudesCab::Device::HasOutputEnabled(uint8_t extNum, uint8_t outputNum)
+{
+   bool hasExtension = ((1 << extNum) & m_pwmExtensionsMask) != 0;
+   bool hasOutput = hasExtension && (m_pwmOutputsMask[extNum] & (1 << outputNum)) != 0;
+   return hasOutput;
+}
+
+bool DudesCab::Device::SupportMx() { return m_firmwareVersion >= s_minimalMxVersion; }
+
+void DudesCab::Device::AllOff() { SendCommand(HIDReportType::RT_PWM_ALLOFF); }
+
+std::vector<uint8_t> DudesCab::Device::ReadUSB(uint8_t command)
+{
+   uint8_t remapCommand = RemapIncomingCommand(command);
+   std::vector<uint8_t> answer;
+   try
+   {
+      while (answer.size() < 2 || answer[1] != remapCommand)
+         answer = ReadUSB();
+   }
+   catch (const std::exception& ex)
+   {
+      throw std::runtime_error(StringExtensions::Build("Exception during answer retrieval for command {0} (remap:{1}) on DudesCabDevice {2} RID {3}: {4}",
+         { std::to_string(command), std::to_string(remapCommand), m_name, std::to_string(static_cast<int>(m_deviceRid)), ex.what() }));
+   }
+   return answer;
+}
 
 std::vector<uint8_t> DudesCab::Device::ReadUSB()
 {
-   std::vector<uint8_t> result;
+   std::vector<uint8_t> incomingData;
+   uint8_t receivedCommand = 0;
+   auto startRead = std::chrono::steady_clock::now();
 
-   if (m_hidDevice)
+   while (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - startRead).count() < 10)
    {
-      uint8_t buffer[65];
-      int bytes_read = hid_read_timeout(m_hidDevice, buffer, sizeof(buffer), 1000);
-      if (bytes_read > 0)
+      uint8_t buf[65];
+      int bytesRead = hid_read_timeout(m_hidDevice, buf, sizeof(buf), 1000);
+      if (bytesRead > 0)
       {
-         result.assign(buffer, buffer + bytes_read);
+         uint8_t rid = buf[0];
+         if (rid == static_cast<uint8_t>(m_deviceRid))
+         {
+            uint8_t numpart = buf[2];
+            if (numpart == 0)
+               receivedCommand = buf[1];
+            uint8_t nbparts = buf[3];
+            uint8_t received = buf[4];
+
+            if (receivedCommand == buf[1])
+            {
+               if (numpart == 0)
+                  incomingData.assign(buf, buf + received + hidCommandPrefixSize);
+               else
+                  incomingData.insert(incomingData.end(), buf + hidCommandPrefixSize, buf + hidCommandPrefixSize + received);
+
+               if (numpart == nbparts - 1)
+                  return incomingData;
+            }
+         }
       }
    }
 
-   return result;
+   Log::Error("DudesCab Controller USB error reading from device: timed out");
+   return {};
 }
 
 bool DudesCab::Device::WriteUSB(const std::vector<uint8_t>& data)
@@ -389,39 +527,125 @@ bool DudesCab::Device::WriteUSB(const std::vector<uint8_t>& data)
    return false;
 }
 
-void DudesCab::Device::AllOff() { SendCommand(RT_PWM_ALLOFF); }
+void DudesCab::Device::SendCommand(HIDCommonReportType command, const std::vector<uint8_t>& parameters)
+{
+   SendCommand(m_deviceRid, static_cast<uint8_t>(RemapCommonCommand(command)), parameters);
+}
 
-void DudesCab::Device::SendCommand(HIDReportType command, const std::vector<uint8_t>& parameters)
+void DudesCab::Device::SendCommand(HIDReportType command, const std::vector<uint8_t>& parameters) { SendCommand(m_deviceRid, static_cast<uint8_t>(RemapPwmCommand(command)), parameters); }
+
+void DudesCab::Device::SendCommand(HIDReportTypeMx command, const std::vector<uint8_t>& parameters)
+{
+   if (SupportMx())
+      SendCommand(m_deviceRid, static_cast<uint8_t>(command), parameters);
+}
+
+void DudesCab::Device::SendCommand(RIDType rid, uint8_t command, const std::vector<uint8_t>& parameters)
 {
    if (!m_hidDevice)
       return;
 
-   Log::Instrumentation("DudesCab", StringExtensions::Build("DudesCab SendCommand: {0}", std::to_string(static_cast<int>(command))));
+   if (rid == RIDType::RIDOutputs)
+      Log::Instrumentation("DudesCab", StringExtensions::Build("DudesCab SendCommand: {0}", std::to_string(static_cast<int>(command))));
+   else
+      Log::Instrumentation("DudesCab,Mx", StringExtensions::Build("DudesCab SendCommand: {0}", std::to_string(static_cast<int>(command))));
+
+   std::vector<uint8_t> data = parameters;
 
    uint8_t bufferOffset = 5;
    uint8_t partSize = 60;
-   uint8_t nbParts = static_cast<uint8_t>((parameters.size() / partSize) + 1);
+   uint8_t nbParts = static_cast<uint8_t>((data.size() / partSize) + 1);
 
    for (uint8_t i = 0; i < nbParts; i++)
    {
       std::vector<uint8_t> sendData(bufferOffset);
-      sendData[0] = RID_OUTPUTS;
-      sendData[1] = static_cast<uint8_t>(command);
+      sendData[0] = static_cast<uint8_t>(rid);
+      sendData[1] = command;
       sendData[2] = i;
       sendData[3] = nbParts;
 
-      size_t remainingData = parameters.size() - (i * partSize);
+      size_t remainingData = data.size() - (i * partSize);
       uint8_t toSend = static_cast<uint8_t>(std::min(static_cast<size_t>(partSize), remainingData));
       sendData[4] = toSend;
 
       if (toSend > 0)
       {
          size_t startPos = i * partSize;
-         sendData.insert(sendData.end(), parameters.begin() + startPos, parameters.begin() + startPos + toSend);
+         sendData.insert(sendData.end(), data.begin() + startPos, data.begin() + startPos + toSend);
       }
 
       WriteUSB(sendData);
    }
+}
+
+DudesCab::Device::HIDCommonReportType DudesCab::Device::RemapCommonCommand(HIDCommonReportType command)
+{
+   if (m_firmwareVersion < s_newProtocolVersion)
+   {
+      switch (command)
+      {
+      case HIDCommonReportType::RT_VERSION: return HIDCommonReportType::RT_OLD_VERSION;
+      default: break;
+      }
+   }
+   return command;
+}
+
+DudesCab::Device::HIDReportType DudesCab::Device::RemapPwmCommand(HIDReportType command)
+{
+   if (m_firmwareVersion < s_newProtocolVersion)
+   {
+      switch (command)
+      {
+      case HIDReportType::RT_PWM_GETINFOS: return HIDReportType::RT_PWM_OLD_GETINFOS;
+      case HIDReportType::RT_PWM_ALLOFF: return HIDReportType::RT_PWM_OLD_ALLOFF;
+      case HIDReportType::RT_PWM_OUTPUTS: return HIDReportType::RT_PWM_OLD_OUTPUTS;
+      default: break;
+      }
+   }
+   return command;
+}
+
+uint8_t DudesCab::Device::RemapIncomingCommand(uint8_t command)
+{
+   if (m_firmwareVersion < s_newProtocolVersion)
+   {
+      switch (command)
+      {
+      case static_cast<uint8_t>(HIDCommonReportType::RT_VERSION): return static_cast<uint8_t>(HIDCommonReportType::RT_OLD_VERSION);
+      case static_cast<uint8_t>(HIDReportType::RT_PWM_GETINFOS): return static_cast<uint8_t>(HIDReportType::RT_PWM_OLD_GETINFOS);
+      case static_cast<uint8_t>(HIDReportType::RT_PWM_ALLOFF): return static_cast<uint8_t>(HIDReportType::RT_PWM_OLD_ALLOFF);
+      case static_cast<uint8_t>(HIDReportType::RT_PWM_OUTPUTS): return static_cast<uint8_t>(HIDReportType::RT_PWM_OLD_OUTPUTS);
+      default: break;
+      }
+   }
+   return command;
+}
+
+bool DudesCab::Device::ReadBool(const std::vector<uint8_t>& data, int& index) { return data[index++] > 0; }
+uint8_t DudesCab::Device::ReadByte(const std::vector<uint8_t>& data, int& index) { return data[index++]; }
+int16_t DudesCab::Device::ReadShort(const std::vector<uint8_t>& data, int& index)
+{
+   int16_t val = static_cast<int16_t>(data[index] | (data[index + 1] << 8));
+   index += 2;
+   return val;
+}
+int DudesCab::Device::ReadLong(const std::vector<uint8_t>& data, int& index)
+{
+   int val = data[index] | (data[index + 1] << 8) | (data[index + 2] << 16) | (data[index + 3] << 24);
+   index += 4;
+   return val;
+}
+std::string DudesCab::Device::ReadString(const std::vector<uint8_t>& data, int& index)
+{
+   std::string strRead;
+   uint8_t len = data[index++];
+   if (len > 0)
+   {
+      for (int i = 0; i < len; i++)
+         strRead += static_cast<char>(data[index++]);
+   }
+   return strRead;
 }
 
 bool DudesCab::FromXml(const tinyxml2::XMLElement* element)
