@@ -53,6 +53,7 @@ mv libserialport-${LIBSERIALPORT_SHA} libserialport
 cd libserialport
 cp libserialport.h ../../third-party/include
 msbuild.exe libserialport.sln \
+   -p:PlatformToolset=v143 \
    -p:TargetName=libserialport64 \
    -p:Platform=x64 \
    -p:Configuration=Release
