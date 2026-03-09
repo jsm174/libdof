@@ -45,7 +45,7 @@ The DirectOutput Framework parses ROM configurations through a multi-stage proce
 
 ### 1. Configuration File Loading
 ```
-~/.vpinball/directoutputconfig/directoutputconfig51.ini (ROM config file)
+<base-path>/directoutputconfig/directoutputconfig51.ini (ROM config file)
     ↓
 LedControl::LoadFromFiles() 
     ↓  
@@ -83,13 +83,13 @@ cmake --build build-clang -- -j10
 ### Memory Leak Detection Methods
 ```bash
 # Method 1: AddressSanitizer (comprehensive, real-time detection)
-ASAN_OPTIONS=detect_leaks=1 ./build-clang/dof_test tna
+ASAN_OPTIONS=detect_leaks=1 ./build-clang/dof_test --base-path "$HOME/Library/Application Support/VPinballX/10.8" tna
 
 # Method 2: macOS leaks tool (at exit)
-leaks --atExit -- ./build/dof_test tna
+leaks --atExit -- ./build/dof_test --base-path "$HOME/Library/Application Support/VPinballX/10.8" tna
 
 # Method 3: macOS leaks tool (live process)
-./build/dof_test tna &
+./build/dof_test --base-path "$HOME/Library/Application Support/VPinballX/10.8" tna &
 PID=$!
 sleep 2
 leaks $PID

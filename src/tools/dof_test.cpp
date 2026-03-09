@@ -11,15 +11,6 @@
 #include <sstream>
 #include <vector>
 
-#ifdef _WIN32
-#include <direct.h>
-#define getcwd _getcwd
-#else
-#include <unistd.h>
-#include <pwd.h>
-#include <sys/types.h>
-#endif
-
 const int TIMEOUT_OFF = 650;
 const int TIMEOUT_ON = 650;
 const int TIMEOUT_START_DELAY = 1000;
@@ -334,41 +325,18 @@ void RunAFMTests(DOF::DOF* pDof)
    pDof->Finish();
 }
 
-std::string GetDefaultBasePath()
-{
-#ifdef _WIN32
-   char cwd[1024];
-   if (getcwd(cwd, sizeof(cwd)) != nullptr)
-   {
-      return std::string(cwd) + "\\";
-   }
-   return ".\\\\";
-#else
-   const char* homeDir = getenv("HOME");
-   if (homeDir == nullptr)
-   {
-      struct passwd* pwd = getpwuid(getuid());
-      if (pwd)
-         homeDir = pwd->pw_dir;
-   }
-
-   if (homeDir != nullptr)
-   {
-      return std::string(homeDir) + "/.vpinball/";
-   }
-   return "./";
-#endif
-}
-
 void PrintUsage(const char* programName)
 {
-   std::cout << "Usage: " << programName << " [ROM_NAME] [--base-path PATH]" << std::endl;
+   std::cout << "Usage: " << programName << " --base-path PATH [ROM_NAME]" << std::endl;
    std::cout << std::endl;
    std::cout << "Options:" << std::endl;
+   std::cout << "  --base-path  Path to VPinballX data directory (required)" << std::endl;
    std::cout << "  ROM_NAME     Specific ROM to test (optional)" << std::endl;
-   std::cout << "  --base-path  Custom base path for DOF configuration" << std::endl;
-   std::cout << "               Default: Windows = current directory" << std::endl;
-   std::cout << "                       Linux/Mac = ~/.vpinball/" << std::endl;
+   std::cout << std::endl;
+   std::cout << "Platform-specific base paths:" << std::endl;
+   std::cout << "  macOS:   ~/Library/Application Support/VPinballX/10.8" << std::endl;
+   std::cout << "  Linux:   ~/.local/share/VPinballX/10.8" << std::endl;
+   std::cout << "  Windows: %APPDATA%\\VPinballX\\10.8" << std::endl;
    std::cout << std::endl;
    std::cout << "Available ROMs:" << std::endl;
    for (const auto& testRom : testRoms)
@@ -379,7 +347,7 @@ void PrintUsage(const char* programName)
 
 int main(int argc, const char* argv[])
 {
-   std::string basePath = GetDefaultBasePath();
+   std::string basePath = "";
    std::string romName = "";
 
    for (int i = 1; i < argc; i++)
@@ -406,6 +374,14 @@ int main(int argc, const char* argv[])
       {
          romName = argv[i];
       }
+   }
+
+   if (basePath.empty())
+   {
+      std::cerr << "ERROR: --base-path is required" << std::endl;
+      std::cerr << std::endl;
+      PrintUsage(argv[0]);
+      return 1;
    }
 
    DOF::Config* pConfig = DOF::Config::GetInstance();

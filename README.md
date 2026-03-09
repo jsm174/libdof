@@ -72,7 +72,7 @@ void test()
    DOF::Config* pConfig = DOF::Config::GetInstance();
    pConfig->SetLogCallback(LogCallback);
    pConfig->SetLogLevel(DOF_LogLevel_DEBUG);
-   pConfig->SetBasePath("/Users/jmillard/.vpinball/");
+   pConfig->SetBasePath("/Users/jmillard/Library/Application Support/VPinballX/10.8/");
 
    DOF::DOF* pDof = new DOF::DOF();
    pDof->Init("", "ij_l7");
@@ -154,6 +154,25 @@ cmake --build build
 platforms/android/arm64-v8a/external.sh
 cmake -DPLATFORM=android -DARCH=arm64-v8a -DCMAKE_BUILD_TYPE=Release -B build
 cmake --build build
+```
+
+## Testing:
+
+The `dof_test` tool requires `--base-path` to specify the VPinballX data directory:
+
+#### macOS
+```shell
+./build/dof_test --base-path "$HOME/Library/Application Support/VPinballX/10.8" gw
+```
+
+#### Linux
+```shell
+./build/dof_test --base-path ~/.local/share/VPinballX/10.8 gw
+```
+
+#### Windows
+```shell
+build\Release\dof_test.exe --base-path %APPDATA%\VPinballX\10.8 gw
 ```
 
 ## Acknowledgments:
