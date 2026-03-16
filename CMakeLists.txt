@@ -51,6 +51,8 @@ if(PLATFORM STREQUAL "win")
    if(MSVC)
       add_compile_options(/bigobj)
    endif()
+elseif(PLATFORM STREQUAL "win-mingw")
+   add_compile_options(-Wa,-mbig-obj)
 elseif(PLATFORM STREQUAL "macos")
    if (ARCH STREQUAL "arm64")
       set(CMAKE_OSX_ARCHITECTURES arm64)
@@ -241,7 +243,7 @@ set(LIBDOF_SOURCES
    third-party/include/tinyxml2/tinyxml2.cpp
 )
 
-if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
+if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "win-mingw" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
    list(APPEND LIBDOF_SOURCES
       src/cab/out/adressableledstrip/DirectStripController.cpp
       src/cab/out/adressableledstrip/DirectStripControllerApi.cpp
@@ -300,6 +302,12 @@ if(BUILD_SHARED)
       else()
          target_link_libraries(dof_shared PUBLIC libserialport hidapi libftdi1 libusb-1.0 ws2_32)
       endif()
+   elseif(PLATFORM STREQUAL "win-mingw")
+      target_link_directories(dof_shared PUBLIC
+         third-party/build-libs/${PLATFORM}/${ARCH}
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(dof_shared PUBLIC serialport64 hidapi64 ftdi164 usb64-1.0 ws2_32)
    elseif(PLATFORM STREQUAL "macos")
       target_link_directories(dof_shared PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
@@ -320,23 +328,32 @@ if(BUILD_SHARED)
       )
    endif()
 
-   if(PLATFORM STREQUAL "win" AND ARCH STREQUAL "x64")
+   if((PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "win-mingw") AND ARCH STREQUAL "x64")
       set(LIBDOF_OUTPUT_NAME "dof64")
    else()
       set(LIBDOF_OUTPUT_NAME "dof")
    endif()
 
-   set_target_properties(dof_shared PROPERTIES
-      OUTPUT_NAME ${LIBDOF_OUTPUT_NAME}
-      VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
-   )
+   if(PLATFORM STREQUAL "win-mingw")
+      set_target_properties(dof_shared PROPERTIES
+         PREFIX ""
+         IMPORT_PREFIX ""
+         OUTPUT_NAME ${LIBDOF_OUTPUT_NAME}
+         VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
+      )
+   else()
+      set_target_properties(dof_shared PROPERTIES
+         OUTPUT_NAME ${LIBDOF_OUTPUT_NAME}
+         VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
+      )
+   endif()
 
    install(TARGETS dof_shared
       LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
    )
    install(DIRECTORY include/DOF DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 
-   if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
+   if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "win-mingw" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
       add_executable(dof_test
          src/tools/dof_test.cpp
       )
@@ -354,6 +371,9 @@ if(BUILD_SHARED)
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/hidapi64.dll" "$<TARGET_FILE_DIR:dof_test>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libftdi164.lib" "$<TARGET_FILE_DIR:dof_test>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libftdi164.dll" "$<TARGET_FILE_DIR:dof_test>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libgcc_s_seh-1.dll" "$<TARGET_FILE_DIR:dof_test>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libstdc++-6.dll" "$<TARGET_FILE_DIR:dof_test>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libwinpthread-1.dll" "$<TARGET_FILE_DIR:dof_test>"
                )
             else()
                add_custom_command(TARGET dof_test POST_BUILD
@@ -367,6 +387,16 @@ if(BUILD_SHARED)
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libftdi1.dll" "$<TARGET_FILE_DIR:dof_test>"
                )
             endif()
+         elseif(PLATFORM STREQUAL "win-mingw")
+            add_custom_command(TARGET dof_test POST_BUILD
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libusb64-1.0.dll" "$<TARGET_FILE_DIR:dof_test>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport64-0.dll" "$<TARGET_FILE_DIR:dof_test>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libhidapi64.dll" "$<TARGET_FILE_DIR:dof_test>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libftdi164.dll" "$<TARGET_FILE_DIR:dof_test>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libgcc_s_seh-1.dll" "$<TARGET_FILE_DIR:dof_test>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libstdc++-6.dll" "$<TARGET_FILE_DIR:dof_test>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libwinpthread-1.dll" "$<TARGET_FILE_DIR:dof_test>"
+            )
          elseif(PLATFORM STREQUAL "macos")
             add_custom_command(TARGET dof_test POST_BUILD
                COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/*.dylib" "$<TARGET_FILE_DIR:dof_test>"
@@ -387,8 +417,9 @@ if(BUILD_STATIC)
 
    target_include_directories(dof_static PUBLIC ${LIBDOF_INCLUDE_DIRS})
 
-   if(PLATFORM STREQUAL "win")
+   if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "win-mingw")
       set_target_properties(dof_static PROPERTIES
+         PREFIX ""
          OUTPUT_NAME "dof_static"
       )
    else()
@@ -402,7 +433,7 @@ if(BUILD_STATIC)
    )
    install(DIRECTORY include/DOF DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 
-   if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
+   if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "win-mingw" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
       add_executable(dof_test_s
          src/tools/dof_test.cpp
       )
@@ -417,6 +448,12 @@ if(BUILD_STATIC)
          else()
             target_link_libraries(dof_test_s PUBLIC dof_static libserialport hidapi libftdi1 libusb-1.0 ws2_32)
          endif()
+      elseif(PLATFORM STREQUAL "win-mingw")
+         target_link_directories(dof_test_s PUBLIC
+            third-party/build-libs/${PLATFORM}/${ARCH}
+            third-party/runtime-libs/${PLATFORM}/${ARCH}
+         )
+         target_link_libraries(dof_test_s PUBLIC dof_static serialport64 hidapi64 ftdi164 usb64-1.0 ws2_32)
       elseif(PLATFORM STREQUAL "macos")
          target_link_directories(dof_test_s PUBLIC
             third-party/runtime-libs/${PLATFORM}/${ARCH}
@@ -441,6 +478,9 @@ if(BUILD_STATIC)
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/hidapi64.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/build-libs/${PLATFORM}/${ARCH}/libftdi164.lib" "$<TARGET_FILE_DIR:dof_test_s>"
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libftdi164.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libgcc_s_seh-1.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libstdc++-6.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+                  COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libwinpthread-1.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                )
             else()
                add_custom_command(TARGET dof_test_s POST_BUILD
@@ -454,6 +494,16 @@ if(BUILD_STATIC)
                   COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libftdi1.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                )
             endif()
+         elseif(PLATFORM STREQUAL "win-mingw")
+            add_custom_command(TARGET dof_test_s POST_BUILD
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libusb64-1.0.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport64-0.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libhidapi64.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libftdi164.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libgcc_s_seh-1.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libstdc++-6.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libwinpthread-1.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+            )
          elseif(PLATFORM STREQUAL "macos")
             add_custom_command(TARGET dof_test_s POST_BUILD
                COMMAND cp -a "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/*.dylib" "$<TARGET_FILE_DIR:dof_test_s>"
@@ -468,7 +518,7 @@ if(BUILD_STATIC)
    endif()
 endif()
 
-if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
+if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "win-mingw" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
    add_executable(ledwiz_test
       src/tools/ledwiz_test.cpp
    )
@@ -488,6 +538,12 @@ if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "li
       else()
          target_link_libraries(ledwiz_test PUBLIC hidapi)
       endif()
+   elseif(PLATFORM STREQUAL "win-mingw")
+      target_link_directories(ledwiz_test PUBLIC
+         third-party/build-libs/${PLATFORM}/${ARCH}
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(ledwiz_test PUBLIC hidapi64)
    elseif(PLATFORM STREQUAL "macos")
       target_link_directories(ledwiz_test PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
@@ -502,7 +558,7 @@ if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "li
 
 endif()
 
-if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
+if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "win-mingw" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
    add_executable(pacled64_test
       src/tools/pacled64_test.cpp
    )
@@ -522,6 +578,12 @@ if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "li
       else()
          target_link_libraries(pacled64_test PUBLIC libusb-1.0)
       endif()
+   elseif(PLATFORM STREQUAL "win-mingw")
+      target_link_directories(pacled64_test PUBLIC
+         third-party/build-libs/${PLATFORM}/${ARCH}
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(pacled64_test PUBLIC usb64-1.0)
    elseif(PLATFORM STREQUAL "macos")
       target_link_directories(pacled64_test PUBLIC
          third-party/runtime-libs/${PLATFORM}/${ARCH}
