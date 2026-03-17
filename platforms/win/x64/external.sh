@@ -90,7 +90,7 @@ cd libftdi
 sed -i.bak 's/cmake_minimum_required([^)]*)/cmake_minimum_required(VERSION 3.10)/' CMakeLists.txt
 sed -i.bak 's/set_target_properties(ftdi1 PROPERTIES VERSION ${VERSION_FIXUP}\.${MINOR_VERSION}\.0 SOVERSION 2)/set_target_properties(ftdi1 PROPERTIES OUTPUT_NAME "ftdi164" VERSION ${VERSION_FIXUP}.${MINOR_VERSION}.0 SOVERSION 2)/' src/CMakeLists.txt
 CURRENT_DIR="$(pwd)"
-"${MSYS2_PATH}/usr/bin/bash.exe" -l -c "
+MSYSTEM=UCRT64 "${MSYS2_PATH}/usr/bin/bash.exe" -l -c "
    cd \"${CURRENT_DIR}\" &&
    cmake \
       -DFTDI_EEPROM=OFF \
@@ -108,3 +108,13 @@ cp src/ftdi.h ../../third-party/include/libftdi1
 cp build/src/libftdi164.dll.a ../../third-party/build-libs/win/x64/libftdi164.lib
 cp build/src/libftdi164.dll ../../third-party/runtime-libs/win/x64/
 cd ..
+
+#
+# copy UCRT64 runtime DLLs (needed by MinGW-built libftdi164.dll)
+#
+
+UCRT64_BIN="${MSYS2_PATH}/ucrt64/bin"
+
+cp "${UCRT64_BIN}/libgcc_s_seh-1.dll" ../third-party/runtime-libs/win/x64/
+cp "${UCRT64_BIN}/libstdc++-6.dll" ../third-party/runtime-libs/win/x64/
+cp "${UCRT64_BIN}/libwinpthread-1.dll" ../third-party/runtime-libs/win/x64/
