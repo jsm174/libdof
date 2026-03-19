@@ -391,7 +391,7 @@ if(BUILD_SHARED)
             add_custom_command(TARGET dof_test POST_BUILD
                COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libusb64-1.0.dll" "$<TARGET_FILE_DIR:dof_test>"
                COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport64-0.dll" "$<TARGET_FILE_DIR:dof_test>"
-               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libhidapi64.dll" "$<TARGET_FILE_DIR:dof_test>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/hidapi64.dll" "$<TARGET_FILE_DIR:dof_test>"
                COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libftdi164.dll" "$<TARGET_FILE_DIR:dof_test>"
                COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libgcc_s_seh-1.dll" "$<TARGET_FILE_DIR:dof_test>"
                COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libstdc++-6.dll" "$<TARGET_FILE_DIR:dof_test>"
@@ -498,7 +498,7 @@ if(BUILD_STATIC)
             add_custom_command(TARGET dof_test_s POST_BUILD
                COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libusb64-1.0.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libserialport64-0.dll" "$<TARGET_FILE_DIR:dof_test_s>"
-               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libhidapi64.dll" "$<TARGET_FILE_DIR:dof_test_s>"
+               COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/hidapi64.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libftdi164.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libgcc_s_seh-1.dll" "$<TARGET_FILE_DIR:dof_test_s>"
                COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/third-party/runtime-libs/${PLATFORM}/${ARCH}/libstdc++-6.dll" "$<TARGET_FILE_DIR:dof_test_s>"

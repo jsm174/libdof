@@ -66,14 +66,14 @@ curl -sL https://github.com/libusb/hidapi/archive/${HIDAPI_SHA}.tar.gz -o hidapi
 tar xzf hidapi-${HIDAPI_SHA}.tar.gz
 mv hidapi-${HIDAPI_SHA} hidapi
 cd hidapi
-sed -i.bak 's/OUTPUT_NAME "hidapi"/OUTPUT_NAME "hidapi64"/' windows/CMakeLists.txt
+sed -i.bak 's/OUTPUT_NAME "hidapi"/OUTPUT_NAME "hidapi64"\n  PREFIX ""\n  IMPORT_PREFIX ""/' windows/CMakeLists.txt
 cmake \
    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
    -B build
 cmake --build build -- -j${NUM_PROCS}
 cp -r hidapi ../../third-party/include/
-cp build/src/windows/libhidapi64.dll.a ../../third-party/build-libs/win-mingw/x64/
-cp build/src/windows/libhidapi64.dll ../../third-party/runtime-libs/win-mingw/x64/
+cp build/src/windows/hidapi64.dll.a ../../third-party/build-libs/win-mingw/x64/
+cp build/src/windows/hidapi64.dll ../../third-party/runtime-libs/win-mingw/x64/
 cd ..
 
 #
