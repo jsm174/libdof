@@ -346,22 +346,18 @@ void Configurator::SetupTable(
                            shiftEffect->SetInactiveColor(inactiveColor);
                            shiftEffect->SetShiftDirection(tcs->GetAreaDirection());
                            shiftEffect->SetShiftAcceleration(tcs->GetAreaAcceleration());
-                           shiftEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
 
                            if (tcs->GetAreaSpeed() > 0)
                               shiftEffect->SetShiftSpeed(tcs->GetAreaSpeed());
 
-                           if (tcs->IsArea())
-                           {
-                              shiftEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-                              shiftEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                              shiftEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                              shiftEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-                           }
+                           shiftEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                           shiftEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                           shiftEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                           shiftEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
 
                            effect = static_cast<EffectBase*>(shiftEffect);
                         }
-                        else if (tcs->IsArea() && tcs->GetAreaFlickerDensity() > 0)
+                        else if (tcs->GetAreaFlickerDensity() > 0)
                         {
                            RGBAMatrixFlickerEffect* flickerEffect = new RGBAMatrixFlickerEffect();
                            effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixFlickerEffect", std::to_string(ledWizNr),
@@ -663,19 +659,21 @@ void Configurator::SetupTable(
                            shiftEffect->SetToyName(toy->GetName());
                            int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
                            shiftEffect->SetLayerNr(layer);
+                           AnalogAlpha activeValue(MathExtensions::Limit(tcs->GetIntensity(), 0, 255), 255);
+                           AnalogAlpha inactiveValue = activeValue;
+                           inactiveValue.SetAlpha(0);
+                           shiftEffect->SetActiveValue(activeValue);
+                           shiftEffect->SetInactiveValue(inactiveValue);
                            shiftEffect->SetShiftDirection(tcs->GetAreaDirection());
                            shiftEffect->SetShiftAcceleration(tcs->GetAreaAcceleration());
 
                            if (tcs->GetAreaSpeed() > 0)
                               shiftEffect->SetShiftSpeed(tcs->GetAreaSpeed());
 
-                           if (tcs->IsArea())
-                           {
-                              shiftEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-                              shiftEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                              shiftEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                              shiftEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-                           }
+                           shiftEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                           shiftEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                           shiftEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                           shiftEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
 
                            effect = static_cast<EffectBase*>(shiftEffect);
                         }

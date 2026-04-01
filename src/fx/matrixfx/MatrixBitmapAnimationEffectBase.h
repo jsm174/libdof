@@ -23,16 +23,11 @@ public:
    virtual ~MatrixBitmapAnimationEffectBase();
 
    int GetAnimationFrameCount() const { return m_animationFrameCount; }
-   void SetAnimationFrameCount(int value) { m_animationFrameCount = MathExtensions::Limit(value, 1, 1000); }
+   void SetAnimationFrameCount(int value) { m_animationFrameCount = MathExtensions::Limit(value, 1, INT_MAX); }
    int GetAnimationStepSize() const { return m_animationStepSize; }
-   void SetAnimationStepSize(int value)
-   {
-      if (value == 0)
-         value = 1;
-      m_animationStepSize = MathExtensions::Limit(value, -100, 100);
-   }
+   void SetAnimationStepSize(int value) { m_animationStepSize = value; }
    int GetAnimationFrameDurationMs() const { return m_animationFrameDurationMs; }
-   void SetAnimationFrameDurationMs(int value) { m_animationFrameDurationMs = MathExtensions::Limit(value, 1, 10000); }
+   void SetAnimationFrameDurationMs(int value) { m_animationFrameDurationMs = MathExtensions::Limit(value, 1, INT_MAX); }
    MatrixAnimationStepDirectionEnum GetAnimationStepDirection() const { return m_animationStepDirection; }
    void SetAnimationStepDirection(MatrixAnimationStepDirectionEnum value) { m_animationStepDirection = value; }
    AnimationBehaviourEnum GetAnimationBehaviour() const { return m_animationBehaviour; }
