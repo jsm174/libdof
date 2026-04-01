@@ -25,7 +25,12 @@ public:
    int GetAnimationFrameCount() const { return m_animationFrameCount; }
    void SetAnimationFrameCount(int value) { m_animationFrameCount = MathExtensions::Limit(value, 1, 1000); }
    int GetAnimationStepSize() const { return m_animationStepSize; }
-   void SetAnimationStepSize(int value) { m_animationStepSize = MathExtensions::Limit(value, 1, 100); }
+   void SetAnimationStepSize(int value)
+   {
+      if (value == 0)
+         value = 1;
+      m_animationStepSize = MathExtensions::Limit(value, -100, 100);
+   }
    int GetAnimationFrameDurationMs() const { return m_animationFrameDurationMs; }
    void SetAnimationFrameDurationMs(int value) { m_animationFrameDurationMs = MathExtensions::Limit(value, 1, 10000); }
    MatrixAnimationStepDirectionEnum GetAnimationStepDirection() const { return m_animationStepDirection; }

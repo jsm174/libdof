@@ -1,4 +1,5 @@
 #include "ShapeDefinitions.h"
+#include "ShapeAnimated.h"
 #include "../../../Log.h"
 #include "../../../general/StringExtensions.h"
 #include "../../../general/FileReader.h"
@@ -140,9 +141,10 @@ ShapeDefinitions* ShapeDefinitions::GetShapeDefinitionsFromShapeDefinitionsXml(c
          {
             std::string elementName = shapeElement->Name() ? shapeElement->Name() : "";
 
-            if (elementName == "Shape")
+            if (elementName == "Shape" || elementName == "ShapeAnimated")
             {
-               Shape* shape = new Shape();
+               const bool isAnimated = (elementName == "ShapeAnimated");
+               Shape* shape = isAnimated ? static_cast<Shape*>(new ShapeAnimated()) : new Shape();
                bool shapeValid = true;
 
                try
@@ -170,6 +172,41 @@ ShapeDefinitions* ShapeDefinitions::GetShapeDefinitionsFromShapeDefinitionsXml(c
                   tinyxml2::XMLElement* heightElement = shapeElement->FirstChildElement("BitmapHeight");
                   if (heightElement)
                      shape->SetBitmapHeight(heightElement->IntText(0));
+
+                  if (isAnimated)
+                  {
+                     ShapeAnimated* animatedShape = dynamic_cast<ShapeAnimated*>(shape);
+                     if (animatedShape != nullptr)
+                     {
+                        tinyxml2::XMLElement* directionElement = shapeElement->FirstChildElement("AnimationStepDirection");
+                        if (directionElement && directionElement->GetText())
+                        {
+                           std::string direction = directionElement->GetText();
+                           if (!direction.empty())
+                              animatedShape->SetAnimationStepDirection(static_cast<MatrixAnimationStepDirectionEnum>(direction[0]));
+                        }
+
+                        tinyxml2::XMLElement* stepSizeElement = shapeElement->FirstChildElement("AnimationStepSize");
+                        if (stepSizeElement)
+                           animatedShape->SetAnimationStepSize(stepSizeElement->IntText(1));
+
+                        tinyxml2::XMLElement* frameCountElement = shapeElement->FirstChildElement("AnimationFrameCount");
+                        if (frameCountElement)
+                           animatedShape->SetAnimationFrameCount(frameCountElement->IntText(1));
+
+                        tinyxml2::XMLElement* behaviourElement = shapeElement->FirstChildElement("AnimationBehaviour");
+                        if (behaviourElement && behaviourElement->GetText())
+                        {
+                           std::string behaviour = behaviourElement->GetText();
+                           if (!behaviour.empty())
+                              animatedShape->SetAnimationBehaviour(static_cast<AnimationBehaviourEnum>(behaviour[0]));
+                        }
+
+                        tinyxml2::XMLElement* frameDurationElement = shapeElement->FirstChildElement("AnimationFrameDurationMs");
+                        if (frameDurationElement)
+                           animatedShape->SetAnimationFrameDurationMs(frameDurationElement->IntText(30));
+                     }
+                  }
 
                   if (!shape->GetName().empty() && !shapeDefinitions->m_shapes.Contains(shape->GetName()))
                   {

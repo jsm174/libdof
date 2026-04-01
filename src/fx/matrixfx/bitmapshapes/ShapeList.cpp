@@ -1,5 +1,6 @@
 #include "ShapeList.h"
 #include "Shape.h"
+#include "ShapeAnimated.h"
 #include "../../../Log.h"
 #include "../../../general/StringExtensions.h"
 
@@ -56,9 +57,10 @@ void ShapeList::ReadXml(const std::string& reader)
    {
       std::string t = element->Name();
 
-      if (t == "Shape")
+      if (t == "Shape" || t == "ShapeAnimated")
       {
-         Shape* shape = new Shape();
+         const bool isAnimated = (t == "ShapeAnimated");
+         Shape* shape = isAnimated ? static_cast<Shape*>(new ShapeAnimated()) : new Shape();
          bool shapeValid = true;
 
          try
@@ -86,6 +88,41 @@ void ShapeList::ReadXml(const std::string& reader)
             tinyxml2::XMLElement* heightElement = element->FirstChildElement("BitmapHeight");
             if (heightElement)
                shape->SetBitmapHeight(heightElement->IntText(0));
+
+            if (isAnimated)
+            {
+               ShapeAnimated* animatedShape = dynamic_cast<ShapeAnimated*>(shape);
+               if (animatedShape != nullptr)
+               {
+                  tinyxml2::XMLElement* directionElement = element->FirstChildElement("AnimationStepDirection");
+                  if (directionElement && directionElement->GetText())
+                  {
+                     std::string direction = directionElement->GetText();
+                     if (!direction.empty())
+                        animatedShape->SetAnimationStepDirection(static_cast<MatrixAnimationStepDirectionEnum>(direction[0]));
+                  }
+
+                  tinyxml2::XMLElement* stepSizeElement = element->FirstChildElement("AnimationStepSize");
+                  if (stepSizeElement)
+                     animatedShape->SetAnimationStepSize(stepSizeElement->IntText(1));
+
+                  tinyxml2::XMLElement* frameCountElement = element->FirstChildElement("AnimationFrameCount");
+                  if (frameCountElement)
+                     animatedShape->SetAnimationFrameCount(frameCountElement->IntText(1));
+
+                  tinyxml2::XMLElement* behaviourElement = element->FirstChildElement("AnimationBehaviour");
+                  if (behaviourElement && behaviourElement->GetText())
+                  {
+                     std::string behaviour = behaviourElement->GetText();
+                     if (!behaviour.empty())
+                        animatedShape->SetAnimationBehaviour(static_cast<AnimationBehaviourEnum>(behaviour[0]));
+                  }
+
+                  tinyxml2::XMLElement* frameDurationElement = element->FirstChildElement("AnimationFrameDurationMs");
+                  if (frameDurationElement)
+                     animatedShape->SetAnimationFrameDurationMs(frameDurationElement->IntText(30));
+               }
+            }
 
             if (shape->GetName().empty())
             {
