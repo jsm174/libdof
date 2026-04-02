@@ -3,10 +3,6 @@
 ## Project Overview
 libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 correspondence. Cross-platform library for Direct Output Framework tasks, used by Visual Pinball Standalone.
 
-**Current Status**: ~99.5% complete - Core architecture, effects system, device management, all controller types, shape effects with bitmap rendering at 100% 1:1 correspondence.
-
-**Recent Major Implementation**: Fixed critical LedWiz event subscription chain - LedWiz outputs must use `OutputList::Add()` not `push_back()` to properly subscribe to output change events. This ensures the event flow: `Output::SetOutput()` → `OutputList::OutputValueChanged` → `OutputControllerBase` → `LedWiz::OnOutputValueChanged()` → `UpdateOutputs()` → USB commands. LedWiz inheritance corrected from `OutputControllerCompleteBase` to `OutputControllerBase` to match C# exactly. PAC controllers previously migrated to libusb with proper device permissions.
-
 ## Core Coding Principles
 
 ### 1:1 C# Correspondence Rules
@@ -15,6 +11,7 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **Value vs Reference Semantics**: C# structs → C++ structs, C# classes → C++ classes
 - **Interface Matching**: No extra methods, no missing methods from C# interfaces
 - **Algorithm Logic**: Step-based vs time-based approaches must match C# exactly
+- **No Invented Code**: Never add validation, guards, or conditional wrapping not present in C#
 
 ### C++ Code Style Requirements
 - **Naming**: PascalCase methods, camelCase parameters/variables, m_ instance members, s_ static members
@@ -55,81 +52,11 @@ libdof is a C++ port of the C# DirectOutput Framework achieving 1:1 corresponden
 - **XML**: Always `tinyxml2::` prefix, no `using namespace`
 - **Arrays**: MSVC requires `{{0.0f, 0.0f}}` for std::array initialization`
 
-### Test ROM Configurations
-- **ij_l7**: Blink + Fade effects
-- **gw**: Blink + Fade effects
-- **tna**: Matrix effects
-- **bourne**: Bitmap effects
-- **goldcue**: Shape effects
-- **afm**: RGB toys + LedWiz testing
-
-## Implementation Status
-
-### ✅ COMPLETE (100% C# Correspondence)
-- **Core Framework**: Cabinet, Table, GlobalConfig, Effects system, AlarmHandler
-- **Memory Safety**: All heap corruption issues resolved via proper value semantics
-- **Effects System**: All effect types with correct chain ordering and nested blink support
-- **Toys System**: All toy types with correct interface implementations
-- **Output Controllers**: LedWiz, Pinscape, PinscapePico, FTDI, ComPort, DudesCab, DMX, PinOne, LED Strips, PAC Controllers (PacLed64, PacDrive, PacUIO)
-- **Matrix Effects**: Flicker, Plasma, and Shift effects with exact timing correspondence
-- **Bitmap Effects System**: Complete bitmap loading, FastImage.Frames, DirectOutputShapes.png support
-- **Shape Effects System**: SHP code parsing, shape resolution, RGBAMatrixShapeEffect implementation
-- **Image Loading System**: Cross-platform image loading via stb_image.h with PNG/GIF/BMP support
-- **Configuration**: LedControl loader, GlobalConfig, ScheduledSettings system with corrected matrix effect logic
-- **Cross-Platform**: Windows/Linux/macOS builds with manual dependency compilation
-
-### ❌ MISSING COMPONENTS (0.5% remaining)
-- **SSF Controllers**: 7 variants with feedback systems  
-- **Philips Hue Controllers**: Smart lighting integration
-- **Extensions Utilities**: 11 utility classes
-
-## Critical Notes & Memories
-
-### Hardware Requirements
-- **PinscapePico**: Requires sudo access for HID enumeration
-- **PAC Controllers**: Use libusb with udev rules for device access without sudo
-- **Unit Bias**: LedWiz(0), Pinscape(50), PinscapePico(119), DudesCab(90-94), PinOne(1-16), PAC(19-27)
-
 ### Windows API Conflicts
-- Use `SendPipeMessage()` not `SendMessage()` 
+- Use `SendPipeMessage()` not `SendMessage()`
 - Use `GetDeviceProductName()` not `GetProductName()`
-
-### Memory Corruption Prevention (Critical)
-- **Root Cause**: C# structs are value types, C++ classes are reference types
-- **TableElementData**: Converted from class to struct to match C# value semantics
-- **AssignedEffectList Fix**: Pass TableElementData by value to prevent shared object modification
-- **Effects Fix**: All timed effects store copies, preventing heap-use-after-free
-- **Thread Safety**: AlarmHandler uses safe callback execution pattern with owner-based registration
-
-### Communication Protocols
-- **FTDI**: libftdi1 bitbang at USB level
-- **ComPort**: libserialport ASCII `{output},{value}#` format
-- **DudesCab**: hidapi HID multi-part messages
-- **DMX**: UDP ArtNet broadcast port 6454
-- **PinOne**: Named pipes with Base64 encoding over text
-- **LedWiz**: HIDAPI 9-byte packets (SBA: `[0x00, 0x40, bank0-3, globalSpeed, 0, 0]`, PBA: 4 chunks of `[0x00, bright1-8]` with 0-49 PWM range, ZebsBoards VID 0x20A0 supported)
-- **PAC Controllers**: libusb control transfers (PacLed64: individual LED intensity with 0-based numbering, PacDrive: 16-bit LED bitmask, PacUIO: via PacDriveSingleton)
-
-### Linux Serial Port Handling (Critical)
-- **USB CDC Devices**: Can hang on `sp_close()` - requires RTS/DTR reset before closing
-- **Device Existence Check**: Always verify device files exist before opening (prevents stale libserialport cache issues)
-- **Cleanup Sequence**: `sp_flush(SP_BUF_BOTH)` → `sp_set_rts(SP_RTS_OFF)` → `sp_set_dtr(SP_DTR_OFF)` → `sp_close()`
-- **Timeout Values**: Must match C# exactly (PinOne: 100ms, PinOneCommunication: 100ms server connection)
 
 ### Auto-Configuration Logging Philosophy
 - **C# Pattern**: Auto-configurators are mostly silent - only log when devices are actually found/configured
 - **No Scan Messages**: C# never logs "device scan found X devices" - remove all such logging
 - **Debug vs Production**: Never leave debug logging in production code - maintain 1:1 C# correspondence for all output
-
-### Bitmap Shapes Architecture
-- **Image Loading**: Cross-platform loading via stb_image.h supporting PNG, GIF, BMP formats
-- **Shape Resolution**: SHP codes resolve to named shapes in DirectOutputShapes.xml
-- **Delegation Pattern**: Shape effects delegate to internal bitmap effects (1:1 C# correspondence)
-- **Effect Types**: RGBAMatrixShapeEffect, RGBAMatrixColorScaleShapeEffect with animation variants
-- **Multi-frame Support**: Image class handles animated GIFs and frame sequences
-- **Interface System**: Full IMatrixBitmapEffect hierarchy matching C# exactly
-
-## References
-- **C# Source**: `/Users/jmillard/DirectOutput`
-- **Documentation**: See NOTES.md for DirectOutput configuration parsing details
-- **PAC Protocol Reference**: [Ultimarc-linux](https://github.com/katie-snow/Ultimarc-linux) - Essential for libusb PAC controller implementation
