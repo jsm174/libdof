@@ -85,7 +85,7 @@ MatrixFlickerEffectBase<MatrixElementType>::MatrixFlickerEffectBase()
    , m_active(false)
    , m_currentValue(0)
    , m_flickerTableElementData(nullptr)
-   , m_randomGenerator(std::random_device {}())
+   , m_randomGenerator(std::random_device { }())
    , m_intervalAlarmCallback()
 {
 }

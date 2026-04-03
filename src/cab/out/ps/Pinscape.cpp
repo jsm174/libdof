@@ -15,7 +15,7 @@
 namespace DOF
 {
 
-std::vector<Pinscape::Device*> Pinscape::s_devices = {};
+std::vector<Pinscape::Device*> Pinscape::s_devices = { };
 
 void Pinscape::Initialize() { FindDevices(); }
 

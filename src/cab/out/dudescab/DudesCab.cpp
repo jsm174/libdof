@@ -514,7 +514,7 @@ std::vector<uint8_t> DudesCab::Device::ReadUSB()
    }
 
    Log::Error("DudesCab Controller USB error reading from device: timed out");
-   return {};
+   return { };
 }
 
 bool DudesCab::Device::WriteUSB(const std::vector<uint8_t>& data)

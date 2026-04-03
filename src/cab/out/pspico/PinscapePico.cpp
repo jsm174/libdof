@@ -24,7 +24,7 @@
 namespace DOF
 {
 
-std::vector<PinscapePico::Device*> PinscapePico::s_devices = {};
+std::vector<PinscapePico::Device*> PinscapePico::s_devices = { };
 
 void PinscapePico::Initialize() { FindDevices(); }
 

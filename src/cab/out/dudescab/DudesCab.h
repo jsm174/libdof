@@ -134,9 +134,9 @@ public:
       bool HasOutputEnabled(uint8_t extNum, uint8_t outputNum);
       bool SupportMx();
 
-      void SendCommand(HIDCommonReportType command, const std::vector<uint8_t>& parameters = {});
-      void SendCommand(HIDReportType command, const std::vector<uint8_t>& parameters = {});
-      void SendCommand(HIDReportTypeMx command, const std::vector<uint8_t>& parameters = {});
+      void SendCommand(HIDCommonReportType command, const std::vector<uint8_t>& parameters = { });
+      void SendCommand(HIDReportType command, const std::vector<uint8_t>& parameters = { });
+      void SendCommand(HIDReportTypeMx command, const std::vector<uint8_t>& parameters = { });
 
       std::vector<uint8_t> ReadUSB(uint8_t command);
 
@@ -159,7 +159,7 @@ public:
       uint8_t m_configVersion;
 
    private:
-      void SendCommand(RIDType rid, uint8_t command, const std::vector<uint8_t>& parameters = {});
+      void SendCommand(RIDType rid, uint8_t command, const std::vector<uint8_t>& parameters = { });
       std::vector<uint8_t> ReadUSB();
       bool WriteUSB(const std::vector<uint8_t>& data);
 

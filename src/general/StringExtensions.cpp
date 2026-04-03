@@ -241,7 +241,7 @@ bool StringExtensions::TryParseInt(const std::string& str, int& value)
 {
    if (str.empty())
       return false;
-   return (std::from_chars(str.c_str(), str.c_str() + str.length(), value).ec == std::errc {});
+   return (std::from_chars(str.c_str(), str.c_str() + str.length(), value).ec == std::errc { });
 }
 
 bool StringExtensions::IsHexString(const std::string& s)

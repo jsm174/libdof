@@ -17,9 +17,9 @@ public:
    const std::string& GetPattern() const noexcept;
    void SetPattern(const std::string& pattern);
 
-   std::string ReplacePlaceholders(const std::unordered_map<std::string, std::string>& replaceValues = {}) const;
-   std::vector<FileInfo> GetMatchingFiles(const std::unordered_map<std::string, std::string>& replaceValues = {}) const;
-   FileInfo* GetFirstMatchingFile(const std::unordered_map<std::string, std::string>& replaceValues = {}) const;
+   std::string ReplacePlaceholders(const std::unordered_map<std::string, std::string>& replaceValues = { }) const;
+   std::vector<FileInfo> GetMatchingFiles(const std::unordered_map<std::string, std::string>& replaceValues = { }) const;
+   FileInfo* GetFirstMatchingFile(const std::unordered_map<std::string, std::string>& replaceValues = { }) const;
 
    bool IsValid() const noexcept;
 

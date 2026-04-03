@@ -100,7 +100,7 @@ public:
    void UpdateOutputs(const std::vector<uint8_t>& outputValues);
 
    virtual void Initialize() = 0;
-   virtual void SendCommand(UMXCommand command, const std::vector<uint8_t>& parameters = {}) = 0;
+   virtual void SendCommand(UMXCommand command, const std::vector<uint8_t>& parameters = { }) = 0;
    virtual void WaitAck(uint8_t command) = 0;
 
    std::vector<LedStripDescriptor> m_ledStrips;

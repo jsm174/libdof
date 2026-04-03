@@ -15,7 +15,7 @@ public:
    virtual ~UMXDudesCabDevice();
 
    void Initialize() override;
-   void SendCommand(UMXCommand command, const std::vector<uint8_t>& parameters = {}) override;
+   void SendCommand(UMXCommand command, const std::vector<uint8_t>& parameters = { }) override;
    void WaitAck(uint8_t command) override;
 
    DudesCab::Device* GetDevice() const { return m_device; }
