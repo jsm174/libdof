@@ -22,7 +22,7 @@ struct TestRom
 };
 
 std::vector<TestRom> testRoms = { { "ij_l7", "Indiana Jones L7" }, { "tna", "Total Nuclear Annihilation" }, { "gw", "The Getaway High Speed II" }, { "goldcue", "Gold Cue" },
-   { "bourne", "Bourne Identity" }, { "twenty4", "24" }, { "afm", "Attack From Mars" } };
+   { "bourne", "Bourne Identity" }, { "twenty4", "24" }, { "afm", "Attack From Mars" }, { "pinupmenu", "PinUP Menu" } };
 
 void LIBDOFCALLBACK LogCallback(DOF_LogLevel logLevel, const char* format, va_list args)
 {
@@ -325,6 +325,115 @@ void RunAFMTests(DOF::DOF* pDof)
    pDof->Finish();
 }
 
+void RunPinupMenuTests(DOF::DOF* pDof)
+{
+   pDof->Init("", "pinupmenu");
+
+   Log("========================================");
+   Log("Testing ROM: pinupmenu");
+   Log("========================================");
+
+   std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_START_DELAY));
+
+   TriggerOutputOnOff(pDof, 'E', 800, 2000);
+   TriggerOutputOnOff(pDof, 'E', 801, 2000);
+   TriggerOutputOnOff(pDof, 'E', 805, 2000);
+   TriggerOutputOnOff(pDof, 'E', 900, 2000);
+   TriggerOutputOnOff(pDof, 'E', 901, 2000);
+   TriggerOutputOnOff(pDof, 'E', 902, 2000);
+   TriggerOutputOnOff(pDof, 'E', 903, 5000);
+   TriggerOutputOnOff(pDof, 'E', 904, 3000);
+   TriggerOutputOnOff(pDof, 'E', 905, 5000);
+   TriggerOutputOnOff(pDof, 'E', 906, 2000);
+   TriggerOutputOnOff(pDof, 'E', 907, 2000);
+   TriggerOutputOnOff(pDof, 'E', 908, 2000);
+   TriggerOutputOnOff(pDof, 'E', 909, 2000);
+   TriggerOutputOnOff(pDof, 'E', 910, 3000);
+   TriggerOutputOnOff(pDof, 'E', 911, 2000);
+   TriggerOutputOnOff(pDof, 'E', 912, 2000);
+   TriggerOutputOnOff(pDof, 'E', 913, 2000);
+   TriggerOutputOnOff(pDof, 'E', 914, 2000);
+   TriggerOutputOnOff(pDof, 'E', 915, 2000);
+   TriggerOutputOnOff(pDof, 'E', 916, 2000);
+   TriggerOutputOnOff(pDof, 'E', 917, 2000);
+   TriggerOutputOnOff(pDof, 'E', 918, 2000);
+   TriggerOutputOnOff(pDof, 'E', 919, 6000);
+   TriggerOutputOnOff(pDof, 'E', 920, 2000);
+   TriggerOutputOnOff(pDof, 'E', 921, 2000);
+   TriggerOutputOnOff(pDof, 'E', 922, 2000);
+   TriggerOutputOnOff(pDof, 'E', 923, 2000);
+   TriggerOutputOnOff(pDof, 'E', 924, 2000);
+   TriggerOutputOnOff(pDof, 'E', 925, 2000);
+   TriggerOutputOnOff(pDof, 'E', 926, 2000);
+   TriggerOutputOnOff(pDof, 'E', 927, 2000);
+   TriggerOutputOnOff(pDof, 'E', 928, 2000);
+   TriggerOutputOnOff(pDof, 'E', 929, 2000);
+   TriggerOutputOnOff(pDof, 'E', 930, 2000);
+   TriggerOutputOnOff(pDof, 'E', 931, 2000);
+   TriggerOutputOnOff(pDof, 'E', 932, 2000);
+   TriggerOutputOnOff(pDof, 'E', 933, 2000);
+   TriggerOutputOnOff(pDof, 'E', 934, 2000);
+   TriggerOutputOnOff(pDof, 'E', 935, 2000);
+   TriggerOutputOnOff(pDof, 'E', 936, 2000);
+   TriggerOutputOnOff(pDof, 'E', 937, 2000);
+   TriggerOutputOnOff(pDof, 'E', 938, 2000);
+   TriggerOutputOnOff(pDof, 'E', 939, 2000);
+   TriggerOutputOnOff(pDof, 'E', 940, 2000);
+   TriggerOutputOnOff(pDof, 'E', 941, 2000);
+   TriggerOutputOnOff(pDof, 'E', 942, 2000);
+   TriggerOutputOnOff(pDof, 'E', 943, 2000);
+   TriggerOutputOnOff(pDof, 'E', 944, 2000);
+   TriggerOutputOnOff(pDof, 'E', 945, 2000);
+   TriggerOutputOnOff(pDof, 'E', 946, 2000);
+   TriggerOutputOnOff(pDof, 'E', 947, 2000);
+   TriggerOutputOnOff(pDof, 'E', 948, 2000);
+   TriggerOutputOnOff(pDof, 'E', 949, 2000);
+   TriggerOutputOnOff(pDof, 'E', 950, 2000);
+   TriggerOutputOnOff(pDof, 'E', 951, 2000);
+   TriggerOutputOnOff(pDof, 'E', 952, 2000);
+   TriggerOutputOnOff(pDof, 'E', 953, 2000);
+   TriggerOutputOnOff(pDof, 'E', 954, 2000);
+   TriggerOutputOnOff(pDof, 'E', 955, 2000);
+   TriggerOutputOnOff(pDof, 'E', 956, 2000);
+   TriggerOutputOnOff(pDof, 'E', 957, 2000);
+   TriggerOutputOnOff(pDof, 'E', 958, 2000);
+   TriggerOutputOnOff(pDof, 'E', 959, 2000);
+   TriggerOutputOnOff(pDof, 'E', 960, 2000);
+   TriggerOutputOnOff(pDof, 'E', 961, 2000);
+   TriggerOutputOnOff(pDof, 'E', 962, 2000);
+   TriggerOutputOnOff(pDof, 'E', 963, 6000);
+   TriggerOutputOnOff(pDof, 'E', 964, 6000);
+   TriggerOutputOnOff(pDof, 'E', 965, 6000);
+   TriggerOutputOnOff(pDof, 'E', 966, 6000);
+   TriggerOutputOnOff(pDof, 'E', 967, 6000);
+   TriggerOutputOnOff(pDof, 'E', 968, 6000);
+   TriggerOutputOnOff(pDof, 'E', 969, 6000);
+   TriggerOutputOnOff(pDof, 'E', 970, 6000);
+   TriggerOutputOnOff(pDof, 'E', 971, 6000);
+   TriggerOutputOnOff(pDof, 'E', 972, 6000);
+   TriggerOutputOnOff(pDof, 'E', 973, 2000);
+   TriggerOutputOnOff(pDof, 'E', 974, 2000);
+   TriggerOutputOnOff(pDof, 'E', 975, 2000);
+   TriggerOutputOnOff(pDof, 'E', 976, 2000);
+   TriggerOutputOnOff(pDof, 'E', 977, 2000);
+   TriggerOutputOnOff(pDof, 'E', 978, 2000);
+   TriggerOutputOnOff(pDof, 'E', 979, 2000);
+   TriggerOutputOnOff(pDof, 'E', 980, 2000);
+   TriggerOutputOnOff(pDof, 'E', 981, 2000);
+   TriggerOutputOnOff(pDof, 'E', 982, 6000);
+   TriggerOutputOnOff(pDof, 'E', 983, 2000);
+   TriggerOutputOnOff(pDof, 'E', 984, 6000);
+   TriggerOutputOnOff(pDof, 'E', 985, 2000);
+   TriggerOutputOnOff(pDof, 'E', 986, 2000);
+   TriggerOutputOnOff(pDof, 'E', 987, 2000);
+   TriggerOutputOnOff(pDof, 'E', 988, 2000);
+   TriggerOutputOnOff(pDof, 'E', 989, 2000);
+   TriggerOutputOnOff(pDof, 'E', 990, 2000);
+   TriggerOutputOnOff(pDof, 'E', 991, 6000);
+
+   pDof->Finish();
+}
+
 void PrintUsage(const char* programName)
 {
    std::cout << "Usage: " << programName << " --base-path PATH [ROM_NAME]" << std::endl;
@@ -415,6 +524,8 @@ int main(int argc, const char* argv[])
                RunTwenty4Tests(pDof);
             else if (testRom.name == "afm")
                RunAFMTests(pDof);
+            else if (testRom.name == "pinupmenu")
+               RunPinupMenuTests(pDof);
             break;
          }
       }
@@ -443,6 +554,7 @@ int main(int argc, const char* argv[])
       RunBourneTests(pDof);
       RunTwenty4Tests(pDof);
       RunAFMTests(pDof);
+      RunPinupMenuTests(pDof);
    }
 
    Log("Shutting down...");

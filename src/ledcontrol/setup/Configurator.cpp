@@ -331,8 +331,8 @@ void Configurator::SetupTable(
                         if (tcs->HasAreaDirection())
                         {
                            RGBAMatrixShiftEffect* shiftEffect = new RGBAMatrixShiftEffect();
-                           effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixShiftEffect", std::to_string(ledWizNr),
-                              std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                           effectName = StringExtensions::Build(
+                              "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixShiftEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
                            shiftEffect->SetName(effectName);
                            shiftEffect->SetToyName(toy->GetName());
                            int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;

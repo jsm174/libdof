@@ -195,7 +195,9 @@ cmake --build build
 
 ## Testing:
 
-The `dof_test` tool requires `--base-path` to specify the VPinballX data directory:
+The `dof_test` tool requires `--base-path` to specify the VPinballX data directory.
+
+Available ROMs: `ij_l7`, `tna`, `gw`, `goldcue`, `bourne`, `twenty4`, `afm`, `pinupmenu`
 
 #### macOS
 ```shell

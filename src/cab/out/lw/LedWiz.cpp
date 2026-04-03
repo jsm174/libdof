@@ -23,7 +23,7 @@
 namespace DOF
 {
 
-std::vector<LedWiz::LWDEVICE> LedWiz::s_deviceList = {};
+std::vector<LedWiz::LWDEVICE> LedWiz::s_deviceList = { };
 int LedWiz::s_startedUp = 0;
 std::mutex LedWiz::s_startupLocker;
 
