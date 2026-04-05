@@ -256,13 +256,17 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
          serialNumber = "<not available>";
 
       bool isDude = (cur_dev->vendor_id == VendorID && cur_dev->product_id == ProductID);
-      if (isDude && !productName.empty())
+      if (isDude)
       {
          Device::RIDType deviceRid = Device::RIDType::None;
 
          if (productName == "DudesCab Outputs")
             deviceRid = Device::RIDType::RIDOutputs;
          else if (productName == "DudesCab Outputs MX")
+            deviceRid = Device::RIDType::RIDOutputsMx;
+         else if (cur_dev->interface_number == 3)
+            deviceRid = Device::RIDType::RIDOutputs;
+         else if (cur_dev->interface_number == 4)
             deviceRid = Device::RIDType::RIDOutputsMx;
 
          if (deviceRid != Device::RIDType::None)
