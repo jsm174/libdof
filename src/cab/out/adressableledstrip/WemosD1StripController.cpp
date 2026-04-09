@@ -1,10 +1,9 @@
 #include "WemosD1StripController.h"
 #include "../../../Log.h"
 #include "../../../general/StringExtensions.h"
-#include <algorithm>
-#include <thread>
 #include <chrono>
 #include <climits>
+#include <thread>
 
 namespace DOF
 {
@@ -145,24 +144,11 @@ void WemosD1MPStripController::SendLedstripData(const std::vector<uint8_t>& outp
          int nbData = static_cast<int>(m_compressedData.size()) / 4;
          int nbLeds = static_cast<int>(outputValues.size()) / 3;
 
-         if (targetPosition + nbLeds > GetNumberOfLedsPerChannel() * 10)
-         {
-            throw std::runtime_error(StringExtensions::Build("LED range {0}-{1} exceeds configured strip capacity {2}", std::to_string(targetPosition),
-               std::to_string(targetPosition + nbLeds - 1), std::to_string(GetNumberOfLedsPerChannel() * 10)));
-         }
-
          std::vector<uint8_t> commandData = { (uint8_t)'Q', (uint8_t)(targetPosition >> 8), (uint8_t)(targetPosition & 255), (uint8_t)(nbData >> 8), (uint8_t)(nbData & 255),
             (uint8_t)(nbLeds >> 8), (uint8_t)(nbLeds & 255) };
 
-         enum sp_return result = sp_blocking_write(GetComPort(), commandData.data(), 7, GetComPortTimeOutMs());
-         if (result < 0)
-            throw std::runtime_error(StringExtensions::Build("Failed to write compressed command data: {0}", sp_last_error_message()));
-
-         result = sp_blocking_write(GetComPort(), m_compressedData.data(), m_compressedData.size(), GetComPortTimeOutMs());
-         if (result < 0)
-            throw std::runtime_error(StringExtensions::Build("Failed to write compressed output values: {0}", sp_last_error_message()));
-
-         std::this_thread::sleep_for(std::chrono::milliseconds(100));
+         sp_blocking_write(GetComPort(), commandData.data(), 7, GetComPortTimeOutMs());
+         sp_blocking_write(GetComPort(), m_compressedData.data(), m_compressedData.size(), GetComPortTimeOutMs());
       }
       else
       {
