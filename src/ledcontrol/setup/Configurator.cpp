@@ -59,6 +59,7 @@
 #include "../../table/TableElementList.h"
 #include "../../table/TableElementData.h"
 #include "../../table/TableElementTypeEnum.h"
+#include "../loader/ColorConfig.h"
 #include <set>
 #include <string>
 #include <cctype>
@@ -326,7 +327,27 @@ void Configurator::SetupTable(
 
                   if (rgbaMatrixToy != nullptr)
                   {
+                     RGBAColor activeColor;
+                     bool hasColor = false;
                      if (tcs->GetColorConfig() != nullptr)
+                     {
+                        ColorConfig* colorConfig = tcs->GetColorConfig();
+                        activeColor = RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
+                        hasColor = true;
+                     }
+                     else
+                     {
+                        if (!StringExtensions::IsNullOrWhiteSpace(tcs->GetColorName()))
+                        {
+                           if (StringExtensions::StartsWith(tcs->GetColorName(), "#"))
+                           {
+                              if (activeColor.SetColor(tcs->GetColorName()))
+                                 hasColor = true;
+                           }
+                        }
+                     }
+
+                     if (hasColor)
                      {
                         if (tcs->HasAreaDirection())
                         {
@@ -338,8 +359,6 @@ void Configurator::SetupTable(
                            int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
                            shiftEffect->SetLayerNr(layer);
 
-                           ColorConfig* colorConfig = tcs->GetColorConfig();
-                           RGBAColor activeColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
                            RGBAColor inactiveColor = activeColor;
                            inactiveColor.SetAlpha(0);
                            shiftEffect->SetActiveColor(activeColor);
@@ -367,8 +386,7 @@ void Configurator::SetupTable(
                            int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
                            flickerEffect->SetLayerNr(layer);
 
-                           ColorConfig* colorConfig = tcs->GetColorConfig();
-                           flickerEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
+                           flickerEffect->SetActiveColor(activeColor);
                            flickerEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
                            flickerEffect->SetDensity(MathExtensions::Limit(tcs->GetAreaFlickerDensity(), 1, 99));
                            if (tcs->GetAreaFlickerMinDurationMs() > 0)
@@ -398,24 +416,64 @@ void Configurator::SetupTable(
                            int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
                            plasmaEffect->SetLayerNr(layer);
 
-                           ColorConfig* colorConfig = tcs->GetColorConfig();
                            RGBAColor activeColor1;
                            RGBAColor activeColor2;
                            RGBAColor inactiveColor;
+                           bool hasColor1 = false;
+                           bool hasColor2 = false;
 
-                           if (colorConfig != nullptr)
+                           if (tcs->GetColorConfig() != nullptr)
+                           {
+                              ColorConfig* colorConfig = tcs->GetColorConfig();
                               activeColor1 = RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
+                              hasColor1 = true;
+                           }
                            else
+                           {
+                              if (!StringExtensions::IsNullOrWhiteSpace(tcs->GetColorName()))
+                              {
+                                 if (StringExtensions::StartsWith(tcs->GetColorName(), "#"))
+                                 {
+                                    if (activeColor1.SetColor(tcs->GetColorName()))
+                                       hasColor1 = true;
+                                 }
+                              }
+                           }
+
+                           if (tcs->GetColorConfig2() != nullptr)
+                           {
+                              ColorConfig* colorConfig2 = tcs->GetColorConfig2();
+                              activeColor2 = RGBAColor(colorConfig2->GetRed(), colorConfig2->GetGreen(), colorConfig2->GetBlue(), colorConfig2->GetAlpha());
+                              hasColor2 = true;
+                           }
+                           else
+                           {
+                              if (!StringExtensions::IsNullOrWhiteSpace(tcs->GetColorName2()))
+                              {
+                                 if (StringExtensions::StartsWith(tcs->GetColorName2(), "#"))
+                                 {
+                                    if (activeColor2.SetColor(tcs->GetColorName2()))
+                                       hasColor2 = true;
+                                 }
+                              }
+                           }
+
+                           if (hasColor1)
+                           {
+                              inactiveColor = activeColor1;
+                              inactiveColor.SetAlpha(0);
+                           }
+                           else if (hasColor2)
+                           {
+                              inactiveColor = activeColor2;
+                              inactiveColor.SetAlpha(0);
+                           }
+
+                           if (!hasColor1)
                               activeColor1 = RGBAColor(0xff, 0, 0, 0xff);
 
-                           ColorConfig* colorConfig2 = tcs->GetColorConfig2();
-                           if (colorConfig2 != nullptr)
-                              activeColor2 = RGBAColor(colorConfig2->GetRed(), colorConfig2->GetGreen(), colorConfig2->GetBlue(), colorConfig2->GetAlpha());
-                           else
+                           if (!hasColor2)
                               activeColor2 = RGBAColor(0, 0xff, 0, 0xff);
-
-                           inactiveColor = activeColor1;
-                           inactiveColor.SetAlpha(0);
 
                            plasmaEffect->SetActiveColor(activeColor1);
                            plasmaEffect->SetSecondaryColor(activeColor2);
@@ -435,8 +493,26 @@ void Configurator::SetupTable(
                         }
                         else if (!tcs->GetShapeName().empty())
                         {
-                           ColorConfig* colorConfig = tcs->GetColorConfig();
-                           if (colorConfig != nullptr)
+                           RGBAColor shapeColor;
+                           bool hasShapeColor = false;
+                           if (tcs->GetColorConfig() != nullptr)
+                           {
+                              ColorConfig* colorConfig = tcs->GetColorConfig();
+                              shapeColor = RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
+                              hasShapeColor = true;
+                           }
+                           else
+                           {
+                              if (!StringExtensions::IsNullOrWhiteSpace(tcs->GetColorName()))
+                              {
+                                 if (StringExtensions::StartsWith(tcs->GetColorName(), "#"))
+                                 {
+                                    if (shapeColor.SetColor(tcs->GetColorName()))
+                                       hasShapeColor = true;
+                                 }
+                              }
+                           }
+                           if (hasShapeColor)
                            {
                               RGBAMatrixColorScaleShapeEffect* shapeEffect = new RGBAMatrixColorScaleShapeEffect();
                               effectName = StringExtensions::Build("Ledwiz {0} Column {1} Setting {2} RGBAMatrixColorScaleShapeEffect", std::to_string(ledWizNr),
@@ -447,7 +523,7 @@ void Configurator::SetupTable(
                               shapeEffect->SetLayerNr(layer);
                               shapeEffect->SetShapeName(tcs->GetShapeName());
 
-                              RGBAColor activeColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
+                              RGBAColor activeColor = shapeColor;
                               RGBAColor inactiveColor = activeColor;
                               inactiveColor.SetAlpha(0);
                               shapeEffect->SetActiveColor(activeColor);
@@ -611,8 +687,6 @@ void Configurator::SetupTable(
                         }
                         else
                         {
-                           ColorConfig* colorConfig = tcs->GetColorConfig();
-                           RGBAColor activeColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
                            RGBAColor inactiveColor = activeColor;
                            inactiveColor.SetAlpha(0);
 
@@ -641,8 +715,8 @@ void Configurator::SetupTable(
                      }
                      else
                      {
-                        Log::Warning(StringExtensions::Build("No color valid color definition found for area effect. Skipped setting {0} in column {1} for LedWizEqivalent number {2}",
-                           std::to_string(settingNumber), std::to_string(tcc->GetNumber()), std::to_string(ledWizNr)));
+                        Log::Warning(StringExtensions::Build("Invalid color definition \"{0}\" found for area effect. Skipped setting {1} in column {2} for LedWizEqivalent number {3}.",
+                           tcs->GetColorName(), std::to_string(settingNumber), std::to_string(tcc->GetNumber()), std::to_string(ledWizNr)));
                         continue;
                      }
                   }
@@ -740,7 +814,35 @@ void Configurator::SetupTable(
                   }
                   else if (rgbaToy != nullptr)
                   {
+                     RGBAColor rgbaActiveColor;
+                     bool hasRgbaColor = false;
                      if (tcs->GetColorConfig() != nullptr)
+                     {
+                        ColorConfig* colorConfig = tcs->GetColorConfig();
+                        rgbaActiveColor = RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
+                        hasRgbaColor = true;
+                     }
+                     else
+                     {
+                        if (!StringExtensions::IsNullOrWhiteSpace(tcs->GetColorName()))
+                        {
+                           if (StringExtensions::StartsWith(tcs->GetColorName(), "#"))
+                           {
+                              if (rgbaActiveColor.SetColor(tcs->GetColorName()))
+                                 hasRgbaColor = true;
+                              else
+                                 Log::Warning(StringExtensions::Build("Skipped setting {0} in column {1} for LedWizEqivalent number {2} since {3} is not a valid color specification.",
+                                    std::to_string(settingNumber), std::to_string(tcc->GetNumber()), std::to_string(ledWizNr), tcs->GetColorName()));
+                           }
+                           else
+                              Log::Warning(StringExtensions::Build("Skipped setting {0} in column {1} for LedWizEqivalent number {2} since {3} is not a valid color specification.",
+                                 std::to_string(settingNumber), std::to_string(tcc->GetNumber()), std::to_string(ledWizNr), tcs->GetColorName()));
+                        }
+                        else
+                           Log::Warning(StringExtensions::Build("Skipped setting {0} in column {1} for LedWizEqivalent number {2} since it does not contain a color specification.",
+                              std::to_string(settingNumber), std::to_string(tcc->GetNumber()), std::to_string(ledWizNr)));
+                     }
+                     if (hasRgbaColor)
                      {
                         RGBAColorEffect* rgbaEffect = new RGBAColorEffect();
                         effectName = StringExtensions::Build(
@@ -748,8 +850,7 @@ void Configurator::SetupTable(
                         rgbaEffect->SetName(effectName);
                         rgbaEffect->SetToyName(toy->GetName());
 
-                        ColorConfig* colorConfig = tcs->GetColorConfig();
-                        rgbaEffect->SetActiveColor(RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha()));
+                        rgbaEffect->SetActiveColor(rgbaActiveColor);
                         rgbaEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
                         rgbaEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
 
@@ -757,8 +858,6 @@ void Configurator::SetupTable(
                      }
                      else
                      {
-                        Log::Warning(StringExtensions::Build("Skipped setting {0} in column {1} for LedWizEqivalent number {2} since it does not contain a color specification.",
-                           std::to_string(settingNumber), std::to_string(tcc->GetNumber()), std::to_string(ledWizNr)));
                         continue;
                      }
                   }
