@@ -22,7 +22,6 @@ void ColorList::UpdateIndex()
 
 void ColorList::Add(const RGBAColorNamed& color)
 {
-
    if (!color.GetName().empty() && Contains(color.GetName()))
    {
       return;

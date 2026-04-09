@@ -39,7 +39,6 @@ void RGBAToy::Init(Cabinet* cabinet)
 
 void RGBAToy::Reset()
 {
-
    m_currentColor = RGBAColor(0, 0, 0, 255);
    UpdateOutputs();
 }

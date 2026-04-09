@@ -38,7 +38,6 @@ int SequentialOutputDevice::GetNextOutput(int currentOutputNumber)
    }
    else
    {
-
       m_outputIndex = 0;
       m_outputTimestamp = now;
       return m_outputNumbers[m_outputIndex];

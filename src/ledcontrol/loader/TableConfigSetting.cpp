@@ -123,7 +123,6 @@ void TableConfigSetting::ParseSettingData(const std::string& settingData)
 
    if (StringExtensions::StartsWith(s, "("))
    {
-
       int bracketCnt = 1;
       int closingBracketPos = -1;
       for (size_t i = 1; i < s.length(); i++)
@@ -154,7 +153,6 @@ void TableConfigSetting::ParseSettingData(const std::string& settingData)
    }
    else
    {
-
       if (s.length() == 0)
       {
          Log::Warning("No data to parse.");
@@ -198,7 +196,6 @@ void TableConfigSetting::ParseSettingData(const std::string& settingData)
       }
       else
       {
-
          std::vector<std::string> tableElements = StringExtensions::Split(trigger, { '|' });
          for (const std::string& element : tableElements)
          {
@@ -207,7 +204,6 @@ void TableConfigSetting::ParseSettingData(const std::string& settingData)
             {
                if (e[0] == (char)TableElementTypeEnum::NamedElement)
                {
-
                   bool validNamed = true;
                   for (size_t j = 1; j < e.length(); j++)
                   {
@@ -226,7 +222,6 @@ void TableConfigSetting::ParseSettingData(const std::string& settingData)
                }
                else
                {
-
                   bool validType = false;
                   TableElementTypeEnum elementType = (TableElementTypeEnum)e[0];
                   switch (elementType)

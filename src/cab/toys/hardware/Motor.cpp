@@ -69,13 +69,10 @@ void Motor::UpdateOutputs()
    {
       if (m_currentMotorPower == 0)
       {
-
          if (p > 0)
          {
-
             if (m_kickstartDurationMs > 0 && m_kickstartPower > 0 && p <= m_kickstartPower)
             {
-
                m_targetMotorPower = p;
 
                if (!m_kickstartActive)
@@ -91,7 +88,6 @@ void Motor::UpdateOutputs()
             }
             else
             {
-
                m_currentMotorPower = p;
                m_targetMotorPower = p;
                output->SetOutput(static_cast<uint8_t>(p));
@@ -105,15 +101,12 @@ void Motor::UpdateOutputs()
       }
       else if (m_kickstartActive)
       {
-
          if (p > 0)
          {
-
             m_targetMotorPower = p;
          }
          else
          {
-
             if (m_alarmHandler != nullptr)
             {
             }
@@ -124,10 +117,8 @@ void Motor::UpdateOutputs()
       }
       else
       {
-
          if (p == 0)
          {
-
             if (m_alarmHandler != nullptr)
             {
             }
@@ -137,7 +128,6 @@ void Motor::UpdateOutputs()
          }
          else if (p != m_currentMotorPower)
          {
-
             m_currentMotorPower = p;
             m_targetMotorPower = p;
             output->SetOutput(static_cast<uint8_t>(p));

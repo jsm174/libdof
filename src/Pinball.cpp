@@ -441,7 +441,6 @@ void Pinball::MainThreadDoIt()
          {
             try
             {
-
                auto now = std::chrono::steady_clock::now();
                updateRequired |= m_alarms->ExecuteAlarms(now + std::chrono::milliseconds(1));
             }
@@ -465,7 +464,6 @@ void Pinball::MainThreadDoIt()
 
          if (m_keepMainThreadAlive)
          {
-
             auto nextAlarm = m_alarms->GetNextAlarmTime();
             auto now = std::chrono::steady_clock::now();
 

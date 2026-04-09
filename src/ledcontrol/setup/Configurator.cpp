@@ -307,7 +307,6 @@ void Configurator::SetupTable(
 
          for (TableConfigColumn* tcc : *tc->GetColumns())
          {
-
             if (toyAssignments.at(ledWizNr).find(tcc->GetNumber()) != toyAssignments.at(ledWizNr).end())
             {
                IToy* toy = toyAssignments.at(ledWizNr).at(tcc->GetNumber());
@@ -325,88 +324,206 @@ void Configurator::SetupTable(
                   IRGBAToy* rgbaToy = dynamic_cast<IRGBAToy*>(toy);
                   IAnalogAlphaToy* analogToy = dynamic_cast<IAnalogAlphaToy*>(toy);
 
-                  if (rgbaMatrixToy != nullptr)
+                  if (rgbaMatrixToy != nullptr || analogMatrixToy != nullptr)
                   {
-                     RGBAColor activeColor;
-                     bool hasColor = false;
-                     if (tcs->GetColorConfig() != nullptr)
+                     if (!tcs->GetShapeName().empty())
                      {
-                        ColorConfig* colorConfig = tcs->GetColorConfig();
-                        activeColor = RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
-                        hasColor = true;
-                     }
-                     else
-                     {
-                        if (!StringExtensions::IsNullOrWhiteSpace(tcs->GetColorName()))
+                        if (rgbaMatrixToy != nullptr)
                         {
-                           if (StringExtensions::StartsWith(tcs->GetColorName(), "#"))
+                           RGBAColor activeColor;
+                           bool hasColor = false;
+                           if (tcs->GetColorConfig() != nullptr)
                            {
-                              if (activeColor.SetColor(tcs->GetColorName()))
-                                 hasColor = true;
+                              ColorConfig* colorConfig = tcs->GetColorConfig();
+                              activeColor = RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
+                              hasColor = true;
+                           }
+                           else
+                           {
+                              if (!StringExtensions::IsNullOrWhiteSpace(tcs->GetColorName()))
+                              {
+                                 if (StringExtensions::StartsWith(tcs->GetColorName(), "#"))
+                                 {
+                                    if (activeColor.SetColor(tcs->GetColorName()))
+                                       hasColor = true;
+                                 }
+                              }
+                           }
+
+                           if (hasColor)
+                           {
+                              RGBAMatrixColorScaleShapeEffect* shapeEffect = new RGBAMatrixColorScaleShapeEffect();
+                              effectName = StringExtensions::Build("Ledwiz {0} Column {1} Setting {2} RGBAMatrixColorScaleShapeEffect", std::to_string(ledWizNr),
+                                 std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                              shapeEffect->SetName(effectName);
+                              shapeEffect->SetToyName(toy->GetName());
+                              int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                              shapeEffect->SetLayerNr(layer);
+                              shapeEffect->SetShapeName(tcs->GetShapeName());
+
+                              RGBAColor inactiveColor = activeColor;
+                              inactiveColor.SetAlpha(0);
+                              shapeEffect->SetActiveColor(activeColor);
+                              shapeEffect->SetInactiveColor(inactiveColor);
+
+                              if (tcs->IsArea())
+                              {
+                                 shapeEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                                 shapeEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                                 shapeEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                                 shapeEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                              }
+
+                              effect = static_cast<EffectBase*>(shapeEffect);
+                           }
+                           else
+                           {
+                              RGBAMatrixShapeEffect* shapeEffect = new RGBAMatrixShapeEffect();
+                              effectName = StringExtensions::Build(
+                                 "Ledwiz {0} Column {1} Setting {2} RGBAMatrixShapeEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                              shapeEffect->SetName(effectName);
+                              shapeEffect->SetToyName(toy->GetName());
+                              int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                              shapeEffect->SetLayerNr(layer);
+                              shapeEffect->SetShapeName(tcs->GetShapeName());
+
+                              if (tcs->IsArea())
+                              {
+                                 shapeEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                                 shapeEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                                 shapeEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                                 shapeEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                              }
+
+                              effect = static_cast<EffectBase*>(shapeEffect);
                            }
                         }
                      }
-
-                     if (hasColor)
+                     else if (tcs->IsBitmap())
                      {
-                        if (tcs->HasAreaDirection())
+                        std::string p;
+                        if (table->GetShapeDefinitions() && table->GetShapeDefinitions()->GetBitmapFilePattern())
                         {
-                           RGBAMatrixShiftEffect* shiftEffect = new RGBAMatrixShiftEffect();
-                           effectName = StringExtensions::Build(
-                              "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixShiftEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                           shiftEffect->SetName(effectName);
-                           shiftEffect->SetToyName(toy->GetName());
-                           int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
-                           shiftEffect->SetLayerNr(layer);
-
-                           RGBAColor inactiveColor = activeColor;
-                           inactiveColor.SetAlpha(0);
-                           shiftEffect->SetActiveColor(activeColor);
-                           shiftEffect->SetInactiveColor(inactiveColor);
-                           shiftEffect->SetShiftDirection(tcs->GetAreaDirection());
-                           shiftEffect->SetShiftAcceleration(tcs->GetAreaAcceleration());
-
-                           if (tcs->GetAreaSpeed() > 0)
-                              shiftEffect->SetShiftSpeed(tcs->GetAreaSpeed());
-
-                           shiftEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-                           shiftEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                           shiftEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                           shiftEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-
-                           effect = static_cast<EffectBase*>(shiftEffect);
+                           p = table->GetShapeDefinitions()->GetBitmapFilePattern()->GetPattern();
                         }
-                        else if (tcs->GetAreaFlickerDensity() > 0)
+                        else
                         {
-                           RGBAMatrixFlickerEffect* flickerEffect = new RGBAMatrixFlickerEffect();
-                           effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixFlickerEffect", std::to_string(ledWizNr),
-                              std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                           flickerEffect->SetName(effectName);
-                           flickerEffect->SetToyName(toy->GetName());
-                           int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
-                           flickerEffect->SetLayerNr(layer);
+                           std::string pathSeparator(1, PATH_SEPARATOR_CHAR);
+                           p = StringExtensions::Build("{0}{1}{2}.*", iniFilePath, pathSeparator, tc->GetShortRomName());
+                        }
 
-                           flickerEffect->SetActiveColor(activeColor);
-                           flickerEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
-                           flickerEffect->SetDensity(MathExtensions::Limit(tcs->GetAreaFlickerDensity(), 1, 99));
-                           if (tcs->GetAreaFlickerMinDurationMs() > 0)
-                              flickerEffect->SetMinFlickerDurationMs(tcs->GetAreaFlickerMinDurationMs());
-                           if (tcs->GetAreaFlickerMaxDurationMs() > 0)
-                              flickerEffect->SetMaxFlickerDurationMs(tcs->GetAreaFlickerMaxDurationMs());
-                           if (tcs->GetAreaFlickerFadeDurationMs() > 0)
+                        if (tcs->GetAreaBitmapAnimationStepCount() > 1)
+                        {
+                           if (rgbaMatrixToy != nullptr)
                            {
-                              flickerEffect->SetFlickerFadeUpDurationMs(tcs->GetAreaFlickerFadeDurationMs());
-                              flickerEffect->SetFlickerFadeDownDurationMs(tcs->GetAreaFlickerFadeDurationMs());
+                              RGBAMatrixBitmapAnimationEffect* bitmapAnimationEffect = new RGBAMatrixBitmapAnimationEffect();
+                              effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixBitmapAnimationEffect", std::to_string(ledWizNr),
+                                 std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                              bitmapAnimationEffect->SetName(effectName);
+                              bitmapAnimationEffect->SetToyName(toy->GetName());
+                              int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                              bitmapAnimationEffect->SetLayerNr(layer);
+                              FilePattern* filePattern = new FilePattern(p);
+                              bitmapAnimationEffect->SetBitmapFilePattern(filePattern);
+                              bitmapAnimationEffect->SetBitmapLeft(tcs->GetAreaBitmapLeft());
+                              bitmapAnimationEffect->SetBitmapTop(tcs->GetAreaBitmapTop());
+                              bitmapAnimationEffect->SetBitmapHeight(tcs->GetAreaBitmapHeight());
+                              bitmapAnimationEffect->SetBitmapWidth(tcs->GetAreaBitmapWidth());
+                              bitmapAnimationEffect->SetBitmapFrameNumber(tcs->GetAreaBitmapFrame());
+                              bitmapAnimationEffect->SetAnimationStepDirection(tcs->GetAreaBitmapAnimationDirection());
+                              bitmapAnimationEffect->SetAnimationFrameDurationMs(tcs->GetAreaBitmapAnimationFrameDuration());
+                              bitmapAnimationEffect->SetAnimationFrameCount(tcs->GetAreaBitmapAnimationStepCount());
+                              bitmapAnimationEffect->SetAnimationStepSize(tcs->GetAreaBitmapAnimationStepSize());
+                              bitmapAnimationEffect->SetAnimationBehaviour(tcs->GetAreaBitmapAnimationBehaviour());
+                              bitmapAnimationEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                              bitmapAnimationEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                              bitmapAnimationEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                              bitmapAnimationEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+
+                              effect = static_cast<EffectBase*>(bitmapAnimationEffect);
                            }
+                           else
+                           {
+                              AnalogAlphaMatrixBitmapAnimationEffect* bitmapAnimationEffect = new AnalogAlphaMatrixBitmapAnimationEffect();
+                              effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixBitmapAnimationEffect", std::to_string(ledWizNr),
+                                 std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                              bitmapAnimationEffect->SetName(effectName);
+                              bitmapAnimationEffect->SetToyName(toy->GetName());
+                              int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                              bitmapAnimationEffect->SetLayerNr(layer);
+                              FilePattern* filePattern = new FilePattern(p);
+                              bitmapAnimationEffect->SetBitmapFilePattern(filePattern);
+                              bitmapAnimationEffect->SetBitmapLeft(tcs->GetAreaBitmapLeft());
+                              bitmapAnimationEffect->SetBitmapTop(tcs->GetAreaBitmapTop());
+                              bitmapAnimationEffect->SetBitmapHeight(tcs->GetAreaBitmapHeight());
+                              bitmapAnimationEffect->SetBitmapWidth(tcs->GetAreaBitmapWidth());
+                              bitmapAnimationEffect->SetBitmapFrameNumber(tcs->GetAreaBitmapFrame());
+                              bitmapAnimationEffect->SetAnimationStepDirection(tcs->GetAreaBitmapAnimationDirection());
+                              bitmapAnimationEffect->SetAnimationFrameDurationMs(tcs->GetAreaBitmapAnimationFrameDuration());
+                              bitmapAnimationEffect->SetAnimationFrameCount(tcs->GetAreaBitmapAnimationStepCount());
+                              bitmapAnimationEffect->SetAnimationStepSize(tcs->GetAreaBitmapAnimationStepSize());
+                              bitmapAnimationEffect->SetAnimationBehaviour(tcs->GetAreaBitmapAnimationBehaviour());
+                              bitmapAnimationEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                              bitmapAnimationEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                              bitmapAnimationEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                              bitmapAnimationEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
 
-                           flickerEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-                           flickerEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                           flickerEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                           flickerEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-
-                           effect = static_cast<EffectBase*>(flickerEffect);
+                              effect = static_cast<EffectBase*>(bitmapAnimationEffect);
+                           }
                         }
-                        else if (tcs->IsPlasma())
+                        else
+                        {
+                           if (rgbaMatrixToy != nullptr)
+                           {
+                              RGBAMatrixBitmapEffect* bitmapEffect = new RGBAMatrixBitmapEffect();
+                              effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixBitmapEffect", std::to_string(ledWizNr),
+                                 std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                              bitmapEffect->SetName(effectName);
+                              bitmapEffect->SetToyName(toy->GetName());
+                              int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                              bitmapEffect->SetLayerNr(layer);
+                              FilePattern* filePattern = new FilePattern(p);
+                              bitmapEffect->SetBitmapFilePattern(filePattern);
+                              bitmapEffect->SetBitmapLeft(tcs->GetAreaBitmapLeft());
+                              bitmapEffect->SetBitmapTop(tcs->GetAreaBitmapTop());
+                              bitmapEffect->SetBitmapHeight(tcs->GetAreaBitmapHeight());
+                              bitmapEffect->SetBitmapWidth(tcs->GetAreaBitmapWidth());
+                              bitmapEffect->SetBitmapFrameNumber(tcs->GetAreaBitmapFrame());
+                              bitmapEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                              bitmapEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                              bitmapEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                              bitmapEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+
+                              effect = static_cast<EffectBase*>(bitmapEffect);
+                           }
+                           else
+                           {
+                              AnalogAlphaMatrixBitmapEffect* bitmapEffect = new AnalogAlphaMatrixBitmapEffect();
+                              effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixBitmapEffect", std::to_string(ledWizNr),
+                                 std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                              bitmapEffect->SetName(effectName);
+                              bitmapEffect->SetToyName(toy->GetName());
+                              int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                              bitmapEffect->SetLayerNr(layer);
+                              FilePattern* filePattern = new FilePattern(p);
+                              bitmapEffect->SetBitmapFilePattern(filePattern);
+                              bitmapEffect->SetBitmapLeft(tcs->GetAreaBitmapLeft());
+                              bitmapEffect->SetBitmapTop(tcs->GetAreaBitmapTop());
+                              bitmapEffect->SetBitmapHeight(tcs->GetAreaBitmapHeight());
+                              bitmapEffect->SetBitmapWidth(tcs->GetAreaBitmapWidth());
+                              bitmapEffect->SetBitmapFrameNumber(tcs->GetAreaBitmapFrame());
+                              bitmapEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                              bitmapEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                              bitmapEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                              bitmapEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+
+                              effect = static_cast<EffectBase*>(bitmapEffect);
+                           }
+                        }
+                     }
+                     else if (tcs->IsPlasma())
+                     {
+                        if (rgbaMatrixToy != nullptr)
                         {
                            RGBAMatrixPlasmaEffect* plasmaEffect = new RGBAMatrixPlasmaEffect();
                            effectName = StringExtensions::Build(
@@ -491,15 +608,18 @@ void Configurator::SetupTable(
 
                            effect = static_cast<EffectBase*>(plasmaEffect);
                         }
-                        else if (!tcs->GetShapeName().empty())
+                     }
+                     else
+                     {
+                        if (rgbaMatrixToy != nullptr)
                         {
-                           RGBAColor shapeColor;
-                           bool hasShapeColor = false;
+                           RGBAColor activeColor;
+                           bool hasColor = false;
                            if (tcs->GetColorConfig() != nullptr)
                            {
                               ColorConfig* colorConfig = tcs->GetColorConfig();
-                              shapeColor = RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
-                              hasShapeColor = true;
+                              activeColor = RGBAColor(colorConfig->GetRed(), colorConfig->GetGreen(), colorConfig->GetBlue(), colorConfig->GetAlpha());
+                              hasColor = true;
                            }
                            else
                            {
@@ -507,309 +627,181 @@ void Configurator::SetupTable(
                               {
                                  if (StringExtensions::StartsWith(tcs->GetColorName(), "#"))
                                  {
-                                    if (shapeColor.SetColor(tcs->GetColorName()))
-                                       hasShapeColor = true;
+                                    if (activeColor.SetColor(tcs->GetColorName()))
+                                       hasColor = true;
                                  }
                               }
                            }
-                           if (hasShapeColor)
-                           {
-                              RGBAMatrixColorScaleShapeEffect* shapeEffect = new RGBAMatrixColorScaleShapeEffect();
-                              effectName = StringExtensions::Build("Ledwiz {0} Column {1} Setting {2} RGBAMatrixColorScaleShapeEffect", std::to_string(ledWizNr),
-                                 std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                              shapeEffect->SetName(effectName);
-                              shapeEffect->SetToyName(toy->GetName());
-                              int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
-                              shapeEffect->SetLayerNr(layer);
-                              shapeEffect->SetShapeName(tcs->GetShapeName());
 
-                              RGBAColor activeColor = shapeColor;
+                           if (hasColor)
+                           {
                               RGBAColor inactiveColor = activeColor;
                               inactiveColor.SetAlpha(0);
-                              shapeEffect->SetActiveColor(activeColor);
-                              shapeEffect->SetInactiveColor(inactiveColor);
 
-                              if (tcs->IsArea())
+                              if (tcs->HasAreaDirection())
                               {
-                                 shapeEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-                                 shapeEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                                 shapeEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                                 shapeEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-                              }
+                                 RGBAMatrixShiftEffect* shiftEffect = new RGBAMatrixShiftEffect();
+                                 effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixShiftEffect", std::to_string(ledWizNr),
+                                    std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                                 shiftEffect->SetName(effectName);
+                                 shiftEffect->SetToyName(toy->GetName());
+                                 int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                                 shiftEffect->SetLayerNr(layer);
 
-                              effect = static_cast<EffectBase*>(shapeEffect);
+                                 shiftEffect->SetActiveColor(activeColor);
+                                 shiftEffect->SetInactiveColor(inactiveColor);
+                                 shiftEffect->SetShiftDirection(tcs->GetAreaDirection());
+                                 shiftEffect->SetShiftAcceleration(tcs->GetAreaAcceleration());
+
+                                 if (tcs->GetAreaSpeed() > 0)
+                                    shiftEffect->SetShiftSpeed(tcs->GetAreaSpeed());
+
+                                 shiftEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                                 shiftEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                                 shiftEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                                 shiftEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+
+                                 effect = static_cast<EffectBase*>(shiftEffect);
+                              }
+                              else if (tcs->GetAreaFlickerDensity() > 0)
+                              {
+                                 RGBAMatrixFlickerEffect* flickerEffect = new RGBAMatrixFlickerEffect();
+                                 effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixFlickerEffect", std::to_string(ledWizNr),
+                                    std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                                 flickerEffect->SetName(effectName);
+                                 flickerEffect->SetToyName(toy->GetName());
+                                 int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                                 flickerEffect->SetLayerNr(layer);
+
+                                 flickerEffect->SetActiveColor(activeColor);
+                                 flickerEffect->SetInactiveColor(inactiveColor);
+                                 flickerEffect->SetDensity(MathExtensions::Limit(tcs->GetAreaFlickerDensity(), 1, 99));
+                                 if (tcs->GetAreaFlickerMinDurationMs() > 0)
+                                    flickerEffect->SetMinFlickerDurationMs(tcs->GetAreaFlickerMinDurationMs());
+                                 if (tcs->GetAreaFlickerMaxDurationMs() > 0)
+                                    flickerEffect->SetMaxFlickerDurationMs(tcs->GetAreaFlickerMaxDurationMs());
+                                 if (tcs->GetAreaFlickerFadeDurationMs() > 0)
+                                 {
+                                    flickerEffect->SetFlickerFadeDownDurationMs(tcs->GetAreaFlickerFadeDurationMs());
+                                    flickerEffect->SetFlickerFadeUpDurationMs(tcs->GetAreaFlickerFadeDurationMs());
+                                 }
+
+                                 flickerEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                                 flickerEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                                 flickerEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                                 flickerEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+
+                                 effect = static_cast<EffectBase*>(flickerEffect);
+                              }
+                              else
+                              {
+                                 RGBAMatrixColorEffect* matrixEffect = new RGBAMatrixColorEffect();
+                                 effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixColorEffect", std::to_string(ledWizNr),
+                                    std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                                 matrixEffect->SetName(effectName);
+                                 matrixEffect->SetToyName(toy->GetName());
+                                 int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                                 matrixEffect->SetLayerNr(layer);
+
+                                 matrixEffect->SetActiveColor(activeColor);
+                                 matrixEffect->SetInactiveColor(inactiveColor);
+                                 matrixEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
+
+                                 if (tcs->IsArea())
+                                 {
+                                    matrixEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                                    matrixEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                                    matrixEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                                    matrixEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                                 }
+
+                                 effect = static_cast<EffectBase*>(matrixEffect);
+                              }
                            }
                            else
                            {
-                              RGBAMatrixShapeEffect* shapeEffect = new RGBAMatrixShapeEffect();
-                              effectName = StringExtensions::Build(
-                                 "Ledwiz {0} Column {1} Setting {2} RGBAMatrixShapeEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                              shapeEffect->SetName(effectName);
-                              shapeEffect->SetToyName(toy->GetName());
+                              Log::Warning(
+                                 StringExtensions::Build("Invalid color definition \"{0}\" found for area effect. Skipped setting {1} in column {2} for LedWizEqivalent number {3}.",
+                                    tcs->GetColorName(), std::to_string(settingNumber), std::to_string(tcc->GetNumber()), std::to_string(ledWizNr)));
+                              continue;
+                           }
+                        }
+                        else if (analogMatrixToy != nullptr)
+                        {
+                           AnalogAlpha activeValue(MathExtensions::Limit(tcs->GetIntensity(), 0, 255), 255);
+                           AnalogAlpha inactiveValue = activeValue;
+                           inactiveValue.SetAlpha(0);
+
+                           if (tcs->HasAreaDirection())
+                           {
+                              AnalogAlphaMatrixShiftEffect* shiftEffect = new AnalogAlphaMatrixShiftEffect();
+                              effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixShiftEffect", std::to_string(ledWizNr),
+                                 std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                              shiftEffect->SetName(effectName);
+                              shiftEffect->SetToyName(toy->GetName());
                               int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
-                              shapeEffect->SetLayerNr(layer);
-                              shapeEffect->SetShapeName(tcs->GetShapeName());
+                              shiftEffect->SetLayerNr(layer);
+                              shiftEffect->SetActiveValue(activeValue);
+                              shiftEffect->SetInactiveValue(inactiveValue);
+                              shiftEffect->SetShiftDirection(tcs->GetAreaDirection());
+                              shiftEffect->SetShiftAcceleration(tcs->GetAreaAcceleration());
+
+                              if (tcs->GetAreaSpeed() > 0)
+                                 shiftEffect->SetShiftSpeed(tcs->GetAreaSpeed());
+
+                              shiftEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                              shiftEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                              shiftEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                              shiftEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+
+                              effect = static_cast<EffectBase*>(shiftEffect);
+                           }
+                           else if (tcs->GetAreaFlickerDensity() > 0)
+                           {
+                              AnalogAlphaMatrixFlickerEffect* flickerEffect = new AnalogAlphaMatrixFlickerEffect();
+                              effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixFlickerEffect", std::to_string(ledWizNr),
+                                 std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                              flickerEffect->SetName(effectName);
+                              flickerEffect->SetToyName(toy->GetName());
+                              int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                              flickerEffect->SetLayerNr(layer);
+                              flickerEffect->SetDensity(MathExtensions::Limit(tcs->GetAreaFlickerDensity(), 1, 99));
+                              flickerEffect->SetActiveValue(activeValue);
+                              flickerEffect->SetInactiveValue(inactiveValue);
 
                               if (tcs->IsArea())
                               {
-                                 shapeEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-                                 shapeEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                                 shapeEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                                 shapeEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
+                                 flickerEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                                 flickerEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                                 flickerEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                                 flickerEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
                               }
 
-                              effect = static_cast<EffectBase*>(shapeEffect);
-                           }
-                        }
-                        else if (tcs->IsBitmap())
-                        {
-                           std::string p;
-                           if (table->GetShapeDefinitions() && table->GetShapeDefinitions()->GetBitmapFilePattern())
-                           {
-                              p = table->GetShapeDefinitions()->GetBitmapFilePattern()->GetPattern();
+                              if (tcs->GetAreaFlickerMinDurationMs() > 0)
+                                 flickerEffect->SetMinFlickerDurationMs(tcs->GetAreaFlickerMinDurationMs());
+                              if (tcs->GetAreaFlickerMaxDurationMs() > 0)
+                                 flickerEffect->SetMaxFlickerDurationMs(tcs->GetAreaFlickerMaxDurationMs());
+                              if (tcs->GetAreaFlickerFadeDurationMs() > 0)
+                              {
+                                 flickerEffect->SetFlickerFadeDownDurationMs(tcs->GetAreaFlickerFadeDurationMs());
+                                 flickerEffect->SetFlickerFadeUpDurationMs(tcs->GetAreaFlickerFadeDurationMs());
+                              }
+
+                              effect = static_cast<EffectBase*>(flickerEffect);
                            }
                            else
                            {
-                              std::string pathSeparator(1, PATH_SEPARATOR_CHAR);
-                              p = StringExtensions::Build("{0}{1}{2}.*", iniFilePath, pathSeparator, tc->GetShortRomName());
-                           }
+                              AnalogAlphaMatrixValueEffect* matrixEffect = new AnalogAlphaMatrixValueEffect();
+                              effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixValueEffect", std::to_string(ledWizNr),
+                                 std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
+                              matrixEffect->SetName(effectName);
+                              matrixEffect->SetToyName(toy->GetName());
+                              int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                              matrixEffect->SetLayerNr(layer);
 
-                           if (tcs->GetAreaBitmapAnimationStepCount() > 1)
-                           {
-                              IMatrixToy<RGBAColor>* rgbaMatrixToy = dynamic_cast<IMatrixToy<RGBAColor>*>(toy);
-                              if (rgbaMatrixToy != nullptr)
-                              {
-                                 RGBAMatrixBitmapAnimationEffect* bitmapAnimationEffect = new RGBAMatrixBitmapAnimationEffect();
-                                 effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixBitmapAnimationEffect", std::to_string(ledWizNr),
-                                    std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                                 bitmapAnimationEffect->SetName(effectName);
-                                 bitmapAnimationEffect->SetToyName(toy->GetName());
-                                 int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
-                                 bitmapAnimationEffect->SetLayerNr(layer);
-                                 FilePattern* filePattern = new FilePattern(p);
-                                 bitmapAnimationEffect->SetBitmapFilePattern(filePattern);
-                                 bitmapAnimationEffect->SetBitmapLeft(tcs->GetAreaBitmapLeft());
-                                 bitmapAnimationEffect->SetBitmapTop(tcs->GetAreaBitmapTop());
-                                 bitmapAnimationEffect->SetBitmapHeight(tcs->GetAreaBitmapHeight());
-                                 bitmapAnimationEffect->SetBitmapWidth(tcs->GetAreaBitmapWidth());
-                                 bitmapAnimationEffect->SetBitmapFrameNumber(tcs->GetAreaBitmapFrame());
-                                 bitmapAnimationEffect->SetAnimationStepDirection(tcs->GetAreaBitmapAnimationDirection());
-                                 bitmapAnimationEffect->SetAnimationFrameDurationMs(tcs->GetAreaBitmapAnimationFrameDuration());
-                                 bitmapAnimationEffect->SetAnimationFrameCount(tcs->GetAreaBitmapAnimationStepCount());
-                                 bitmapAnimationEffect->SetAnimationStepSize(tcs->GetAreaBitmapAnimationStepSize());
-                                 bitmapAnimationEffect->SetAnimationBehaviour(tcs->GetAreaBitmapAnimationBehaviour());
-                                 bitmapAnimationEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-                                 bitmapAnimationEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                                 bitmapAnimationEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                                 bitmapAnimationEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-
-                                 effect = static_cast<EffectBase*>(bitmapAnimationEffect);
-                              }
-                              else
-                              {
-                                 AnalogAlphaMatrixBitmapAnimationEffect* bitmapAnimationEffect = new AnalogAlphaMatrixBitmapAnimationEffect();
-                                 effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixBitmapAnimationEffect", std::to_string(ledWizNr),
-                                    std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                                 bitmapAnimationEffect->SetName(effectName);
-                                 bitmapAnimationEffect->SetToyName(toy->GetName());
-                                 int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
-                                 bitmapAnimationEffect->SetLayerNr(layer);
-                                 FilePattern* filePattern = new FilePattern(p);
-                                 bitmapAnimationEffect->SetBitmapFilePattern(filePattern);
-                                 bitmapAnimationEffect->SetBitmapLeft(tcs->GetAreaBitmapLeft());
-                                 bitmapAnimationEffect->SetBitmapTop(tcs->GetAreaBitmapTop());
-                                 bitmapAnimationEffect->SetBitmapHeight(tcs->GetAreaBitmapHeight());
-                                 bitmapAnimationEffect->SetBitmapWidth(tcs->GetAreaBitmapWidth());
-                                 bitmapAnimationEffect->SetBitmapFrameNumber(tcs->GetAreaBitmapFrame());
-                                 bitmapAnimationEffect->SetAnimationStepDirection(tcs->GetAreaBitmapAnimationDirection());
-                                 bitmapAnimationEffect->SetAnimationFrameDurationMs(tcs->GetAreaBitmapAnimationFrameDuration());
-                                 bitmapAnimationEffect->SetAnimationFrameCount(tcs->GetAreaBitmapAnimationStepCount());
-                                 bitmapAnimationEffect->SetAnimationStepSize(tcs->GetAreaBitmapAnimationStepSize());
-                                 bitmapAnimationEffect->SetAnimationBehaviour(tcs->GetAreaBitmapAnimationBehaviour());
-                                 bitmapAnimationEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-                                 bitmapAnimationEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                                 bitmapAnimationEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                                 bitmapAnimationEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-
-                                 effect = static_cast<EffectBase*>(bitmapAnimationEffect);
-                              }
-                           }
-                           else
-                           {
-                              IMatrixToy<RGBAColor>* rgbaMatrixToy = dynamic_cast<IMatrixToy<RGBAColor>*>(toy);
-                              if (rgbaMatrixToy != nullptr)
-                              {
-                                 RGBAMatrixBitmapEffect* bitmapEffect = new RGBAMatrixBitmapEffect();
-                                 effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixBitmapEffect", std::to_string(ledWizNr),
-                                    std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                                 bitmapEffect->SetName(effectName);
-                                 bitmapEffect->SetToyName(toy->GetName());
-                                 int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
-                                 bitmapEffect->SetLayerNr(layer);
-                                 FilePattern* filePattern = new FilePattern(p);
-                                 bitmapEffect->SetBitmapFilePattern(filePattern);
-                                 bitmapEffect->SetBitmapLeft(tcs->GetAreaBitmapLeft());
-                                 bitmapEffect->SetBitmapTop(tcs->GetAreaBitmapTop());
-                                 bitmapEffect->SetBitmapHeight(tcs->GetAreaBitmapHeight());
-                                 bitmapEffect->SetBitmapWidth(tcs->GetAreaBitmapWidth());
-                                 bitmapEffect->SetBitmapFrameNumber(tcs->GetAreaBitmapFrame());
-                                 bitmapEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-                                 bitmapEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                                 bitmapEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                                 bitmapEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-
-                                 effect = static_cast<EffectBase*>(bitmapEffect);
-                              }
-                              else
-                              {
-                                 AnalogAlphaMatrixBitmapEffect* bitmapEffect = new AnalogAlphaMatrixBitmapEffect();
-                                 effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixBitmapEffect", std::to_string(ledWizNr),
-                                    std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                                 bitmapEffect->SetName(effectName);
-                                 bitmapEffect->SetToyName(toy->GetName());
-                                 int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
-                                 bitmapEffect->SetLayerNr(layer);
-                                 FilePattern* filePattern = new FilePattern(p);
-                                 bitmapEffect->SetBitmapFilePattern(filePattern);
-                                 bitmapEffect->SetBitmapLeft(tcs->GetAreaBitmapLeft());
-                                 bitmapEffect->SetBitmapTop(tcs->GetAreaBitmapTop());
-                                 bitmapEffect->SetBitmapHeight(tcs->GetAreaBitmapHeight());
-                                 bitmapEffect->SetBitmapWidth(tcs->GetAreaBitmapWidth());
-                                 bitmapEffect->SetBitmapFrameNumber(tcs->GetAreaBitmapFrame());
-                                 bitmapEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-                                 bitmapEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                                 bitmapEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                                 bitmapEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-
-                                 effect = static_cast<EffectBase*>(bitmapEffect);
-                              }
+                              effect = static_cast<EffectBase*>(matrixEffect);
                            }
                         }
-                        else
-                        {
-                           RGBAColor inactiveColor = activeColor;
-                           inactiveColor.SetAlpha(0);
-
-                           RGBAMatrixColorEffect* matrixEffect = new RGBAMatrixColorEffect();
-                           effectName = StringExtensions::Build(
-                              "Ledwiz {0:00} Column {1:00} Setting {2:00} RGBAMatrixColorEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                           matrixEffect->SetName(effectName);
-                           matrixEffect->SetToyName(toy->GetName());
-                           int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
-                           matrixEffect->SetLayerNr(layer);
-
-                           matrixEffect->SetActiveColor(activeColor);
-                           matrixEffect->SetInactiveColor(inactiveColor);
-                           matrixEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
-
-                           if (tcs->IsArea())
-                           {
-                              matrixEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-                              matrixEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                              matrixEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                              matrixEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-                           }
-
-                           effect = static_cast<EffectBase*>(matrixEffect);
-                        }
-                     }
-                     else
-                     {
-                        Log::Warning(StringExtensions::Build("Invalid color definition \"{0}\" found for area effect. Skipped setting {1} in column {2} for LedWizEqivalent number {3}.",
-                           tcs->GetColorName(), std::to_string(settingNumber), std::to_string(tcc->GetNumber()), std::to_string(ledWizNr)));
-                        continue;
-                     }
-                  }
-                  else if (analogMatrixToy != nullptr)
-                  {
-                     if (tcs->HasLayer())
-                     {
-                        if (tcs->HasAreaDirection())
-                        {
-                           AnalogAlphaMatrixShiftEffect* shiftEffect = new AnalogAlphaMatrixShiftEffect();
-                           effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixShiftEffect", std::to_string(ledWizNr),
-                              std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                           shiftEffect->SetName(effectName);
-                           shiftEffect->SetToyName(toy->GetName());
-                           int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
-                           shiftEffect->SetLayerNr(layer);
-                           AnalogAlpha activeValue(MathExtensions::Limit(tcs->GetIntensity(), 0, 255), 255);
-                           AnalogAlpha inactiveValue = activeValue;
-                           inactiveValue.SetAlpha(0);
-                           shiftEffect->SetActiveValue(activeValue);
-                           shiftEffect->SetInactiveValue(inactiveValue);
-                           shiftEffect->SetShiftDirection(tcs->GetAreaDirection());
-                           shiftEffect->SetShiftAcceleration(tcs->GetAreaAcceleration());
-
-                           if (tcs->GetAreaSpeed() > 0)
-                              shiftEffect->SetShiftSpeed(tcs->GetAreaSpeed());
-
-                           shiftEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-                           shiftEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                           shiftEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                           shiftEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-
-                           effect = static_cast<EffectBase*>(shiftEffect);
-                        }
-                        else if (tcs->GetAreaFlickerDensity() > 0)
-                        {
-                           AnalogAlphaMatrixFlickerEffect* flickerEffect = new AnalogAlphaMatrixFlickerEffect();
-                           effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixFlickerEffect", std::to_string(ledWizNr),
-                              std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                           flickerEffect->SetName(effectName);
-                           flickerEffect->SetToyName(toy->GetName());
-                           int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
-                           flickerEffect->SetLayerNr(layer);
-                           flickerEffect->SetDensity(MathExtensions::Limit(tcs->GetAreaFlickerDensity(), 1, 99));
-
-                           AnalogAlpha activeValue(MathExtensions::Limit(tcs->GetIntensity(), 0, 255), 255);
-                           AnalogAlpha inactiveValue = activeValue;
-                           inactiveValue.SetAlpha(0);
-                           flickerEffect->SetActiveValue(activeValue);
-                           flickerEffect->SetInactiveValue(inactiveValue);
-
-                           if (tcs->IsArea())
-                           {
-                              flickerEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-                              flickerEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                              flickerEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                              flickerEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-                           }
-
-                           if (tcs->GetAreaFlickerMinDurationMs() > 0)
-                              flickerEffect->SetMinFlickerDurationMs(tcs->GetAreaFlickerMinDurationMs());
-                           if (tcs->GetAreaFlickerMaxDurationMs() > 0)
-                              flickerEffect->SetMaxFlickerDurationMs(tcs->GetAreaFlickerMaxDurationMs());
-                           if (tcs->GetAreaFlickerFadeDurationMs() > 0)
-                           {
-                              flickerEffect->SetFlickerFadeDownDurationMs(tcs->GetAreaFlickerFadeDurationMs());
-                              flickerEffect->SetFlickerFadeUpDurationMs(tcs->GetAreaFlickerFadeDurationMs());
-                           }
-
-                           effect = static_cast<EffectBase*>(flickerEffect);
-                        }
-                        else
-                        {
-                           AnalogAlphaMatrixValueEffect* matrixEffect = new AnalogAlphaMatrixValueEffect();
-                           effectName = StringExtensions::Build("Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogAlphaMatrixValueEffect", std::to_string(ledWizNr),
-                              std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                           matrixEffect->SetName(effectName);
-                           matrixEffect->SetToyName(toy->GetName());
-                           int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
-                           matrixEffect->SetLayerNr(layer);
-
-                           effect = static_cast<EffectBase*>(matrixEffect);
-                        }
-                     }
-                     else
-                     {
-                        AnalogToyValueEffect* analogEffect = new AnalogToyValueEffect();
-                        effectName = StringExtensions::Build(
-                           "Ledwiz {0:00} Column {1:00} Setting {2:00} AnalogToyValueEffect", std::to_string(ledWizNr), std::to_string(tcc->GetNumber()), std::to_string(settingNumber));
-                        analogEffect->SetName(effectName);
-                        analogEffect->SetToyName(toy->GetName());
-
-                        effect = analogEffect;
                      }
                   }
                   else if (rgbaToy != nullptr)
@@ -850,9 +842,12 @@ void Configurator::SetupTable(
                         rgbaEffect->SetName(effectName);
                         rgbaEffect->SetToyName(toy->GetName());
 
+                        int layer = tcs->HasLayer() ? tcs->GetLayer() : settingNumber;
+                        rgbaEffect->SetLayerNr(layer);
+                        RGBAColor rgbaInactiveColor = rgbaActiveColor;
+                        rgbaInactiveColor.SetAlpha(0);
                         rgbaEffect->SetActiveColor(rgbaActiveColor);
-                        rgbaEffect->SetInactiveColor(RGBAColor(0, 0, 0, 0));
-                        rgbaEffect->SetFadeMode(tcs->GetBlink() > 0 ? FadeModeEnum::OnOff : FadeModeEnum::Fade);
+                        rgbaEffect->SetInactiveColor(rgbaInactiveColor);
 
                         effect = rgbaEffect;
                      }

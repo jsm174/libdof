@@ -67,7 +67,6 @@ bool EffectList::FromXml(const tinyxml2::XMLElement* element)
       IEffect* effect = factory.CreateEffect(typeName);
       if (effect)
       {
-
          if (effect->FromXml(effectElement))
          {
             Add(effect);

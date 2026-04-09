@@ -64,7 +64,6 @@ bool RGBAColor::SetColor(const RGBColor& color)
 
 bool RGBAColor::SetColor(const std::string& color)
 {
-
    if ((color.length() == 8 && IsHexString(color)) || (color.length() == 9 && color[0] == '#' && IsHexString(color, 1)))
    {
       int offset = (color[0] == '#') ? 1 : 0;
