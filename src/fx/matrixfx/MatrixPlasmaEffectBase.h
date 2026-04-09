@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MatrixEffectBase.h"
-#include "../RetriggerBehaviourEnum.h"
 #include "../../general/MathExtensions.h"
 #include "../../table/TableElementData.h"
 #include "../../table/Table.h"
@@ -9,7 +8,10 @@
 #include "../../pinballsupport/AlarmHandler.h"
 #include "../../pinballsupport/Action.h"
 #include <cmath>
-#include <chrono>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 namespace DOF
 {
@@ -23,41 +25,55 @@ public:
    virtual ~MatrixPlasmaEffectBase() = default;
 
    int GetPlasmaSpeed() const { return m_plasmaSpeed; }
-   void SetPlasmaSpeed(int value) { m_plasmaSpeed = MathExtensions::Limit(value, 1, 100); }
+   void SetPlasmaSpeed(int value) { m_plasmaSpeed = MathExtensions::Limit(value, 1, INT_MAX); }
+   int GetPlasmaScale() const { return m_plasmaScale; }
+   void SetPlasmaScale(int value) { m_plasmaScale = value; }
    int GetPlasmaDensity() const { return m_plasmaDensity; }
-   void SetPlasmaDensity(int value) { m_plasmaDensity = MathExtensions::Limit(value, 1, 100); }
-   RetriggerBehaviourEnum GetRetriggerBehaviour() const { return m_retriggerBehaviour; }
-   void SetRetriggerBehaviour(RetriggerBehaviourEnum value) { m_retriggerBehaviour = value; }
+   void SetPlasmaDensity(int value) { m_plasmaDensity = value; }
    virtual void Trigger(TableElementData* tableElementData) override;
-   virtual void Finish() override;
 
 protected:
-   virtual MatrixElementType GetInactiveValue() = 0;
-   virtual MatrixElementType GetPlasmaValue(int triggerValue, double intensity) = 0;
+   virtual MatrixElementType GetEffectValue(int triggerValue, double time, double value, double x, double y) = 0;
 
 private:
-   void StartPlasma(TableElementData* tableElementData);
-   void StopPlasma();
-   void PlasmaStep();
-   void UpdateMatrix();
-   double CalculatePlasmaIntensity(int x, int y, double time);
+   void DoPlasma();
+   void DrawFrame();
+   void ClearFrame();
+   void PrecalcTimeValues(double time);
+   void PrecalcXValues(double x, double time);
+   double CalcPositionValue(double x, double y, double time);
+
+   static const int RefreshIntervalMs = 30;
 
    int m_plasmaSpeed;
+   int m_plasmaScale;
    int m_plasmaDensity;
-   RetriggerBehaviourEnum m_retriggerBehaviour;
+   int m_currentTriggerValue;
    bool m_active;
-   TableElementData* m_plasmaTableElementData;
-   std::chrono::steady_clock::time_point m_startTime;
+   double m_time;
+   Action m_plasmaCallback;
+
+   double m_cosTime;
+   double m_sinTimeDiv11767Mult05;
+   double m_cosTimeDiv1833371Mult05;
+   double m_xWaveValue1;
+   double m_xWaveValue2;
 };
 
 
 template <typename MatrixElementType>
 MatrixPlasmaEffectBase<MatrixElementType>::MatrixPlasmaEffectBase()
-   : m_plasmaSpeed(50)
-   , m_plasmaDensity(50)
-   , m_retriggerBehaviour(RetriggerBehaviourEnum::Restart)
+   : m_plasmaSpeed(100)
+   , m_plasmaScale(100)
+   , m_plasmaDensity(100)
+   , m_currentTriggerValue(0)
    , m_active(false)
-   , m_plasmaTableElementData(nullptr)
+   , m_time(0.0)
+   , m_cosTime(0.0)
+   , m_sinTimeDiv11767Mult05(0.0)
+   , m_cosTimeDiv1833371Mult05(0.0)
+   , m_xWaveValue1(0.0)
+   , m_xWaveValue2(0.0)
 {
 }
 
@@ -65,112 +81,115 @@ template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementT
 {
    if (this->m_matrixLayer != nullptr)
    {
-      if (tableElementData->m_value != 0)
-      {
-         if (!m_active)
-         {
-            StartPlasma(tableElementData);
-         }
-         else if (m_retriggerBehaviour == RetriggerBehaviourEnum::Restart)
-         {
-            StartPlasma(tableElementData);
-         }
-      }
-      else
-      {
-         if (m_active)
-         {
-            StopPlasma();
-         }
-      }
+      m_currentTriggerValue = tableElementData->m_value;
+      if (m_currentTriggerValue > 0 && !m_active)
+         DoPlasma();
    }
 }
 
-template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementType>::StartPlasma(TableElementData* tableElementData)
+template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementType>::DoPlasma()
 {
-   m_plasmaTableElementData = tableElementData;
-   m_active = true;
-   m_startTime = std::chrono::steady_clock::now();
-
-   UpdateMatrix();
-   PlasmaStep();
-}
-
-template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementType>::StopPlasma()
-{
-   m_active = false;
-   m_plasmaTableElementData = nullptr;
-
-
-   MatrixElementType inactiveValue = GetInactiveValue();
-   for (int x = this->m_areaLeft; x <= this->m_areaRight; x++)
+   int v = MathExtensions::Limit(m_currentTriggerValue, 0, 255);
+   if (v > 0)
    {
-      for (int y = this->m_areaTop; y <= this->m_areaBottom; y++)
+      if (!m_active)
       {
-         this->m_matrix->SetElement(this->GetLayerNr(), x, y, inactiveValue);
+         if (!m_plasmaCallback)
+            m_plasmaCallback = Action(this, &MatrixPlasmaEffectBase<MatrixElementType>::DoPlasma);
+         this->m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(RefreshIntervalMs, m_plasmaCallback);
+         m_active = true;
       }
+      DrawFrame();
+   }
+   else
+   {
+      this->m_table->GetPinball()->GetAlarms()->UnregisterIntervalAlarm(m_plasmaCallback);
+      m_active = false;
+      ClearFrame();
    }
 }
 
-template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementType>::PlasmaStep()
+template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementType>::DrawFrame()
 {
-   if (!m_active || m_plasmaTableElementData == nullptr)
-      return;
+   int f = (this->GetFadeMode() == FadeModeEnum::OnOff ? (m_currentTriggerValue > 0 ? 255 : 0) : MathExtensions::Limit(m_currentTriggerValue, 0, 255));
 
-   UpdateMatrix();
+   m_time += ((double)m_plasmaSpeed / 2000);
+   int w = this->GetAreaWidth();
+   int h = this->GetAreaHeight();
 
+   double sx;
+   double sy;
 
-   int stepDelayMs = MathExtensions::Limit(110 - m_plasmaSpeed, 10, 100);
-   this->m_table->GetPinball()->GetAlarms()->RegisterAlarm(stepDelayMs, Action(this, &MatrixPlasmaEffectBase<MatrixElementType>::PlasmaStep), false);
-}
-
-template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementType>::UpdateMatrix()
-{
-   if (!m_active || m_plasmaTableElementData == nullptr)
-      return;
-
-   auto now = std::chrono::steady_clock::now();
-   auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_startTime).count();
-   double time = elapsed / 1000.0;
-
-   for (int x = this->m_areaLeft; x <= this->m_areaRight; x++)
+   if (w >= h)
    {
-      for (int y = this->m_areaTop; y <= this->m_areaBottom; y++)
+      sx = (double)m_plasmaScale / 100 / w;
+      sy = sx;
+   }
+   else
+   {
+      sy = (double)m_plasmaScale / 100 / h;
+      sx = sy;
+   }
+
+   PrecalcTimeValues(m_time);
+
+   for (int x = 0; x < w; x++)
+   {
+      double xx = sx * x;
+      PrecalcXValues(xx, m_time);
+
+      for (int y = 0; y < h; y++)
       {
-         double intensity = CalculatePlasmaIntensity(x, y, time);
-         MatrixElementType value = GetPlasmaValue(m_plasmaTableElementData->m_value, intensity);
-         this->m_matrix->SetElement(this->GetLayerNr(), x, y, value);
+         double yy = (double)sy * y;
+
+         double v = std::max(0.0, std::min(CalcPositionValue(xx, yy, m_time), 1.0));
+
+         int idx = (this->m_areaTop + y) * this->m_matrix->GetWidth() + (this->m_areaLeft + x);
+         this->m_matrixLayer[idx] = GetEffectValue(f, m_time, v, xx, yy);
       }
    }
 }
 
-template <typename MatrixElementType> double MatrixPlasmaEffectBase<MatrixElementType>::CalculatePlasmaIntensity(int x, int y, double time)
+template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementType>::ClearFrame()
 {
-   double normX = (double)(x - this->m_areaLeft) / (double)this->GetAreaWidth();
-   double normY = (double)(y - this->m_areaTop) / (double)this->GetAreaHeight();
+   int w = this->GetAreaWidth();
+   int h = this->GetAreaHeight();
 
-   double densityFactor = m_plasmaDensity / 50.0;
-
-   double plasma1 = std::sin(normX * 10.0 * densityFactor + time);
-   double plasma2 = std::sin(normY * 10.0 * densityFactor + time * 1.3);
-   double plasma3 = std::sin((normX + normY) * 8.0 * densityFactor + time * 0.7);
-   double plasma4 = std::sin(std::sqrt(normX * normX + normY * normY) * 12.0 * densityFactor + time * 1.1);
-
-   double combined = (plasma1 + plasma2 + plasma3 + plasma4) / 4.0;
-   return (combined + 1.0) / 2.0;
+   for (int y = 0; y < h; y++)
+   {
+      for (int x = 0; x < w; x++)
+      {
+         int idx = (this->m_areaTop + y) * this->m_matrix->GetWidth() + (this->m_areaLeft + x);
+         this->m_matrixLayer[idx] = GetEffectValue(0, 0, 0, 0, 0);
+      }
+   }
 }
 
-template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementType>::Finish()
+template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementType>::PrecalcTimeValues(double time)
 {
-   try
-   {
-   }
-   catch (...)
-   {
-   }
-   m_active = false;
-   m_plasmaTableElementData = nullptr;
-   MatrixEffectBase<MatrixElementType>::Finish();
+   m_cosTime = std::cos(time);
+   m_sinTimeDiv11767Mult05 = 0.5 * std::sin(time / 1.1767);
+   m_cosTimeDiv1833371Mult05 = 0.5 * std::cos(time / 1.833371);
+}
+
+template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementType>::PrecalcXValues(double x, double time)
+{
+   m_xWaveValue1 = std::sin(x * M_PI * (m_plasmaDensity / 28) + time);
+   m_xWaveValue2 = x * std::sin(time / 2.567);
+}
+
+template <typename MatrixElementType> double MatrixPlasmaEffectBase<MatrixElementType>::CalcPositionValue(double x, double y, double time)
+{
+   double v = m_xWaveValue1;
+
+   v += std::sin(M_PI * (m_plasmaDensity / 28) * (m_xWaveValue2 + y * m_cosTime) + time);
+
+   double cx = x + m_sinTimeDiv11767Mult05;
+   double cy = y + m_cosTimeDiv1833371Mult05;
+   v += std::sin(std::sqrt((M_PI * (m_plasmaDensity / 56)) * (M_PI * (m_plasmaDensity / 56)) * (cx * cx + cy * cy) + 1) + time);
+   v = ((v + 3) / 6.0);
+
+   return v;
 }
 
 }

@@ -22,7 +22,7 @@ struct TestRom
 };
 
 std::vector<TestRom> testRoms = { { "ij_l7", "Indiana Jones L7" }, { "tna", "Total Nuclear Annihilation" }, { "gw", "The Getaway High Speed II" }, { "goldcue", "Gold Cue" },
-   { "bourne", "Bourne Identity" }, { "twenty4", "24" }, { "afm", "Attack From Mars" }, { "pinupmenu", "PinUP Menu" } };
+   { "bourne", "Bourne Identity" }, { "twenty4", "24" }, { "afm", "Attack From Mars" }, { "pinupmenu", "PinUP Menu" }, { "bloodmach", "Blood Machines" }, { "genesis", "Genesis" } };
 
 void LIBDOFCALLBACK LogCallback(DOF_LogLevel logLevel, const char* format, va_list args)
 {
@@ -325,6 +325,38 @@ void RunAFMTests(DOF::DOF* pDof)
    pDof->Finish();
 }
 
+void RunBloodmachTests(DOF::DOF* pDof)
+{
+   pDof->Init("", "bloodmach");
+
+   Log("========================================");
+   Log("Testing ROM: bloodmach");
+   Log("========================================");
+
+   std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_START_DELAY));
+
+   TriggerOutputOnOff(pDof, 'E', 135, 6000);
+
+   pDof->Finish();
+}
+
+void RunGenesisTests(DOF::DOF* pDof)
+{
+   pDof->Init("", "genesis");
+
+   Log("========================================");
+   Log("Testing ROM: genesis");
+   Log("========================================");
+
+   std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_START_DELAY));
+
+   TriggerOutputOnOff(pDof, 'E', 169, 6000);
+   TriggerOutputOnOff(pDof, 'W', 43, 6000);
+   TriggerOutputOnOff(pDof, 'W', 73, 6000);
+
+   pDof->Finish();
+}
+
 void RunPinupMenuTests(DOF::DOF* pDof)
 {
    pDof->Init("", "pinupmenu");
@@ -526,6 +558,10 @@ int main(int argc, const char* argv[])
                RunAFMTests(pDof);
             else if (testRom.name == "pinupmenu")
                RunPinupMenuTests(pDof);
+            else if (testRom.name == "bloodmach")
+               RunBloodmachTests(pDof);
+            else if (testRom.name == "genesis")
+               RunGenesisTests(pDof);
             break;
          }
       }

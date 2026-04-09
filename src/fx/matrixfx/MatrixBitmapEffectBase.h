@@ -29,15 +29,15 @@ public:
    virtual FilePattern* GetBitmapFilePattern() const override { return m_bitmapFilePattern; }
    virtual void SetBitmapFilePattern(FilePattern* value) override;
    virtual int GetBitmapFrameNumber() const override { return m_bitmapFrameNumber; }
-   virtual void SetBitmapFrameNumber(int value) override { m_bitmapFrameNumber = MathExtensions::Limit(value, 0, 1000); }
+   virtual void SetBitmapFrameNumber(int value) override { m_bitmapFrameNumber = value; }
    virtual int GetBitmapLeft() const override { return m_bitmapLeft; }
-   virtual void SetBitmapLeft(int value) override { m_bitmapLeft = MathExtensions::Limit(value, 0, 1000); }
+   virtual void SetBitmapLeft(int value) override { m_bitmapLeft = value; }
    virtual int GetBitmapTop() const override { return m_bitmapTop; }
-   virtual void SetBitmapTop(int value) override { m_bitmapTop = MathExtensions::Limit(value, 0, 1000); }
+   virtual void SetBitmapTop(int value) override { m_bitmapTop = value; }
    virtual int GetBitmapWidth() const override { return m_bitmapWidth; }
-   virtual void SetBitmapWidth(int value) override { m_bitmapWidth = MathExtensions::Limit(value, -1, 1000); }
+   virtual void SetBitmapWidth(int value) override { m_bitmapWidth = value; }
    virtual int GetBitmapHeight() const override { return m_bitmapHeight; }
-   virtual void SetBitmapHeight(int value) override { m_bitmapHeight = MathExtensions::Limit(value, -1, 1000); }
+   virtual void SetBitmapHeight(int value) override { m_bitmapHeight = value; }
    virtual FastBitmapDataExtractModeEnum GetDataExtractMode() const override { return m_dataExtractMode; }
    virtual void SetDataExtractMode(FastBitmapDataExtractModeEnum value) override { m_dataExtractMode = value; }
    virtual void Trigger(TableElementData* tableElementData) override;
