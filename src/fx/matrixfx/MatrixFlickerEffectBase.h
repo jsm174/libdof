@@ -24,17 +24,15 @@ public:
    virtual ~MatrixFlickerEffectBase() = default;
 
    int GetDensity() const { return m_density; }
-   void SetDensity(int value) { m_density = MathExtensions::Limit(value, 1, 100); }
+   void SetDensity(int value) { m_density = MathExtensions::Limit(value, 0, 100); }
    int GetMinFlickerDurationMs() const { return m_minFlickerDurationMs; }
-   void SetMinFlickerDurationMs(int value) { m_minFlickerDurationMs = MathExtensions::Limit(value, 1, 10000); }
+   void SetMinFlickerDurationMs(int value) { m_minFlickerDurationMs = MathExtensions::Limit(value, 1, INT_MAX); }
    int GetMaxFlickerDurationMs() const { return m_maxFlickerDurationMs; }
-   void SetMaxFlickerDurationMs(int value) { m_maxFlickerDurationMs = MathExtensions::Limit(value, 1, 10000); }
-   int GetFadeDurationMs() const { return m_fadeDurationMs; }
-   void SetFadeDurationMs(int value) { m_fadeDurationMs = MathExtensions::Limit(value, 0, 10000); }
+   void SetMaxFlickerDurationMs(int value) { m_maxFlickerDurationMs = MathExtensions::Limit(value, 1, INT_MAX); }
    int GetFlickerFadeUpDurationMs() const { return m_flickerFadeUpDurationMs; }
-   void SetFlickerFadeUpDurationMs(int value) { m_flickerFadeUpDurationMs = MathExtensions::Limit(value, 0, 10000); }
+   void SetFlickerFadeUpDurationMs(int value) { m_flickerFadeUpDurationMs = MathExtensions::Limit(value, 1, INT_MAX); }
    int GetFlickerFadeDownDurationMs() const { return m_flickerFadeDownDurationMs; }
-   void SetFlickerFadeDownDurationMs(int value) { m_flickerFadeDownDurationMs = MathExtensions::Limit(value, 0, 10000); }
+   void SetFlickerFadeDownDurationMs(int value) { m_flickerFadeDownDurationMs = MathExtensions::Limit(value, 1, INT_MAX); }
    RetriggerBehaviourEnum GetRetriggerBehaviour() const { return m_retriggerBehaviour; }
    void SetRetriggerBehaviour(RetriggerBehaviourEnum value) { m_retriggerBehaviour = value; }
    virtual void Init(Table* table) override;
@@ -51,7 +49,6 @@ private:
    int m_density;
    int m_minFlickerDurationMs;
    int m_maxFlickerDurationMs;
-   int m_fadeDurationMs;
    int m_flickerFadeUpDurationMs;
    int m_flickerFadeDownDurationMs;
    RetriggerBehaviourEnum m_retriggerBehaviour;
@@ -78,7 +75,6 @@ MatrixFlickerEffectBase<MatrixElementType>::MatrixFlickerEffectBase()
    : m_density(10)
    , m_minFlickerDurationMs(60)
    , m_maxFlickerDurationMs(150)
-   , m_fadeDurationMs(0)
    , m_flickerFadeUpDurationMs(0)
    , m_flickerFadeDownDurationMs(0)
    , m_retriggerBehaviour(RetriggerBehaviourEnum::Restart)
@@ -143,6 +139,9 @@ template <typename MatrixElementType> void MatrixFlickerEffectBase<MatrixElement
          this->m_table->GetPinball()->GetAlarms()->RegisterIntervalAlarm(30, m_intervalAlarmCallback);
          m_active = true;
       }
+
+      if (v > 0 && this->GetFadeMode() == FadeModeEnum::OnOff)
+         v = 255;
 
       int numberOfLeds = (this->m_areaRight - this->m_areaLeft + 1) * (this->m_areaBottom - this->m_areaTop + 1);
 

@@ -9,8 +9,9 @@
 #include "../../Pinball.h"
 #include "../../pinballsupport/AlarmHandler.h"
 #include "../../pinballsupport/Action.h"
-#include <vector>
+#include <cmath>
 #include <map>
+#include <vector>
 
 namespace DOF
 {
@@ -76,14 +77,14 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
    float numberOfElements
       = (m_shiftDirection == MatrixShiftDirectionEnum::Left || m_shiftDirection == MatrixShiftDirectionEnum::Right) ? (float)this->GetAreaWidth() : (float)this->GetAreaHeight();
    float position = 0.0f;
-   float speed = numberOfElements / 100.0f * (m_shiftSpeed / (1000.0f / (float)RefreshIntervalMs));
-   float acceleration = numberOfElements / 100.0f * (m_shiftAcceleration / (1000.0f / (float)RefreshIntervalMs));
+   float speed = numberOfElements / 100.0f * (m_shiftSpeed / (1000 / RefreshIntervalMs));
+   float acceleration = numberOfElements / 100.0f * (m_shiftAcceleration / (1000 / RefreshIntervalMs));
 
    while (position <= numberOfElements)
    {
       stepList.push_back(MathExtensions::Limit(position, 0.0f, numberOfElements));
       position += speed;
-      speed = MathExtensions::Limit(speed + acceleration, numberOfElements / 100.0f * (1.0f / (1000.0f / (float)RefreshIntervalMs)), 10000.0f);
+      speed = MathExtensions::Limit(speed + acceleration, numberOfElements / 100.0f * (float)(1 / (1000 / RefreshIntervalMs)), 10000.0f);
    }
    stepList.push_back(MathExtensions::Limit(position, 0.0f, numberOfElements));
 
@@ -118,7 +119,7 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
          if (fromElementNr != (float)(int)fromElementNr)
             value[(int)fromElementNr] += (fromElementNr - (float)(int)fromElementNr) * (float)lastValue;
 
-         toNr = (int)(toElementNr + 0.999f);
+         toNr = (int)std::ceil(toElementNr);
          for (int i = (int)fromElementNr - 1; i >= toNr; i--)
             value[i] = (float)lastValue;
          if (toElementNr != (float)(int)toElementNr)
@@ -130,10 +131,10 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
    toElementNr = 0;
    if (fromElementNr != toElementNr)
    {
-      if (fromElementNr != (float)(int)fromElementNr && (int)fromElementNr < numberOfElements - 1)
+      if (fromElementNr != (float)(int)fromElementNr && (int)fromElementNr < (int)this->GetWidth() - 1)
          value[(int)fromElementNr] += (fromElementNr - (float)(int)fromElementNr) * (float)lastValue;
 
-      toNr = MathExtensions::Limit((int)(toElementNr + 0.999f), 0, 2147483647);
+      toNr = MathExtensions::Limit((int)std::ceil(toElementNr), 0, 2147483647);
       for (int i = (int)fromElementNr - 1; i >= toNr; i--)
          value[i] = (float)lastValue;
       if (toElementNr != (float)(int)toElementNr)
@@ -205,7 +206,6 @@ template <typename MatrixElementType> void MatrixShiftEffectBase<MatrixElementTy
       break;
    }
 
-   // Clean up old trigger values
    int dropKey = m_currentStep - ((int)m_step2Element.size() - 1);
    auto it = m_triggerValueBuffer.find(dropKey);
    if (it != m_triggerValueBuffer.end())

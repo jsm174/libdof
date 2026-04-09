@@ -32,12 +32,16 @@ public:
    void SetAnimationStepDirection(MatrixAnimationStepDirectionEnum value) { m_animationStepDirection = value; }
    AnimationBehaviourEnum GetAnimationBehaviour() const { return m_animationBehaviour; }
    void SetAnimationBehaviour(AnimationBehaviourEnum value) { m_animationBehaviour = value; }
+   virtual void SetBitmapTop(int value) override { MatrixBitmapEffectBase<MatrixElementType>::SetBitmapTop(MathExtensions::Limit(value, 0, INT_MAX)); }
+   virtual void SetBitmapLeft(int value) override { MatrixBitmapEffectBase<MatrixElementType>::SetBitmapLeft(MathExtensions::Limit(value, 0, INT_MAX)); }
+   virtual void SetBitmapWidth(int value) override { MatrixBitmapEffectBase<MatrixElementType>::SetBitmapWidth(MathExtensions::Limit(value, -1, INT_MAX)); }
+   virtual void SetBitmapHeight(int value) override { MatrixBitmapEffectBase<MatrixElementType>::SetBitmapHeight(MathExtensions::Limit(value, -1, INT_MAX)); }
    virtual void Trigger(TableElementData* tableElementData) override;
    virtual void Init(Table* table) override;
    virtual void Finish() override;
 
 protected:
-   void ControlAnimation(int fadeValue, TableElementData* tableElementData);
+   void ControlAnimation(int fadeValue);
    void Animate();
    void StopAnimation();
    void CleanupPixels();
@@ -78,11 +82,11 @@ template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<Matri
       int fadeValue = tableElementData->m_value;
       if (this->GetFadeMode() == FadeModeEnum::OnOff)
          fadeValue = (fadeValue < 1 ? 0 : 255);
-      ControlAnimation(fadeValue, tableElementData);
+      ControlAnimation(fadeValue);
    }
 }
 
-template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::ControlAnimation(int fadeValue, TableElementData* tableElementData)
+template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<MatrixElementType>::ControlAnimation(int fadeValue)
 {
    if (fadeValue > 0)
    {
@@ -201,7 +205,7 @@ template <typename MatrixElementType> void MatrixBitmapAnimationEffectBase<Matri
                m_pixels.resize(stepCount);
                for (int s = 0; s < stepCount; s++)
                {
-                  auto stepFrameIt = frames.find(this->GetBitmapFrameNumber() + s * m_animationStepSize);
+                  auto stepFrameIt = frames.find(this->GetBitmapFrameNumber() + s);
                   if (stepFrameIt != frames.end())
                   {
                      FastBitmap clippedBitmap = stepFrameIt->second.GetClip(this->GetAreaWidth(), this->GetAreaHeight(), this->GetBitmapLeft(), this->GetBitmapTop(), this->GetBitmapWidth(),

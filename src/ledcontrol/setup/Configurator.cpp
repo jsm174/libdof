@@ -592,19 +592,16 @@ void Configurator::SetupTable(
                            if (!hasColor2)
                               activeColor2 = RGBAColor(0, 0xff, 0, 0xff);
 
-                           plasmaEffect->SetActiveColor(activeColor1);
-                           plasmaEffect->SetSecondaryColor(activeColor2);
+                           plasmaEffect->SetActiveColor1(activeColor1);
+                           plasmaEffect->SetActiveColor2(activeColor2);
                            plasmaEffect->SetInactiveColor(inactiveColor);
                            plasmaEffect->SetPlasmaSpeed(tcs->GetPlasmaSpeed());
                            plasmaEffect->SetPlasmaDensity(tcs->GetPlasmaDensity());
 
-                           if (tcs->IsArea())
-                           {
-                              plasmaEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
-                              plasmaEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
-                              plasmaEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
-                              plasmaEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
-                           }
+                           plasmaEffect->SetLeft(static_cast<float>(tcs->GetAreaLeft()));
+                           plasmaEffect->SetTop(static_cast<float>(tcs->GetAreaTop()));
+                           plasmaEffect->SetWidth(static_cast<float>(tcs->GetAreaWidth()));
+                           plasmaEffect->SetHeight(static_cast<float>(tcs->GetAreaHeight()));
 
                            effect = static_cast<EffectBase*>(plasmaEffect);
                         }

@@ -3,8 +3,6 @@
 #include "MatrixEffectBase.h"
 #include "../../table/TableElementData.h"
 #include "../../general/MathExtensions.h"
-#include "../../general/StringExtensions.h"
-#include "../../Log.h"
 
 namespace DOF
 {
@@ -38,10 +36,6 @@ template <typename MatrixElementType> void MatrixValueEffectBase<MatrixElementTy
             this->m_matrix->SetElement(this->GetLayerNr(), x, y, d);
          }
       }
-   }
-   else
-   {
-      Log::Exception(StringExtensions::Build("MatrixValueEffectBase::Trigger - m_matrixLayer is null for toy '{0}'", this->GetToyName()));
    }
 }
 

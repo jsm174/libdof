@@ -113,7 +113,7 @@ template <typename MatrixElementType> void MatrixEffectBase<MatrixElementType>::
          {
             tmp = m_areaRight;
             m_areaRight = m_areaLeft;
-            m_areaLeft = tmp;
+            m_areaLeft = m_areaRight;
          }
          if (m_areaTop > m_areaBottom)
          {
@@ -127,7 +127,7 @@ template <typename MatrixElementType> void MatrixEffectBase<MatrixElementType>::
          std::vector<std::string> args2 = { std::to_string(m_areaLeft), std::to_string(m_areaTop), std::to_string(m_areaRight), std::to_string(m_areaBottom), std::to_string(GetAreaWidth()),
             std::to_string(GetAreaHeight()) };
          args.insert(args.end(), args2.begin(), args2.end());
-         args.push_back(this->GetName());
+         args.push_back(this->GetXmlElementName());
          Log::Instrumentation("MX",
             StringExtensions::Build("MatrixBase for {12}. Calculated area size: AreaDef(L:{0}, T:{1}, W:{2}, H:{3}), Matrix(W:{4}, H:{5}), ResultArea(Left: {6}, Top:{7}, Right:{8}, "
                                     "Bottom:{9}, Width:{10}, Height:{11})",
