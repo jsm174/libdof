@@ -76,7 +76,6 @@ template <typename MatrixElementType> MatrixElementType* MatrixDictionaryBase<Ma
 
 template <typename MatrixElementType> void MatrixDictionaryBase<MatrixElementType>::SetLayer(int layerNr, MatrixElementType* data)
 {
-
    auto it = this->find(layerNr);
    if (it != this->end())
    {
@@ -93,7 +92,6 @@ template <typename MatrixElementType> void MatrixDictionaryBase<MatrixElementTyp
    int newWidth = MathExtensions::Limit(value, 1, INT_MAX);
    if (newWidth != m_width)
    {
-
       Clear();
       m_width = newWidth;
    }
@@ -104,7 +102,6 @@ template <typename MatrixElementType> void MatrixDictionaryBase<MatrixElementTyp
    int newHeight = MathExtensions::Limit(value, 1, INT_MAX);
    if (newHeight != m_height)
    {
-
       Clear();
       m_height = newHeight;
    }

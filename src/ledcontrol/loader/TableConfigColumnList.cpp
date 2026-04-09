@@ -9,69 +9,69 @@ namespace DOF
 
 void TableConfigColumnList::ParseControlData(const std::string& ledControlData, bool throwExceptions)
 {
-   std::vector<std::string> Cols = SplitColumns(ledControlData);
-   if (Cols.size() < 2)
+   std::vector<std::string> cols = SplitColumns(ledControlData);
+   if (cols.size() < 2)
    {
       Log::Warning(StringExtensions::Build("No data to parse found in LedControlData: {0}", ledControlData));
       if (throwExceptions)
          throw std::runtime_error(StringExtensions::Build("No data to parse found in LedControlData: {0}", ledControlData));
       return;
    }
-   int FirstOutputNumber = 1;
-   int LastColumnWithData = -1;
-   for (int i = 1; i < static_cast<int>(Cols.size()); i++)
+   int firstOutputNumber = 1;
+   int lastColumnWithData = -1;
+   for (int i = 1; i < static_cast<int>(cols.size()); i++)
    {
-      if (!StringExtensions::IsNullOrWhiteSpace(Cols[i]))
-         LastColumnWithData = i;
+      if (!StringExtensions::IsNullOrWhiteSpace(cols[i]))
+         lastColumnWithData = i;
    }
-   for (int i = 1; i <= LastColumnWithData; i++)
+   for (int i = 1; i <= lastColumnWithData; i++)
    {
-      TableConfigColumn* C = new TableConfigColumn();
-      C->SetNumber(i);
-      C->SetFirstOutputNumber(FirstOutputNumber);
-      bool ParseOK = C->ParseColumnData(Cols[i], false);
-      if (!ParseOK)
+      TableConfigColumn* c = new TableConfigColumn();
+      c->SetNumber(i);
+      c->SetFirstOutputNumber(firstOutputNumber);
+      bool parseOK = c->ParseColumnData(cols[i], false);
+      if (!parseOK)
       {
          Log::Warning(StringExtensions::Build("Previous exceptions occured in the line {0} of the ledcontrol file", ledControlData));
          if (throwExceptions)
          {
-            delete C;
+            delete c;
             throw std::runtime_error(StringExtensions::Build("Exception(s) occured when parsing {0}", ledControlData));
          }
       }
 
-      push_back(C);
+      push_back(c);
 
-      FirstOutputNumber += C->GetRequiredOutputCount();
+      firstOutputNumber += c->GetRequiredOutputCount();
    }
 }
 
 std::vector<std::string> TableConfigColumnList::SplitColumns(const std::string& configData)
 {
-   std::vector<std::string> L;
+   std::vector<std::string> l;
 
-   int BracketCount = 0;
+   int bracketCount = 0;
 
-   int LP = 0;
+   int lp = 0;
 
-   for (int P = 0; P < static_cast<int>(configData.length()); P++)
+   for (int p = 0; p < static_cast<int>(configData.length()); p++)
    {
-      if (configData[P] == '(')
-         BracketCount++;
-      else if (configData[P] == ')')
-         BracketCount--;
-      if (configData[P] == ',' && BracketCount <= 0)
+      if (configData[p] == '(')
+         bracketCount++;
+      else if (configData[p] == ')')
+         bracketCount--;
+      if (configData[p] == ',' && bracketCount <= 0)
       {
-         L.push_back(configData.substr(LP, P - LP));
-         LP = P + 1;
-         BracketCount = 0;
+         l.push_back(configData.substr(lp, p - lp));
+         lp = p + 1;
+         bracketCount = 0;
       }
    }
 
-   if (LP < static_cast<int>(configData.length()))
-      L.push_back(configData.substr(LP));
+   if (lp < static_cast<int>(configData.length()))
+      l.push_back(configData.substr(lp));
 
-   return L;
+   return l;
 }
 
 void TableConfigColumnList::Sort()

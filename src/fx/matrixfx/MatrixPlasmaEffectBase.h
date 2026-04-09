@@ -146,19 +146,15 @@ template <typename MatrixElementType> void MatrixPlasmaEffectBase<MatrixElementT
 
 template <typename MatrixElementType> double MatrixPlasmaEffectBase<MatrixElementType>::CalculatePlasmaIntensity(int x, int y, double time)
 {
-
    double normX = (double)(x - this->m_areaLeft) / (double)this->GetAreaWidth();
    double normY = (double)(y - this->m_areaTop) / (double)this->GetAreaHeight();
 
-
    double densityFactor = m_plasmaDensity / 50.0;
-
 
    double plasma1 = std::sin(normX * 10.0 * densityFactor + time);
    double plasma2 = std::sin(normY * 10.0 * densityFactor + time * 1.3);
    double plasma3 = std::sin((normX + normY) * 8.0 * densityFactor + time * 0.7);
    double plasma4 = std::sin(std::sqrt(normX * normX + normY * normY) * 12.0 * densityFactor + time * 1.1);
-
 
    double combined = (plasma1 + plasma2 + plasma3 + plasma4) / 4.0;
    return (combined + 1.0) / 2.0;

@@ -41,7 +41,6 @@ void TableOverrideSetting::ParseRoms()
 
    while (std::getline(ss, item, ','))
    {
-
       item.erase(0, item.find_first_not_of(" \t"));
       item.erase(item.find_last_not_of(" \t") + 1);
 
@@ -70,7 +69,6 @@ void TableOverrideSetting::ParseTables()
 
    while (std::getline(ss, item, ','))
    {
-
       item.erase(0, item.find_first_not_of(" \t"));
       item.erase(item.find_last_not_of(" \t") + 1);
 
@@ -91,7 +89,6 @@ void TableOverrideSetting::AddTableOverrideSettingDevice(TableOverrideSettingDev
 
 void TableOverrideSetting::ClearTableOverrideSettingDevices()
 {
-
    for (auto* device : m_tableOverrideSettingDeviceList)
    {
       delete device;

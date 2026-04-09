@@ -339,7 +339,6 @@ void OutputControllerCompleteBase::UpdaterThreadDoIt()
 
          if (m_keepUpdaterThreadAlive)
          {
-
             std::unique_lock<std::mutex> lock(m_conditionMutex);
             m_updateCondition.wait_for(lock, std::chrono::milliseconds(50), [this] { return !m_keepUpdaterThreadAlive || m_updateRequired; });
          }

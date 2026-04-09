@@ -81,7 +81,6 @@ void LedControlConfig::ParseLedControlIni(const std::string& ledControlIniFilena
       {
          if (StringExtensions::StartsWith(iniLine, "[") && StringExtensions::EndsWith(iniLine, "]") && iniLine.length() > 2)
          {
-
             if (!StringExtensions::IsNullOrWhiteSpace(sectionHeader))
             {
                if (sections.find(sectionHeader) != sections.end())
@@ -104,7 +103,6 @@ void LedControlConfig::ParseLedControlIni(const std::string& ledControlIniFilena
          }
          else
          {
-
             sectionData.push_back(iniLine);
          }
       }

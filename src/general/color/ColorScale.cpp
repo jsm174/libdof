@@ -28,7 +28,6 @@ ColorScale::ColorScale(double hue, double saturation, double brightness, int alp
 
 RGBAColor ColorScale::ApplyScale(const RGBAColor& baseColor) const
 {
-
    int r = MathExtensions::Limit((int)((float)baseColor.GetRed() * m_color.GetRed() / 255), 0, 255);
    int g = MathExtensions::Limit((int)((float)baseColor.GetGreen() * m_color.GetGreen() / 255), 0, 255);
    int b = MathExtensions::Limit((int)((float)baseColor.GetBlue() * m_color.GetBlue() / 255), 0, 255);
@@ -39,7 +38,6 @@ RGBAColor ColorScale::ApplyScale(const RGBAColor& baseColor) const
 
 RGBAColor ColorScale::ApplyScale(const PixelData& pixel) const
 {
-
    RGBAColor baseColor(pixel.red, pixel.green, pixel.blue, pixel.alpha);
    return ApplyScale(baseColor);
 }
@@ -158,7 +156,6 @@ void ColorScale::RGBToHSB(int r, int g, int b, double& h, double& s, double& br)
 
 void ColorScale::HSBToRGB(double h, double s, double br, int& r, int& g, int& b)
 {
-
    h = std::fmod(h, 360.0);
    if (h < 0.0)
       h += 360.0;

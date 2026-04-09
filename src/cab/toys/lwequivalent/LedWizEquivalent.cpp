@@ -34,7 +34,6 @@ LedWizEquivalentOutputList::LedWizEquivalentOutputList() { }
 
 LedWizEquivalentOutputList::~LedWizEquivalentOutputList()
 {
-
    for (LedWizEquivalentOutput* output : *this)
    {
       delete output;

@@ -13,7 +13,6 @@ ToyList::ToyList() { }
 
 ToyList::~ToyList()
 {
-
    for (IToy* toy : *this)
       delete toy;
    clear();
@@ -85,7 +84,6 @@ void ToyList::UpdateToys()
    {
       if (toy != nullptr)
       {
-
          IToyUpdatable* updatableToy = dynamic_cast<IToyUpdatable*>(toy);
          if (updatableToy != nullptr)
          {

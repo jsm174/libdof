@@ -60,10 +60,7 @@ template <typename MatrixElementType> ToyGroupBase<MatrixElementType>::~ToyGroup
 
 template <typename MatrixElementType> void ToyGroupBase<MatrixElementType>::Init(Cabinet* cabinet)
 {
-
-
    InitializeToyMatrix(cabinet);
-
 
    m_layers = LayerDictionary<MatrixElementType>(m_width, m_height);
 }
@@ -76,7 +73,6 @@ template <typename MatrixElementType> void ToyGroupBase<MatrixElementType>::Upda
 
 template <typename MatrixElementType> void ToyGroupBase<MatrixElementType>::UpdateOutputs()
 {
-
    std::vector<int> layerNumbers = m_layers.GetLayerNumbers();
 
    for (int layerNr : layerNumbers)
@@ -92,7 +88,6 @@ template <typename MatrixElementType> void ToyGroupBase<MatrixElementType>::Upda
             {
                if (y < static_cast<int>(m_toys.size()) && x < static_cast<int>(m_toys[y].size()) && m_toys[y][x] != nullptr)
                {
-
                   LayerDictionary<MatrixElementType>& targetLayers = m_toys[y][x]->GetLayers();
                   MatrixElementType* targetLayer = targetLayers.GetOrCreateLayer(targetLayerNr, 1);
                   if (targetLayer != nullptr)
@@ -142,7 +137,6 @@ template <typename MatrixElementType> void ToyGroupBase<MatrixElementType>::Init
 
    if (m_height > 0)
    {
-
       for (const auto& row : m_toyNames)
       {
          m_width = std::max(m_width, static_cast<int>(row.size()));
@@ -151,7 +145,6 @@ template <typename MatrixElementType> void ToyGroupBase<MatrixElementType>::Init
 
    if (m_height == 0 || m_width == 0)
    {
-
       m_height = 1;
       m_width = 1;
       m_toyNames = { { "" } };
@@ -169,7 +162,6 @@ template <typename MatrixElementType> void ToyGroupBase<MatrixElementType>::Init
       {
          if (y < static_cast<int>(m_toyNames.size()) && x < static_cast<int>(m_toyNames[y].size()) && !m_toyNames[y][x].empty())
          {
-
             IToy* toy = cabinet->GetToys()->FindByName(m_toyNames[y][x]);
             ILayerToy<MatrixElementType>* layerToy = dynamic_cast<ILayerToy<MatrixElementType>*>(toy);
             m_toys[y][x] = layerToy;
