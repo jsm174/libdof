@@ -266,7 +266,7 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
             deviceRid = Device::RIDType::RIDOutputs;
          else if (productName == "DudesCab Outputs MX")
             deviceRid = Device::RIDType::RIDOutputsMx;
-#if defined(__linux__)
+#if defined(__linux__) || defined(__APPLE__)
          else if (productName == "DudesCab" && cur_dev->interface_number == static_cast<int>(Device::RIDType::RIDOutputs))
             deviceRid = Device::RIDType::RIDOutputs;
 #endif
