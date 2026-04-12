@@ -1,8 +1,7 @@
 #include "PacDriveSingleton.h"
-#include "../../../Log.h"
+#include "../../../general/IOConfigurator.h"
 #include "../../../general/StringExtensions.h"
 #include <string>
-#include <algorithm>
 
 namespace DOF
 {
@@ -15,7 +14,7 @@ PacDriveSingleton& PacDriveSingleton::GetInstance()
 
 PacDriveSingleton::PacDriveSingleton()
    : m_numDevices(0)
-   , m_libusbContext(nullptr)
+   , m_usbContext(nullptr)
 {
    Initialize();
 }
@@ -24,13 +23,7 @@ PacDriveSingleton::~PacDriveSingleton() { Shutdown(); }
 
 void PacDriveSingleton::Initialize()
 {
-   int result = libusb_init(&m_libusbContext);
-   if (result < 0)
-   {
-      Log::Exception(StringExtensions::Build("Failed to initialize libusb: {0}", std::to_string(result)));
-      return;
-   }
-
+   m_usbContext = IOConfigurator::GetUSBContext();
    EnumerateDevices();
 }
 
@@ -56,12 +49,7 @@ void PacDriveSingleton::Shutdown()
          }
       }
       m_usbDevices.clear();
-
-      if (m_libusbContext)
-      {
-         libusb_exit(m_libusbContext);
-         m_libusbContext = nullptr;
-      }
+      m_usbContext = nullptr;
    }
 }
 
@@ -151,8 +139,14 @@ void PacDriveSingleton::EnumerateDevices()
 
    hid_free_enumeration(devices);
 
+   if (!m_usbContext)
+   {
+      m_numDevices = static_cast<int>(m_devices.size());
+      return;
+   }
+
    libusb_device** usbDevices;
-   ssize_t deviceCount = libusb_get_device_list(m_libusbContext, &usbDevices);
+   ssize_t deviceCount = libusb_get_device_list(m_usbContext, &usbDevices);
 
    if (deviceCount > 0)
    {
@@ -577,7 +571,10 @@ void PacDriveSingleton::OpenUsbDevice(int index)
    if (m_usbDevices.find(index) != m_usbDevices.end())
       return;
 
-   libusb_device_handle* handle = libusb_open_device_with_vid_pid(m_libusbContext, device.vendorId, device.productId);
+   if (!m_usbContext)
+      return;
+
+   libusb_device_handle* handle = libusb_open_device_with_vid_pid(m_usbContext, device.vendorId, device.productId);
    if (handle)
    {
       if (libusb_kernel_driver_active(handle, 0) == 1)

@@ -232,8 +232,9 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
          else
             productName = "<not available>";
 #else
-         std::wstring wstr(cur_dev->product_string);
-         productName = std::string(wstr.begin(), wstr.end());
+         wchar_t* wstr = cur_dev->product_string;
+         while (*wstr)
+            productName += static_cast<char>(*wstr++);
 #endif
       }
 
@@ -250,8 +251,9 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
          else
             serialNumber = "<not available>";
 #else
-         std::wstring wserial(cur_dev->serial_number);
-         serialNumber = std::string(wserial.begin(), wserial.end());
+         wchar_t* wserial = cur_dev->serial_number;
+         while (*wserial)
+            serialNumber += static_cast<char>(*wserial++);
 #endif
       }
       else
