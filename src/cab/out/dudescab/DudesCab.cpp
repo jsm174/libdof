@@ -232,7 +232,8 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
          else
             productName = "<not available>";
 #else
-         productName = std::string(reinterpret_cast<const char*>(cur_dev->product_string));
+         std::wstring wstr(cur_dev->product_string);
+         productName = std::string(wstr.begin(), wstr.end());
 #endif
       }
 
@@ -249,7 +250,8 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
          else
             serialNumber = "<not available>";
 #else
-         serialNumber = std::string(reinterpret_cast<const char*>(cur_dev->serial_number));
+         std::wstring wserial(cur_dev->serial_number);
+         serialNumber = std::string(wserial.begin(), wserial.end());
 #endif
       }
       else
@@ -264,6 +266,10 @@ std::vector<DudesCab::Device*> DudesCab::FindDevices()
             deviceRid = Device::RIDType::RIDOutputs;
          else if (productName == "DudesCab Outputs MX")
             deviceRid = Device::RIDType::RIDOutputsMx;
+#if defined(__linux__) || defined(__APPLE__)
+         else if (productName == "DudesCab" && cur_dev->interface_number == static_cast<int>(Device::RIDType::RIDOutputs))
+            deviceRid = Device::RIDType::RIDOutputs;
+#endif
 
          if (deviceRid != Device::RIDType::None)
          {
