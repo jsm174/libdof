@@ -99,6 +99,7 @@ set(LIBDOF_SOURCES
    src/general/FilePattern.cpp
    src/general/FilePatternList.cpp
    src/general/FileReader.cpp
+   src/general/IOConfigurator.cpp
    src/general/MathExtensions.cpp
    src/general/StringExtensions.cpp
    src/general/analog/AnalogAlpha.cpp

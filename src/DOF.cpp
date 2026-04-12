@@ -9,29 +9,22 @@
 #include "Log.h"
 #include "Logger.h"
 #include "Pinball.h"
+#include "general/IOConfigurator.h"
 #include "general/StringExtensions.h"
-
-#ifdef __HIDAPI__
-#include <hidapi/hidapi.h>
-#endif
 
 namespace DOF
 {
 
 DOF::DOF()
 {
-#ifdef __HIDAPI__
-   hid_init();
-#endif
+   IOConfigurator::Initialize();
    m_pinball = new Pinball();
 }
 
 DOF::~DOF()
 {
    delete m_pinball;
-#ifdef __HIDAPI__
-   hid_exit();
-#endif
+   IOConfigurator::Shutdown();
 }
 
 void DOF::Init(const char* tableFilename, const char* romName)

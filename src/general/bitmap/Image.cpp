@@ -67,7 +67,7 @@ void Image::LoadFromFile(const std::string& filename)
       int channels;
       unsigned char* gifData = stbi_load_gif_from_memory(buffer.data(), static_cast<int>(fileSize), &delays, &m_width, &m_height, &frameCount, &channels, 4);
 
-      if (gifData != nullptr && frameCount > 1)
+      if (gifData != nullptr && frameCount > 0)
       {
          m_channels = 4;
          m_frameCount = frameCount;

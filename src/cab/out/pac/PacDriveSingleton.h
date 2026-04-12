@@ -79,7 +79,7 @@ private:
    std::mutex m_hidDevicesMutex;
    int m_numDevices;
 
-   libusb_context* m_libusbContext;
+   libusb_context* m_usbContext;
    std::map<int, libusb_device_handle*> m_usbDevices;
    std::mutex m_usbDevicesMutex;
 
