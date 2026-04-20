@@ -26,7 +26,12 @@ namespace DOF
 
 std::vector<PinscapePico::Device*> PinscapePico::s_devices = { };
 
-void PinscapePico::Initialize() { FindDevices(); }
+void PinscapePico::Initialize()
+{
+   if (!s_devices.empty())
+      return;
+   FindDevices();
+}
 
 PinscapePico::PinscapePico()
 {
