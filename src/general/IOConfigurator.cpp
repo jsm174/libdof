@@ -5,6 +5,8 @@
 
 #ifdef __HIDAPI__
 #include <hidapi/hidapi.h>
+#include "../cab/out/ps/Pinscape.h"
+#include "../cab/out/pspico/PinscapePico.h"
 #endif
 
 #include <string>
@@ -44,6 +46,8 @@ void IOConfigurator::Shutdown()
    }
 #endif
 #ifdef __HIDAPI__
+   Pinscape::ClearDevices();
+   PinscapePico::ClearDevices();
    hid_exit();
 #endif
 }

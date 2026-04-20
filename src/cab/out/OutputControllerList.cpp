@@ -64,8 +64,6 @@ void OutputControllerList::Finish()
       controller->Finish();
 
 #ifdef __HIDAPI__
-   Pinscape::ClearDevices();
-   PinscapePico::ClearDevices();
    DudesCab::ClearDevices();
    UMXControllerAutoConfigurator::ClearDevices();
 #endif
