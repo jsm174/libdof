@@ -204,6 +204,7 @@ jobs:
           cp build/dof_test tmp/
           cp build/ledwiz_test tmp/
           cp build/pacled64_test tmp/
+          cp build/pinone_test tmp/
           cd tmp && tar -czvf ../libdof-${{ needs.version.outputs.tag }}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz *
       - if: (matrix.platform == 'linux')
         name: Prepare artifacts (linux)
@@ -216,6 +217,7 @@ jobs:
           cp build/dof_test tmp/
           cp build/ledwiz_test tmp/
           cp build/pacled64_test tmp/
+          cp build/pinone_test tmp/
           cd tmp && tar -czvf ../libdof-${{ needs.version.outputs.tag }}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz *
       - if: (matrix.platform == 'ios' || matrix.platform == 'ios-simulator' || matrix.platform == 'tvos')
         name: Prepare artifacts (ios/tvos)

@@ -18,6 +18,8 @@ namespace DOF
 
 void PinOneAutoConfigurator::AutoConfig(Cabinet* cabinet)
 {
+   Log::Write("PinOne auto-configuration starting");
+
    const int UnitBias = 10;
 
    std::vector<std::string> preconfigured;

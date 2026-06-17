@@ -599,4 +599,41 @@ if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "win-mingw" OR PLATFORM STREQUAL
       target_link_libraries(pacled64_test PUBLIC usb-1.0)
    endif()
 
+   add_executable(pinone_test
+      src/tools/pinone_test.cpp
+   )
+
+   target_include_directories(pinone_test PRIVATE
+      ${CMAKE_SOURCE_DIR}
+      ${CMAKE_SOURCE_DIR}/third-party/include
+   )
+
+   if(PLATFORM STREQUAL "win")
+      target_link_directories(pinone_test PUBLIC
+         third-party/build-libs/${PLATFORM}/${ARCH}
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      if(ARCH STREQUAL "x64")
+         target_link_libraries(pinone_test PUBLIC libserialport64)
+      else()
+         target_link_libraries(pinone_test PUBLIC libserialport)
+      endif()
+   elseif(PLATFORM STREQUAL "win-mingw")
+      target_link_directories(pinone_test PUBLIC
+         third-party/build-libs/${PLATFORM}/${ARCH}
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(pinone_test PUBLIC serialport64)
+   elseif(PLATFORM STREQUAL "macos")
+      target_link_directories(pinone_test PUBLIC
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(pinone_test PUBLIC serialport)
+   elseif(PLATFORM STREQUAL "linux")
+      target_link_directories(pinone_test PUBLIC
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(pinone_test PUBLIC serialport)
+   endif()
+
 endif()
