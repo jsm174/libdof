@@ -30,40 +30,52 @@ std::string TestSerialPort(const char* portName)
    sp_set_bits(port, 8);
    sp_set_parity(port, SP_PARITY_NONE);
    sp_set_stopbits(port, 1);
+   sp_set_rts(port, SP_RTS_ON);
    sp_set_dtr(port, SP_DTR_ON);
-   sp_set_rts(port, SP_RTS_OFF);
    sp_set_cts(port, SP_CTS_IGNORE);
    sp_set_dsr(port, SP_DSR_IGNORE);
    sp_set_xon_xoff(port, SP_XONXOFF_DISABLED);
 
-   std::this_thread::sleep_for(std::chrono::milliseconds(20));
+   std::cout << "  RTS=ON DTR=ON (matching working NamedPipeServer setup)" << std::endl;
+   std::this_thread::sleep_for(std::chrono::milliseconds(200));
    sp_flush(port, SP_BUF_BOTH);
-   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
    uint8_t command[] = { 0, 251, 0, 0, 0, 0, 0, 0, 0 };
    int written = sp_blocking_write(port, command, 9, 100);
    std::cout << "  wrote " << written << " bytes (expected 9)" << std::endl;
 
-   char buffer[256];
-   int bytesRead = sp_blocking_read(port, buffer, sizeof(buffer) - 1, 100);
-   std::cout << "  read " << bytesRead << " bytes" << std::endl;
-
    std::string result;
-   if (bytesRead > 0)
+   bool matched = false;
+   std::cout << "  reading for up to 3s (board may reset on open and boot slowly)..." << std::endl;
+   for (int attempt = 0; attempt < 30 && !matched; attempt++)
    {
-      buffer[bytesRead] = '\0';
+      char buffer[256];
+      int bytesRead = sp_blocking_read(port, buffer, sizeof(buffer) - 1, 100);
+      if (bytesRead > 0)
+      {
+         buffer[bytesRead] = '\0';
 
-      std::cout << "  hex:   ";
-      for (int i = 0; i < bytesRead; i++)
-         std::cout << std::hex << ((buffer[i] >> 4) & 0xF) << (buffer[i] & 0xF) << " ";
-      std::cout << std::dec << std::endl;
+         std::cout << "  [" << attempt << "] read " << bytesRead << " bytes  hex: ";
+         for (int i = 0; i < bytesRead; i++)
+            std::cout << std::hex << ((buffer[i] >> 4) & 0xF) << (buffer[i] & 0xF) << " ";
+         std::cout << std::dec << std::endl;
 
-      result = std::string(buffer);
-      while (!result.empty() && (result.back() == '\r' || result.back() == '\n'))
-         result.pop_back();
+         result += std::string(buffer, bytesRead);
 
-      std::cout << "  trimmed string: \"" << result << "\"" << std::endl;
+         std::string trimmed = result;
+         while (!trimmed.empty() && (trimmed.back() == '\r' || trimmed.back() == '\n'))
+            trimmed.pop_back();
+         std::cout << "       accumulated: \"" << trimmed << "\"" << std::endl;
+
+         if (trimmed.find("DEBUG,CSD Board Connected") != std::string::npos)
+         {
+            matched = true;
+            result = "DEBUG,CSD Board Connected";
+         }
+      }
    }
+   if (result.empty())
+      std::cout << "  read 0 bytes over the whole window" << std::endl;
 
    sp_flush(port, SP_BUF_BOTH);
    sp_set_rts(port, SP_RTS_OFF);
