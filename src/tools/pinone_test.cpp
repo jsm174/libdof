@@ -107,13 +107,20 @@ int main(int argc, char* argv[])
    {
       char* name = sp_get_port_name(portList[i]);
       char* desc = sp_get_port_description(portList[i]);
-      std::cout << "  " << (name ? name : "(null)") << "  -  " << (desc ? desc : "") << std::endl;
+      enum sp_transport transport = sp_get_port_transport(portList[i]);
+      const char* transportName = transport == SP_TRANSPORT_USB ? "usb" : transport == SP_TRANSPORT_BLUETOOTH ? "bluetooth" : "native";
+      std::cout << "  " << (name ? name : "(null)") << "  -  " << (desc ? desc : "") << "  [" << transportName << "]" << std::endl;
    }
 
    std::string found;
    for (int i = 0; portList[i] != nullptr; i++)
    {
       char* name = sp_get_port_name(portList[i]);
+      if (sp_get_port_transport(portList[i]) != SP_TRANSPORT_USB)
+      {
+         std::cout << "\n=== Skipping " << (name ? name : "(null)") << " (not a USB serial port) ===" << std::endl;
+         continue;
+      }
       if (name)
       {
          found = TestSerialPort(name);

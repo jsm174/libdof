@@ -166,6 +166,9 @@ std::string PinOneAutoConfigurator::GetDevice()
 
    for (int i = 0; portList[i] != nullptr; i++)
    {
+      if (sp_get_port_transport(portList[i]) != SP_TRANSPORT_USB)
+         continue;
+
       char* portName = sp_get_port_name(portList[i]);
       if (!portName)
          continue;
