@@ -3,6 +3,7 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <mutex>
 #include <libftdi1/ftdi.h>
 
 namespace DOF
@@ -89,6 +90,8 @@ public:
    bool IsOpen() const { return m_ftdiContext != nullptr && m_isOpen; }
 
 private:
+   static std::mutex s_openMutex;
+
    struct ftdi_context* m_ftdiContext;
    bool m_isOpen;
 

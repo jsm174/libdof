@@ -600,3 +600,43 @@ if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "win-mingw" OR PLATFORM STREQUAL
    endif()
 
 endif()
+
+if(PLATFORM STREQUAL "win" OR PLATFORM STREQUAL "win-mingw" OR PLATFORM STREQUAL "macos" OR PLATFORM STREQUAL "linux")
+   add_executable(ftdi_test
+      src/tools/ftdi_test.cpp
+   )
+
+   target_include_directories(ftdi_test PRIVATE
+      ${CMAKE_SOURCE_DIR}
+      ${CMAKE_SOURCE_DIR}/third-party/include
+   )
+
+   if(PLATFORM STREQUAL "win")
+      target_link_directories(ftdi_test PUBLIC
+         third-party/build-libs/${PLATFORM}/${ARCH}
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      if(ARCH STREQUAL "x64")
+         target_link_libraries(ftdi_test PUBLIC libftdi164 libusb64-1.0)
+      else()
+         target_link_libraries(ftdi_test PUBLIC libftdi1 libusb-1.0)
+      endif()
+   elseif(PLATFORM STREQUAL "win-mingw")
+      target_link_directories(ftdi_test PUBLIC
+         third-party/build-libs/${PLATFORM}/${ARCH}
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(ftdi_test PUBLIC ftdi164 usb64-1.0)
+   elseif(PLATFORM STREQUAL "macos")
+      target_link_directories(ftdi_test PUBLIC
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(ftdi_test PUBLIC ftdi1 usb-1.0)
+   elseif(PLATFORM STREQUAL "linux")
+      target_link_directories(ftdi_test PUBLIC
+         third-party/runtime-libs/${PLATFORM}/${ARCH}
+      )
+      target_link_libraries(ftdi_test PUBLIC ftdi1 usb-1.0)
+   endif()
+
+endif()
