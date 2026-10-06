@@ -168,6 +168,23 @@ std::string FormatArgument(const std::string& arg, const std::string& formatSpec
          return std::string(width - arg.length(), '0') + arg;
    }
 
+   if (formatSpec[0] == 'X' || formatSpec[0] == 'x')
+   {
+      try
+      {
+         long long value = std::stoll(arg);
+         int width = formatSpec.length() > 1 ? std::stoi(formatSpec.substr(1)) : 0;
+         std::ostringstream oss;
+         if (formatSpec[0] == 'X')
+            oss << std::uppercase;
+         oss << std::hex << std::setw(width) << std::setfill('0') << value;
+         return oss.str();
+      }
+      catch (const std::exception&)
+      {
+      }
+   }
+
    return arg;
 }
 

@@ -17,7 +17,7 @@ std::ofstream Log::m_logger;
 bool Log::m_isInitialized = false;
 bool Log::m_isOk = false;
 bool Log::m_isEnabled = true;
-std::mutex Log::m_locker;
+std::recursive_mutex Log::m_locker;
 
 std::string Log::m_filename = "./DirectOutput.log";
 std::string Log::m_instrumentations = "";
@@ -45,7 +45,7 @@ void Log::SetInstrumentations(const std::string& instrumentations)
 
 void Log::Init(bool enableLogging)
 {
-   std::lock_guard<std::mutex> lock(m_locker);
+   std::lock_guard<std::recursive_mutex> lock(m_locker);
    m_isEnabled = enableLogging;
    if (!m_isInitialized && m_isEnabled)
    {
@@ -136,7 +136,7 @@ void Log::AfterInit() { m_preLogFileLog.clear(); }
 
 void Log::Finish()
 {
-   std::lock_guard<std::mutex> lock(m_locker);
+   std::lock_guard<std::recursive_mutex> lock(m_locker);
    if (m_logger.is_open())
    {
       Write("Logging stopped");
@@ -150,7 +150,7 @@ void Log::Finish()
 
 void Log::WriteRaw(const std::string& message)
 {
-   std::lock_guard<std::mutex> lock(m_locker);
+   std::lock_guard<std::recursive_mutex> lock(m_locker);
    if (!m_isEnabled)
       return;
 

@@ -40,7 +40,7 @@ private:
    static bool m_isInitialized;
    static bool m_isOk;
    static bool m_isEnabled;
-   static std::mutex m_locker;
+   static std::recursive_mutex m_locker;
 
    static std::string m_filename;
    static std::string m_instrumentations;

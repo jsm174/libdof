@@ -4,6 +4,7 @@
 #include <hidapi/hidapi.h>
 #include "../cab/out/ps/Pinscape.h"
 #include "../cab/out/pspico/PinscapePico.h"
+#include "../cab/out/lw/LedWiz.h"
 #endif
 #ifdef __LIBUSB__
 #include "../cab/out/pac/PacDriveSingleton.h"
@@ -29,6 +30,7 @@ void IOConfigurator::Shutdown()
 #ifdef __HIDAPI__
    Pinscape::ClearDevices();
    PinscapePico::ClearDevices();
+   LedWiz::ClearDevices();
    hid_exit();
 #endif
 }
