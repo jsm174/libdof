@@ -217,10 +217,7 @@ void PacUIO::PacUIOUnit::TerminatePacUIOUpdaterThread()
          std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
 
-      if (m_updaterThreadFinished)
-         m_pacUIOUpdater.join();
-      else
-         m_pacUIOUpdater.detach();
+      m_pacUIOUpdater.join();
    }
 }
 

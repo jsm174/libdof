@@ -308,10 +308,7 @@ void PacLed64::PacLed64Unit::TerminatePacLed64UpdaterThread()
          std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
 
-      if (m_updaterThreadFinished)
-         m_pacLed64Updater.join();
-      else
-         m_pacLed64Updater.detach();
+      m_pacLed64Updater.join();
    }
 }
 

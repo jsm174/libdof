@@ -208,10 +208,7 @@ void PacDrive::PacDriveUnit::TerminatePacDriveUpdaterThread()
          std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
 
-      if (m_updaterThreadFinished)
-         m_pacDriveUpdater.join();
-      else
-         m_pacDriveUpdater.detach();
+      m_pacDriveUpdater.join();
    }
 }
 

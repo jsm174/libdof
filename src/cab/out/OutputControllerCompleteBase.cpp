@@ -242,13 +242,9 @@ void OutputControllerCompleteBase::FinishUpdaterThread()
          std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
 
-      if (m_updaterThreadFinished)
-         m_updaterThread->join();
-      else
-      {
-         Log::Warning("Updater thread did not quit within timeout. Thread termination may be forceful.");
-         m_updaterThread->detach();
-      }
+      if (!m_updaterThreadFinished)
+         Log::Warning(StringExtensions::Build("{0} \"{1}\" updater thread did not quit. Forcing abort.", GetXmlElementName(), GetName()));
+      m_updaterThread->join();
       m_updaterThread.reset();
    }
 }
