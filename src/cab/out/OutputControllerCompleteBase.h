@@ -64,13 +64,13 @@ protected:
       Running
    };
    InUseState m_inUseState;
+   bool m_keepUpdaterThreadAlive;
 
 private:
    std::unique_ptr<std::thread> m_updaterThread;
    mutable std::mutex m_updaterThreadMutex;
    std::condition_variable m_updateCondition;
    mutable std::mutex m_conditionMutex;
-   bool m_keepUpdaterThreadAlive;
    std::atomic<bool> m_updaterThreadFinished { false };
    void UpdaterThreadDoIt();
 };

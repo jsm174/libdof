@@ -452,6 +452,9 @@ void TeensyStripController::ConnectToController()
    bool commandModeOK = false;
    for (int attemptNr = 0; attemptNr < 20; attemptNr++)
    {
+      if (!m_keepUpdaterThreadAlive)
+         throw std::runtime_error("Thread was being aborted.");
+
       uint8_t zeroCommand = 0;
       sp_blocking_write(m_comPort, &zeroCommand, 1, m_comPortTimeOutMs);
       std::this_thread::sleep_for(std::chrono::milliseconds(m_comPortHandshakeStartWaitMs));
