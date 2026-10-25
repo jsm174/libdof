@@ -44,7 +44,11 @@ NamedPipeServer::NamedPipeServer(const std::string& comPort)
    sp_set_dtr(m_serialPort, SP_DTR_ON);
 }
 
-NamedPipeServer::~NamedPipeServer() { StopServer(); }
+NamedPipeServer::~NamedPipeServer()
+{
+   if (m_serverThread.joinable() || m_serialPort)
+      StopServer();
+}
 
 void NamedPipeServer::StartServer()
 {
@@ -55,18 +59,43 @@ void NamedPipeServer::StartServer()
          {
 #ifdef _WIN32
             std::string pipePath = "\\\\.\\pipe\\" + s_pipeName;
-            HANDLE serverPipe = CreateNamedPipeA(pipePath.c_str(), PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, nullptr);
+            HANDLE serverPipe = CreateNamedPipeA(pipePath.c_str(), PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, PIPE_UNLIMITED_INSTANCES, 1024, 1024, 0, nullptr);
 
             if (serverPipe == INVALID_HANDLE_VALUE)
             {
                continue;
             }
 
-            if (ConnectNamedPipe(serverPipe, nullptr) || GetLastError() == ERROR_PIPE_CONNECTED)
+            OVERLAPPED overlapped = {};
+            overlapped.hEvent = CreateEventA(nullptr, TRUE, FALSE, nullptr);
+            bool connected = ConnectNamedPipe(serverPipe, &overlapped) != 0;
+            if (!connected)
+            {
+               DWORD error = GetLastError();
+               if (error == ERROR_PIPE_CONNECTED)
+                  connected = true;
+               else if (error == ERROR_IO_PENDING)
+               {
+                  bool connectReady = false;
+                  while (m_isRunning && !connectReady)
+                     connectReady = WaitForSingleObject(overlapped.hEvent, 200) == WAIT_OBJECT_0;
+                  DWORD bytesTransferred;
+                  if (connectReady)
+                     connected = GetOverlappedResult(serverPipe, &overlapped, &bytesTransferred, FALSE) != 0;
+                  else
+                  {
+                     CancelIo(serverPipe);
+                     GetOverlappedResult(serverPipe, &overlapped, &bytesTransferred, TRUE);
+                  }
+               }
+            }
+
+            if (connected)
             {
                HandleClientConnection(serverPipe);
             }
 
+            CloseHandle(overlapped.hEvent);
             CloseHandle(serverPipe);
 #else
             int serverSock = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -130,6 +159,9 @@ void NamedPipeServer::StartServer()
 void NamedPipeServer::HandleClientConnection(void* serverStream)
 {
    bool completed = false;
+#ifdef _WIN32
+   HANDLE event = CreateEventA(nullptr, TRUE, FALSE, nullptr);
+#endif
 
    while (m_isRunning && !completed)
    {
@@ -140,8 +172,26 @@ void NamedPipeServer::HandleClientConnection(void* serverStream)
 
 #ifdef _WIN32
          HANDLE pipe = static_cast<HANDLE>(serverStream);
+         OVERLAPPED readOverlapped = {};
+         readOverlapped.hEvent = event;
          DWORD dwBytesRead;
-         if (!ReadFile(pipe, request.data(), static_cast<DWORD>(request.size()), &dwBytesRead, nullptr))
+         if (!ReadFile(pipe, request.data(), static_cast<DWORD>(request.size()), nullptr, &readOverlapped))
+         {
+            if (GetLastError() != ERROR_IO_PENDING)
+            {
+               break;
+            }
+            bool readReady = false;
+            while (m_isRunning && !readReady)
+               readReady = WaitForSingleObject(event, 200) == WAIT_OBJECT_0;
+            if (!readReady)
+            {
+               CancelIo(pipe);
+               GetOverlappedResult(pipe, &readOverlapped, &dwBytesRead, TRUE);
+               break;
+            }
+         }
+         if (!GetOverlappedResult(pipe, &readOverlapped, &dwBytesRead, FALSE))
          {
             break;
          }
@@ -186,8 +236,11 @@ void NamedPipeServer::HandleClientConnection(void* serverStream)
             std::string response = "OK";
 #ifdef _WIN32
             HANDLE pipe = static_cast<HANDLE>(serverStream);
+            OVERLAPPED writeOverlapped = {};
+            writeOverlapped.hEvent = event;
             DWORD bytesWritten;
-            WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.length()), &bytesWritten, nullptr);
+            if (WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.length()), nullptr, &writeOverlapped) || GetLastError() == ERROR_IO_PENDING)
+               GetOverlappedResult(pipe, &writeOverlapped, &bytesWritten, TRUE);
 #else
             int sock = static_cast<int>(reinterpret_cast<intptr_t>(serverStream));
             ssize_t bytesWritten = write(sock, response.c_str(), response.length());
@@ -215,8 +268,11 @@ void NamedPipeServer::HandleClientConnection(void* serverStream)
             std::string response = "OK";
 #ifdef _WIN32
             HANDLE pipe = static_cast<HANDLE>(serverStream);
+            OVERLAPPED writeOverlapped = {};
+            writeOverlapped.hEvent = event;
             DWORD bytesWritten;
-            WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.length()), &bytesWritten, nullptr);
+            if (WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.length()), nullptr, &writeOverlapped) || GetLastError() == ERROR_IO_PENDING)
+               GetOverlappedResult(pipe, &writeOverlapped, &bytesWritten, TRUE);
 #else
             int sock = static_cast<int>(reinterpret_cast<intptr_t>(serverStream));
             ssize_t bytesWritten = write(sock, response.c_str(), response.length());
@@ -239,8 +295,11 @@ void NamedPipeServer::HandleClientConnection(void* serverStream)
 
 #ifdef _WIN32
             HANDLE pipe = static_cast<HANDLE>(serverStream);
+            OVERLAPPED writeOverlapped = {};
+            writeOverlapped.hEvent = event;
             DWORD bytesWritten;
-            WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.length()), &bytesWritten, nullptr);
+            if (WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.length()), nullptr, &writeOverlapped) || GetLastError() == ERROR_IO_PENDING)
+               GetOverlappedResult(pipe, &writeOverlapped, &bytesWritten, TRUE);
 #else
             int sock = static_cast<int>(reinterpret_cast<intptr_t>(serverStream));
             ssize_t bytesWritten = write(sock, response.c_str(), response.length());
@@ -261,8 +320,11 @@ void NamedPipeServer::HandleClientConnection(void* serverStream)
 
 #ifdef _WIN32
             HANDLE pipe = static_cast<HANDLE>(serverStream);
+            OVERLAPPED writeOverlapped = {};
+            writeOverlapped.hEvent = event;
             DWORD bytesWritten;
-            WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.length()), &bytesWritten, nullptr);
+            if (WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.length()), nullptr, &writeOverlapped) || GetLastError() == ERROR_IO_PENDING)
+               GetOverlappedResult(pipe, &writeOverlapped, &bytesWritten, TRUE);
 #else
             int sock = static_cast<int>(reinterpret_cast<intptr_t>(serverStream));
             ssize_t bytesWritten = write(sock, response.c_str(), response.length());
@@ -273,8 +335,11 @@ void NamedPipeServer::HandleClientConnection(void* serverStream)
          {
 #ifdef _WIN32
             HANDLE pipe = static_cast<HANDLE>(serverStream);
+            OVERLAPPED writeOverlapped = {};
+            writeOverlapped.hEvent = event;
             DWORD bytesWritten;
-            WriteFile(pipe, m_comPort.c_str(), static_cast<DWORD>(m_comPort.length()), &bytesWritten, nullptr);
+            if (WriteFile(pipe, m_comPort.c_str(), static_cast<DWORD>(m_comPort.length()), nullptr, &writeOverlapped) || GetLastError() == ERROR_IO_PENDING)
+               GetOverlappedResult(pipe, &writeOverlapped, &bytesWritten, TRUE);
 #else
             int sock = static_cast<int>(reinterpret_cast<intptr_t>(serverStream));
             ssize_t bytesWritten = write(sock, m_comPort.c_str(), m_comPort.length());
@@ -287,6 +352,10 @@ void NamedPipeServer::HandleClientConnection(void* serverStream)
          completed = true;
       }
    }
+
+#ifdef _WIN32
+   CloseHandle(event);
+#endif
 }
 
 void NamedPipeServer::StopServer()

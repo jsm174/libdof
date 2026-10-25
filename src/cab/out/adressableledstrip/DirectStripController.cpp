@@ -167,13 +167,7 @@ void DirectStripController::FinishUpdaterThread()
                std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
 
-            if (m_updaterThreadFinished)
-               m_updaterThread->join();
-            else
-            {
-               Log::Warning("DirectStripController updater thread did not quit within timeout.");
-               m_updaterThread->detach();
-            }
+            m_updaterThread->join();
          }
 
          delete m_updaterThread;

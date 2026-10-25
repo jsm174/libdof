@@ -27,7 +27,7 @@ FT245RBitbangController::FT245RBitbangController()
    SetOutputs(new OutputList());
 }
 
-FT245RBitbangController::~FT245RBitbangController() { }
+FT245RBitbangController::~FT245RBitbangController() { FinishUpdaterThread(); }
 
 void FT245RBitbangController::SetId(int value)
 {
@@ -156,10 +156,7 @@ void FT245RBitbangController::FinishUpdaterThread()
                std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
 
-            if (m_updaterThreadFinished)
-               m_updaterThread->join();
-            else
-               m_updaterThread->detach();
+            m_updaterThread->join();
          }
          delete m_updaterThread;
          m_updaterThread = nullptr;
