@@ -25,6 +25,7 @@ PinOne::PinOne(const std::string& comPort)
 
 PinOne::~PinOne()
 {
+   FinishUpdaterThread();
    if (m_pinOneCommunication)
    {
       delete m_pinOneCommunication;

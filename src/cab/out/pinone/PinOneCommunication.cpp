@@ -29,9 +29,17 @@ PinOneCommunication::~PinOneCommunication()
 {
    try
    {
+      if (m_pipeClient)
+      {
+#ifdef _WIN32
+         CloseHandle(static_cast<HANDLE>(m_pipeClient));
+#else
+         close(static_cast<int>(reinterpret_cast<intptr_t>(m_pipeClient)));
+#endif
+         m_pipeClient = nullptr;
+      }
       if (m_server)
       {
-         m_server->StopServer();
          delete m_server;
          m_server = nullptr;
       }
@@ -121,8 +129,6 @@ bool PinOneCommunication::DisconnectFromServer()
    if (m_server)
    {
       m_server->StopServer();
-      delete m_server;
-      m_server = nullptr;
       return true;
    }
    return false;
