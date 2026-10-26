@@ -297,6 +297,13 @@ For custom setups, create a `CabinetConfig.xml` file in your DOF config director
       <Name>Backbox Pico</Name>
       <Number>1</Number>
     </PinscapePico>
+    
+    <!-- PinOne Controller -->
+    <PinOne>
+      <Name>Main PinOne</Name>
+      <Number>1</Number>
+      <ComPort>/dev/ttyACM0</ComPort>
+    </PinOne>
   </OutputControllers>
   
   <Toys>    
@@ -361,6 +368,18 @@ For custom setups, create a `CabinetConfig.xml` file in your DOF config director
       <Outputs>
         <LedWizEquivalentOutput>
           <OutputName>Backbox Pico.01</OutputName>
+          <LedWizEquivalentOutputNumber>1</LedWizEquivalentOutputNumber>
+        </LedWizEquivalentOutput>
+      </Outputs>
+    </LedWizEquivalent>
+
+    <!-- LedWizEquivalent for PinOne (Unit 1 = LedWiz #11) -->
+    <LedWizEquivalent>
+      <Name>PinOne Equivalent</Name>
+      <LedWizNumber>11</LedWizNumber>
+      <Outputs>
+        <LedWizEquivalentOutput>
+          <OutputName>PinOne\PinOne.01</OutputName>
           <LedWizEquivalentOutputNumber>1</LedWizEquivalentOutputNumber>
         </LedWizEquivalentOutput>
       </Outputs>
